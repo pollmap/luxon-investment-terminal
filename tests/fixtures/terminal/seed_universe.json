@@ -1,0 +1,80 @@
+{
+  "securities": {
+    "AAPL": {"name": "Apple Inc.", "market": "US", "country": "US", "currency": "USD", "sector_policy": "default", "source_label": "fixture_non_production"},
+    "NVDA": {"name": "NVIDIA Corp.", "market": "US", "country": "US", "currency": "USD", "sector_policy": "default", "source_label": "fixture_non_production"},
+    "005930.KS": {"name": "Samsung Electronics Co., Ltd.", "market": "KR", "country": "KR", "currency": "KRW", "sector_policy": "default", "source_label": "fixture_non_production"},
+    "7203.T": {"name": "Toyota Motor Corp.", "market": "JP", "country": "JP", "currency": "JPY", "sector_policy": "default", "source_label": "fixture_non_production"},
+    "CRM": {"name": "Salesforce Inc.", "market": "US", "country": "US", "currency": "USD", "sector_policy": "default", "source_label": "fixture_non_production"},
+    "O": {"name": "Realty Income Corp.", "market": "US", "country": "US", "currency": "USD", "sector_policy": "reit", "source_label": "fixture_non_production"},
+    "JPM": {"name": "JPMorgan Chase & Co.", "market": "US", "country": "US", "currency": "USD", "sector_policy": "bank", "source_label": "fixture_non_production"}
+  },
+  "forecast_presets": {
+    "AAPL": {"consensus_low_growth_rate": "5.0", "consensus_growth_rate": "7.0", "consensus_high_growth_rate": "9.0", "lt_growth_rate": "8.0", "analyst_count": 31},
+    "NVDA": {"consensus_low_growth_rate": "14.0", "consensus_growth_rate": "18.0", "consensus_high_growth_rate": "22.0", "lt_growth_rate": "20.0", "analyst_count": 44},
+    "CRM": {"consensus_low_growth_rate": "8.0", "consensus_growth_rate": "11.0", "consensus_high_growth_rate": "14.0", "lt_growth_rate": "12.5", "analyst_count": 38},
+    "O": {"consensus_low_growth_rate": "2.5", "consensus_growth_rate": "4.0", "consensus_high_growth_rate": "5.5", "lt_growth_rate": "3.5", "analyst_count": 18},
+    "JPM": {"consensus_low_growth_rate": "3.5", "consensus_growth_rate": "5.0", "consensus_high_growth_rate": "6.5", "lt_growth_rate": "5.5", "analyst_count": 25},
+    "005930.KS": {"consensus_low_growth_rate": "9.0", "consensus_growth_rate": "9.0", "consensus_high_growth_rate": "9.0", "lt_growth_rate": "8.5", "analyst_count": 0},
+    "7203.T": {"consensus_low_growth_rate": "4.5", "consensus_growth_rate": "4.5", "consensus_high_growth_rate": "4.5", "lt_growth_rate": "4.0", "analyst_count": 0}
+  },
+  "gaap_facts": {
+    "AAPL": {
+      "2020": {"gaap_eps_diluted": "3.28", "gaap_ni": "57411000000", "diluted_shares": "17528214000"},
+      "2021": {"gaap_eps_diluted": "5.61", "gaap_ni": "94680000000", "diluted_shares": "16864919000"},
+      "2022": {"gaap_eps_diluted": "6.11", "gaap_ni": "99803000000", "diluted_shares": "16325819000"},
+      "2023": {"gaap_eps_diluted": "6.13", "gaap_ni": "96995000000", "diluted_shares": "15812547000"},
+      "2024": {"gaap_eps_diluted": "6.08", "gaap_ni": "93736000000", "diluted_shares": "15408000000"}
+    },
+    "NVDA": {
+      "2020": {"gaap_eps_diluted": "0.64", "gaap_ni": "2796000000", "diluted_shares": "4350000000"},
+      "2021": {"gaap_eps_diluted": "1.73", "gaap_ni": "4332000000", "diluted_shares": "2506000000"},
+      "2022": {"gaap_eps_diluted": "3.85", "gaap_ni": "9752000000", "diluted_shares": "2535000000"},
+      "2023": {"gaap_eps_diluted": "1.74", "gaap_ni": "4368000000", "diluted_shares": "2507000000"},
+      "2024": {"gaap_eps_diluted": "11.93", "gaap_ni": "29760000000", "diluted_shares": "2495000000"}
+    },
+    "005930.KS": {
+      "2020": {"gaap_eps_diluted": "3841", "gaap_ni": "26090846000000", "diluted_shares": "6792669250"},
+      "2021": {"gaap_eps_diluted": "5777", "gaap_ni": "39243791000000", "diluted_shares": "6792669250"},
+      "2022": {"gaap_eps_diluted": "8057", "gaap_ni": "54730018000000", "diluted_shares": "6792669250"},
+      "2023": {"gaap_eps_diluted": "2131", "gaap_ni": "14473401000000", "diluted_shares": "6792669250"},
+      "2024": {"gaap_eps_diluted": "4990", "gaap_ni": "33884896000000", "diluted_shares": "6792669250"}
+    },
+    "7203.T": {
+      "2020": {"gaap_eps_diluted": "150.10", "gaap_ni": "2076183000000", "diluted_shares": "13831900000"},
+      "2021": {"gaap_eps_diluted": "245.05", "gaap_ni": "2245261000000", "diluted_shares": "9162700000"},
+      "2022": {"gaap_eps_diluted": "205.23", "gaap_ni": "2451759000000", "diluted_shares": "11945900000"},
+      "2023": {"gaap_eps_diluted": "179.47", "gaap_ni": "2451318000000", "diluted_shares": "13658900000"},
+      "2024": {"gaap_eps_diluted": "365.94", "gaap_ni": "4944933000000", "diluted_shares": "13513200000"}
+    },
+    "CRM": {
+      "2020": {"gaap_eps_diluted": "0.15", "gaap_ni": "126000000", "diluted_shares": "840000000"},
+      "2021": {"gaap_eps_diluted": "4.38", "gaap_ni": "4072000000", "diluted_shares": "930000000"},
+      "2022": {"gaap_eps_diluted": "1.48", "gaap_ni": "1444000000", "diluted_shares": "976000000"},
+      "2023": {"gaap_eps_diluted": "0.21", "gaap_ni": "208000000", "diluted_shares": "990000000"},
+      "2024": {"gaap_eps_diluted": "4.20", "gaap_ni": "4136000000", "diluted_shares": "985000000"}
+    },
+    "O": {
+      "2020": {"gaap_eps_diluted": "1.16", "gaap_ni": "395000000", "diluted_shares": "340000000"},
+      "2021": {"gaap_eps_diluted": "0.87", "gaap_ni": "360000000", "diluted_shares": "414000000"},
+      "2022": {"gaap_eps_diluted": "1.42", "gaap_ni": "869000000", "diluted_shares": "612000000"},
+      "2023": {"gaap_eps_diluted": "1.26", "gaap_ni": "872000000", "diluted_shares": "692000000"},
+      "2024": {"gaap_eps_diluted": "1.05", "gaap_ni": "780000000", "diluted_shares": "743000000"}
+    },
+    "JPM": {
+      "2020": {"gaap_eps_diluted": "8.88", "gaap_ni": "29131000000", "diluted_shares": "3280000000"},
+      "2021": {"gaap_eps_diluted": "15.36", "gaap_ni": "48334000000", "diluted_shares": "3147000000"},
+      "2022": {"gaap_eps_diluted": "12.09", "gaap_ni": "37676000000", "diluted_shares": "3116000000"},
+      "2023": {"gaap_eps_diluted": "16.23", "gaap_ni": "49552000000", "diluted_shares": "3053000000"},
+      "2024": {"gaap_eps_diluted": "18.22", "gaap_ni": "58500000000", "diluted_shares": "3210000000"}
+    }
+  },
+  "price_dividend": {
+    "AAPL": {"2020": ["132", "0.80"], "2021": ["177", "0.85"], "2022": ["129", "0.90"], "2023": ["192", "0.94"], "2024": ["250", "1.00"]},
+    "NVDA": {"2020": ["130", "0.16"], "2021": ["294", "0.16"], "2022": ["146", "0.16"], "2023": ["495", "0.16"], "2024": ["138", "0.04"]},
+    "005930.KS": {"2020": ["81000", "2994"], "2021": ["78300", "2994"], "2022": ["55300", "1444"], "2023": ["78500", "1444"], "2024": ["53200", "1444"]},
+    "7203.T": {"2020": ["1550", "44"], "2021": ["2228", "52"], "2022": ["1817", "53"], "2023": ["1880", "60"], "2024": ["3140", "75"]},
+    "CRM": {"2020": ["222", "0"], "2021": ["254", "0"], "2022": ["132", "0"], "2023": ["263", "0"], "2024": ["334", "1.60"]},
+    "O": {"2020": ["62", "2.80"], "2021": ["71", "2.85"], "2022": ["63", "2.97"], "2023": ["57", "3.07"], "2024": ["53", "3.16"]},
+    "JPM": {"2020": ["127", "3.60"], "2021": ["158", "3.70"], "2022": ["134", "4.00"], "2023": ["170", "4.10"], "2024": ["240", "4.60"]}
+  }
+}

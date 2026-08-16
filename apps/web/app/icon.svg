@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" role="img" aria-label="ValuTrace underwriting valuation terminal mark">
+  <defs>
+    <linearGradient id="vt-bg" x1="5" y1="4" x2="67" y2="68" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#080b0e"/>
+      <stop offset="1" stop-color="#151f28"/>
+    </linearGradient>
+    <linearGradient id="vt-eps" x1="9" y1="49" x2="65" y2="16" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#095c3b"/>
+      <stop offset="1" stop-color="#26a967"/>
+    </linearGradient>
+  </defs>
+  <rect x="3" y="3" width="66" height="66" rx="13" fill="url(#vt-bg)"/>
+  <rect x="9" y="10" width="54" height="43" rx="7" fill="#0b1015" stroke="#627282" stroke-width="1.2"/>
+  <path d="M13 47V17M24 47V17M35 47V17M46 47V17M57 47V17M13 47H60M13 38H60M13 29H60M13 20H60" fill="none" stroke="#63717c" stroke-width=".8" opacity=".38"/>
+  <path d="M50 18h10v29H50z" fill="#7ec99b" opacity=".18"/>
+  <path d="M13 47C20 42 26 40 32 35C39 29 47 24 60 16V49H13Z" fill="url(#vt-eps)" opacity=".9"/>
+  <path d="M13 31C25 28 37 23 48 21C53 20 57 18 60 16" fill="none" stroke="#3477ff" stroke-width="4" stroke-linecap="round"/>
+  <path d="M13 43C25 39 36 35 47 29C53 26 57 23 60 21" fill="none" stroke="#f48423" stroke-width="4" stroke-linecap="round"/>
+  <path d="M13 26C21 36 28 45 36 33C42 23 48 42 60 20" fill="none" stroke="#010203" stroke-width="7.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M13 26C21 36 28 45 36 33C42 23 48 42 60 20" fill="none" stroke="#f0f6f3" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="11" y="58" width="50" height="6" rx="3" fill="#081016" stroke="#5f6f7d" stroke-width=".8"/>
+  <path d="M19 61H54" stroke="#8896a2" stroke-width="1" opacity=".7"/>
+  <circle cx="19" cy="61" r="3" fill="#111923" stroke="#3477ff" stroke-width="1.8"/>
+  <circle cx="33" cy="61" r="3" fill="#111923" stroke="#f48423" stroke-width="1.8"/>
+  <circle cx="47" cy="61" r="3" fill="#111923" stroke="#e5b62f" stroke-width="1.8"/>
+  <circle cx="55" cy="61" r="3.2" fill="#26a967" stroke="#d8f4df" stroke-width="1.6"/>
+  <path d="M53.2 61.1l1.2 1.3 2.7-3.1" fill="none" stroke="#dbfae2" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

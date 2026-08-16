@@ -1,0 +1,12 @@
+{
+  "ticker": "AAPL",
+  "fiscal_year": 2024,
+  "fiscal_period": "FY",
+  "expected_company_adjusted_eps": "6.08",
+  "tolerance": "0.01",
+  "expected_method": "S1_SEC_RECONCILIATION",
+  "expected_flags_absent": ["gaap_fallback"],
+  "expected_source_contains": "sec.gov",
+  "fixture_type": "synthetic_non_production"
+}
+

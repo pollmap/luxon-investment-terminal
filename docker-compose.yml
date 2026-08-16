@@ -1,0 +1,118 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-luxon}
+      POSTGRES_USER: ${POSTGRES_USER:-luxon}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in the Compose env file}
+    ports:
+      - "127.0.0.1:${LUXON_DB_PORT:-5432}:5432"
+    volumes:
+      - luxon-postgres-data:/var/lib/postgresql/data
+      - ./.local-backups:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  api:
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATA_BACKEND: postgres
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-luxon}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in the Compose env file}@postgres:5432/${POSTGRES_DB:-luxon}
+      ALLOW_FIXTURE_FALLBACK: "false"
+      DISABLE_FIXTURE_FALLBACK: "true"
+      NEXT_PUBLIC_SITE_URL: http://127.0.0.1:${LUXON_WEB_PORT:-3000}
+      API_CORS_ORIGINS: http://127.0.0.1:${LUXON_WEB_PORT:-3000},http://localhost:${LUXON_WEB_PORT:-3000}
+      API_AUTH_REQUIRED: ${API_AUTH_REQUIRED:-false}
+      API_AUTH_DISABLED: ${API_AUTH_DISABLED:-true}
+      API_RATE_LIMIT_ENABLED: ${API_RATE_LIMIT_ENABLED:-false}
+      API_RATE_LIMIT_REQUESTS: ${API_RATE_LIMIT_REQUESTS:-600}
+      API_RATE_LIMIT_WINDOW_SECONDS: ${API_RATE_LIMIT_WINDOW_SECONDS:-60}
+      API_RATE_LIMIT_EXEMPT_PATHS: ${API_RATE_LIMIT_EXEMPT_PATHS:-/api/health}
+      API_ENABLE_HSTS: ${API_ENABLE_HSTS:-false}
+      AUTH_REQUIRED: ${AUTH_REQUIRED:-false}
+      AUTH_SECRET: ${AUTH_SECRET:-}
+      AUTH_ALLOWED_EMAILS: ${AUTH_ALLOWED_EMAILS:-}
+      PF_COOKIE_SECRET: ${PF_COOKIE_SECRET:-}
+      BLOB_READ_WRITE_TOKEN: ${BLOB_READ_WRITE_TOKEN:-}
+      CHART_BLOB_QUEUE_ENABLED: ${CHART_BLOB_QUEUE_ENABLED:-false}
+      CHART_CACHE_DIR: /workspace/storage/rendered_charts
+      CHART_RUN_DIR: /workspace/storage/chart_runs
+      CHART_LAYOUT_DIR: /workspace/storage/chart_layouts
+      KR_VALUATION_INPUT_CACHE_DIR: /workspace/storage/cache/kr-valuation-inputs
+      KR_VALUATION_WAREHOUSE_DB: /workspace/data/warehouse/warehouse.duckdb
+      SOURCE_DOCUMENT_STORAGE_ROOT: /workspace
+      OPENDART_API_KEY: ${OPENDART_API_KEY:-}
+      DART_API_KEY: ${DART_API_KEY:-}
+      SEC_USER_AGENT: ${SEC_USER_AGENT:-}
+      EDINET_API_KEY: ${EDINET_API_KEY:-}
+      JQUANTS_EMAIL: ${JQUANTS_EMAIL:-}
+      JQUANTS_PASSWORD: ${JQUANTS_PASSWORD:-}
+      JQUANTS_REFRESH_TOKEN: ${JQUANTS_REFRESH_TOKEN:-}
+      FRED_API_KEY: ${FRED_API_KEY:-}
+      ECOS_API_KEY: ${ECOS_API_KEY:-}
+      KOSIS_API_KEY: ${KOSIS_API_KEY:-}
+      ESTAT_APP_ID: ${ESTAT_APP_ID:-}
+      NAVER_CLIENT_ID: ${NAVER_CLIENT_ID:-}
+      NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET:-}
+    ports:
+      - "127.0.0.1:${LUXON_API_PORT:-8000}:8000"
+    volumes:
+      - ./data/raw:/workspace/data/raw
+      - ./data/warehouse:/workspace/data/warehouse
+      - ./storage:/workspace/storage
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3).read()"
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        API_BASE_URL: http://api:8000
+        NEXT_PUBLIC_SITE_URL: http://127.0.0.1:${LUXON_WEB_PORT:-3000}
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      API_BASE_URL: http://api:8000
+      NEXT_PUBLIC_SITE_URL: http://127.0.0.1:${LUXON_WEB_PORT:-3000}
+      AUTH_REQUIRED: ${AUTH_REQUIRED:-false}
+      AUTH_SECRET: ${AUTH_SECRET:-}
+      AUTH_GITHUB_ID: ${AUTH_GITHUB_ID:-}
+      AUTH_GITHUB_SECRET: ${AUTH_GITHUB_SECRET:-}
+      AUTH_ALLOWED_EMAILS: ${AUTH_ALLOWED_EMAILS:-}
+    ports:
+      - "127.0.0.1:${LUXON_WEB_PORT:-3000}:3000"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/').then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+volumes:
+  luxon-postgres-data:

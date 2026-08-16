@@ -1,0 +1,6 @@
+{
+  "ticker": "JPM",
+  "pending_real_source_verification": true,
+  "fixture_type": "pending_real_golden"
+}
+

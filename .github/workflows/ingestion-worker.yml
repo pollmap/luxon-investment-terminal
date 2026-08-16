@@ -1,0 +1,582 @@
+name: Ingestion Worker
+
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: Worker command to run
+        required: true
+        default: run_source_e2e
+        type: choice
+        options:
+          - preflight
+          - deploy_gate
+          - doctor
+          - migrate
+          - run_priority_e2e
+          - run_source_e2e
+          - run_p1_e2e
+          - normalize_us
+          - normalize_us_batch
+          - collect_market
+          - collect_sec_bulk
+          - load_sec_bulk_warehouse
+          - collect_fred
+          - collect_ecos
+          - collect_kosis
+          - collect_estat
+          - collect_stooq_prices
+          - collect_fdr_prices
+          - collect_pykrx_prices
+          - collect_marcap
+          - collect_jquants
+          - collect_edinet
+          - import_market_csv
+          - import_consensus_csv
+          - validate_consensus_csv
+          - consensus_workpaper
+          - export_consensus_template
+          - import_fnguide_export
+          - source_coverage
+          - secret_audit
+          - data_lake_plan
+          - blob_sync
+      ticker:
+        description: Ticker or security id, for example 005930.KS or AAPL
+        required: false
+        default: 005930.KS
+      market:
+        description: Market for collect_market
+        required: false
+        default: KR
+        type: choice
+        options:
+          - US
+          - KR
+          - JP
+      years:
+        description: Year range, for example 2020:2025
+        required: false
+        default: 2020:2025
+      csv_path:
+        description: CSV/XLSX path for import commands
+        required: false
+        default: storage/imports/consensus_estimates.csv
+      coverage_tickers:
+        description: Comma-separated tickers for collection and template commands
+        required: false
+        default: 005930.KS,000660.KS,402340.KS,005380.KS,028260.KS,032830.KS,373220.KS,207940.KS,329180.KS,009155.KS
+      source_e2e_tickers:
+        description: Optional comma-separated tickers for run_source_e2e; blank uses selected market priority universe
+        required: false
+        default: ""
+      priority_e2e_markets:
+        description: Market order subset for run_priority_e2e; KR is the first production slice
+        required: false
+        default: KR
+      source_coverage_market:
+        description: Market universe for source_coverage when source_coverage_tickers is blank
+        required: false
+        default: KR
+        type: choice
+        options:
+          - KR
+          - US
+          - JP
+          - ALL
+      source_coverage_tickers:
+        description: Optional comma-separated tickers for source_coverage; blank uses source_coverage_market
+        required: false
+        default: ""
+      plan_markets:
+        description: Comma-separated markets for data_lake_plan
+        required: false
+        default: US,KR,JP
+      fred_series:
+        description: Comma-separated FRED series ids for collect_fred
+        required: false
+        default: DGS10,DGS2,FEDFUNDS,CPIAUCSL,UNRATE,USREC,DEXKOUS,DEXJPUS
+      stat_series:
+        description: Comma-separated ECOS/KOSIS/e-Stat ids for official statistics collectors
+        required: false
+        default: ""
+      require_consensus_forecast:
+        description: Require 1Y-5Y consensus forecast snapshots in source coverage gates
+        required: false
+        default: true
+        type: boolean
+      persist:
+        description: Persist normalized data to Neon/Postgres
+        required: false
+        default: true
+        type: boolean
+      force_refresh:
+        description: Ignore existing cache where supported
+        required: false
+        default: false
+        type: boolean
+      sync_blob:
+        description: Sync queued raw payloads to Vercel Blob after ingestion
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  ingestion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      DATA_BACKEND: postgres
+      AUTH_REQUIRED: ${{ vars.AUTH_REQUIRED || 'true' }}
+      API_AUTH_REQUIRED: ${{ vars.API_AUTH_REQUIRED || 'true' }}
+      API_AUTH_DISABLED: ${{ vars.API_AUTH_DISABLED || 'false' }}
+      INPUT_COMMAND: ${{ inputs.command }}
+      INPUT_TICKER: ${{ inputs.ticker }}
+      INPUT_MARKET: ${{ inputs.market }}
+      INPUT_YEARS: ${{ inputs.years }}
+      INPUT_CSV_PATH: ${{ inputs.csv_path }}
+      INPUT_COVERAGE_TICKERS: ${{ inputs.coverage_tickers }}
+      INPUT_SOURCE_E2E_TICKERS: ${{ inputs.source_e2e_tickers }}
+      INPUT_PRIORITY_E2E_MARKETS: ${{ inputs.priority_e2e_markets }}
+      INPUT_SOURCE_COVERAGE_MARKET: ${{ inputs.source_coverage_market }}
+      INPUT_SOURCE_COVERAGE_TICKERS: ${{ inputs.source_coverage_tickers }}
+      INPUT_PLAN_MARKETS: ${{ inputs.plan_markets }}
+      INPUT_FRED_SERIES: ${{ inputs.fred_series }}
+      INPUT_STAT_SERIES: ${{ inputs.stat_series }}
+      INPUT_REQUIRE_CONSENSUS_FORECAST: ${{ inputs.require_consensus_forecast }}
+      INPUT_PERSIST: ${{ inputs.persist }}
+      INPUT_FORCE_REFRESH: ${{ inputs.force_refresh }}
+      INPUT_SYNC_BLOB: ${{ inputs.sync_blob }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version-file: .python-version
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+        with:
+          enable-cache: true
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 10.29.3
+
+      - name: Set up Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: |
+          uv sync --locked --extra dev
+          pnpm install --frozen-lockfile
+
+      - name: Validate required secrets
+        shell: bash
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+          OPENDART_API_KEY: ${{ secrets.OPENDART_API_KEY }}
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+          EDINET_API_KEY: ${{ secrets.EDINET_API_KEY }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
+          KOSIS_API_KEY: ${{ secrets.KOSIS_API_KEY }}
+          ESTAT_APP_ID: ${{ secrets.ESTAT_APP_ID }}
+          JQUANTS_REFRESH_TOKEN: ${{ secrets.JQUANTS_REFRESH_TOKEN }}
+          JQUANTS_EMAIL: ${{ secrets.JQUANTS_EMAIL }}
+          JQUANTS_PASSWORD: ${{ secrets.JQUANTS_PASSWORD }}
+        run: |
+          if [[ "${INPUT_PERSIST}" == "true" && -z "${DATABASE_URL}" ]]; then
+            echo "DATABASE_URL secret is required when persist=true."
+            exit 1
+          fi
+          PRIORITY_E2E_MARKETS="$(echo "${INPUT_PRIORITY_E2E_MARKETS}" | tr '[:lower:]' '[:upper:]' | tr -d ' ')"
+          if [[ "${INPUT_COMMAND}" == "source_coverage" && -z "${DATABASE_URL}" ]]; then
+            echo "DATABASE_URL secret is required for source_coverage."
+            exit 1
+          fi
+          if [[ "${INPUT_COMMAND}" == "deploy_gate" && -z "${DATABASE_URL}" ]]; then
+            echo "DATABASE_URL secret is required for deploy_gate."
+            exit 1
+          fi
+          if { [[ "${INPUT_COMMAND}" == "run_source_e2e" && "${INPUT_MARKET}" == "US" ]] || [[ "${INPUT_COMMAND}" == "run_p1_e2e" ]] || [[ "${INPUT_COMMAND}" == "normalize_us" ]] || [[ "${INPUT_COMMAND}" == "normalize_us_batch" ]]; } && [[ -z "${SEC_USER_AGENT}" ]]; then
+            echo "SEC_USER_AGENT secret is required for US normalization."
+            exit 1
+          fi
+          if [[ "${INPUT_COMMAND}" == "run_priority_e2e" && ( "${PRIORITY_E2E_MARKETS}" == "ALL" || ",${PRIORITY_E2E_MARKETS}," == *",US,"* ) && -z "${SEC_USER_AGENT}" ]]; then
+            echo "SEC_USER_AGENT secret is required for US run_priority_e2e."
+            exit 1
+          fi
+          if [[ "${INPUT_COMMAND}" == "run_source_e2e" && "${INPUT_MARKET}" == "KR" && -z "${OPENDART_API_KEY}" && -z "${DART_API_KEY}" ]]; then
+            echo "OPENDART_API_KEY or DART_API_KEY secret is required for KR run_source_e2e."
+            exit 1
+          fi
+          if [[ "${INPUT_COMMAND}" == "run_priority_e2e" && ( "${PRIORITY_E2E_MARKETS}" == "ALL" || ",${PRIORITY_E2E_MARKETS}," == *",KR,"* ) && -z "${OPENDART_API_KEY}" && -z "${DART_API_KEY}" ]]; then
+            echo "OPENDART_API_KEY or DART_API_KEY secret is required for KR run_priority_e2e."
+            exit 1
+          fi
+          if [[ "${INPUT_COMMAND}" == "run_source_e2e" && "${INPUT_MARKET}" == "JP" && -z "${JQUANTS_REFRESH_TOKEN}" && ( -z "${JQUANTS_EMAIL}" || -z "${JQUANTS_PASSWORD}" ) ]]; then
+            echo "J-Quants credentials are required for JP run_source_e2e."
+            exit 1
+          fi
+          if [[ "${INPUT_COMMAND}" == "run_priority_e2e" && ( "${PRIORITY_E2E_MARKETS}" == "ALL" || ",${PRIORITY_E2E_MARKETS}," == *",JP,"* ) && -z "${JQUANTS_REFRESH_TOKEN}" && ( -z "${JQUANTS_EMAIL}" || -z "${JQUANTS_PASSWORD}" ) ]]; then
+            echo "J-Quants credentials are required for JP run_priority_e2e."
+            exit 1
+          fi
+          if [[ "${INPUT_COMMAND}" == "run_source_e2e" && "${INPUT_MARKET}" == "JP" && -z "${EDINET_API_KEY}" ]]; then
+            echo "EDINET_API_KEY secret is required for JP run_source_e2e."
+            exit 1
+          fi
+          if [[ "${INPUT_COMMAND}" == "run_priority_e2e" && ( "${PRIORITY_E2E_MARKETS}" == "ALL" || ",${PRIORITY_E2E_MARKETS}," == *",JP,"* ) && -z "${EDINET_API_KEY}" ]]; then
+            echo "EDINET_API_KEY secret is required for JP run_priority_e2e."
+            exit 1
+          fi
+          if [[ "${INPUT_COMMAND}" == "run_p1_e2e" && -z "${OPENDART_API_KEY}" && -z "${DART_API_KEY}" ]]; then
+            echo "OPENDART_API_KEY or DART_API_KEY secret is required for run_p1_e2e."
+            exit 1
+          fi
+          if [[ "${INPUT_COMMAND}" == "run_p1_e2e" && -z "${JQUANTS_REFRESH_TOKEN}" && ( -z "${JQUANTS_EMAIL}" || -z "${JQUANTS_PASSWORD}" ) ]]; then
+            echo "JQUANTS credentials are required for run_p1_e2e."
+            exit 1
+          fi
+          if [[ "${INPUT_COMMAND}" == "run_p1_e2e" && -z "${EDINET_API_KEY}" ]]; then
+            echo "EDINET_API_KEY secret is required for run_p1_e2e."
+            exit 1
+          fi
+          if [[ "${INPUT_COMMAND}" == "collect_market" && "${INPUT_MARKET}" == "US" && -z "${SEC_USER_AGENT}" ]]; then
+            echo "SEC_USER_AGENT secret is required for US collect_market."
+            exit 1
+          fi
+          if [[ "${INPUT_COMMAND}" == "collect_sec_bulk" && -z "${SEC_USER_AGENT}" ]]; then
+            echo "SEC_USER_AGENT secret is required for collect_sec_bulk."
+            exit 1
+          fi
+          if [[ "${INPUT_COMMAND}" == "collect_market" && "${INPUT_MARKET}" == "KR" && -z "${OPENDART_API_KEY}" && -z "${DART_API_KEY}" ]]; then
+            echo "OPENDART_API_KEY or DART_API_KEY secret is required for KR collect_market."
+            exit 1
+          fi
+          if [[ "${INPUT_COMMAND}" == "collect_market" && "${INPUT_MARKET}" == "JP" && -z "${JQUANTS_REFRESH_TOKEN}" ]]; then
+            echo "JQUANTS_REFRESH_TOKEN secret is required for JP collect_market."
+            exit 1
+          fi
+          if [[ "${INPUT_COMMAND}" == "collect_jquants" && -z "${JQUANTS_REFRESH_TOKEN}" ]]; then
+            echo "JQUANTS_REFRESH_TOKEN secret is required for collect_jquants."
+            exit 1
+          fi
+          if [[ "${INPUT_COMMAND}" == "collect_edinet" && -z "${EDINET_API_KEY}" ]]; then
+            echo "EDINET_API_KEY secret is required for collect_edinet."
+            exit 1
+          fi
+          if [[ "${INPUT_COMMAND}" == "collect_fred" && -z "${FRED_API_KEY}" ]]; then
+            echo "FRED_API_KEY secret is required for collect_fred."
+            exit 1
+          fi
+          if [[ "${INPUT_COMMAND}" == "collect_ecos" && ( -z "${ECOS_API_KEY}" || -z "${INPUT_STAT_SERIES}" ) ]]; then
+            echo "ECOS_API_KEY secret and stat_series input are required for collect_ecos."
+            exit 1
+          fi
+          if [[ "${INPUT_COMMAND}" == "collect_kosis" && ( -z "${KOSIS_API_KEY}" || -z "${INPUT_STAT_SERIES}" ) ]]; then
+            echo "KOSIS_API_KEY secret and stat_series input are required for collect_kosis."
+            exit 1
+          fi
+          if [[ "${INPUT_COMMAND}" == "collect_estat" && ( -z "${ESTAT_APP_ID}" || -z "${INPUT_STAT_SERIES}" ) ]]; then
+            echo "ESTAT_APP_ID secret and stat_series input are required for collect_estat."
+            exit 1
+          fi
+          if [[ "${INPUT_SYNC_BLOB}" == "true" && "${INPUT_COMMAND}" != "migrate" && "${INPUT_COMMAND}" != "source_coverage" && "${INPUT_COMMAND}" != "secret_audit" && "${INPUT_COMMAND}" != "deploy_gate" && "${INPUT_COMMAND}" != "data_lake_plan" && "${INPUT_COMMAND}" != "consensus_workpaper" && "${INPUT_COMMAND}" != "export_consensus_template" && "${INPUT_COMMAND}" != "validate_consensus_csv" && "${INPUT_COMMAND}" != "blob_sync" && -z "${BLOB_READ_WRITE_TOKEN}" ]]; then
+            echo "BLOB_READ_WRITE_TOKEN secret is required when sync_blob=true."
+            exit 1
+          fi
+          if [[ "${INPUT_COMMAND}" == "blob_sync" && -z "${BLOB_READ_WRITE_TOKEN}" ]]; then
+            echo "BLOB_READ_WRITE_TOKEN secret is required for blob_sync."
+            exit 1
+          fi
+
+      - name: Run worker command
+        shell: bash
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+          OPENDART_API_KEY: ${{ secrets.OPENDART_API_KEY }}
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+          EDINET_API_KEY: ${{ secrets.EDINET_API_KEY }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
+          KOSIS_API_KEY: ${{ secrets.KOSIS_API_KEY }}
+          ESTAT_APP_ID: ${{ secrets.ESTAT_APP_ID }}
+          JQUANTS_REFRESH_TOKEN: ${{ secrets.JQUANTS_REFRESH_TOKEN }}
+          JQUANTS_EMAIL: ${{ secrets.JQUANTS_EMAIL }}
+          JQUANTS_PASSWORD: ${{ secrets.JQUANTS_PASSWORD }}
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+          AUTH_GITHUB_ID: ${{ secrets.AUTH_GITHUB_ID }}
+          AUTH_GITHUB_SECRET: ${{ secrets.AUTH_GITHUB_SECRET }}
+          AUTH_ALLOWED_EMAILS: ${{ secrets.AUTH_ALLOWED_EMAILS }}
+        run: |
+          set -euo pipefail
+
+          PERSIST_FLAG=""
+          FORCE_FLAG=""
+          FORECAST_GATE_FLAG=""
+          if [[ "${INPUT_PERSIST}" == "true" ]]; then
+            PERSIST_FLAG="--persist"
+          fi
+          if [[ "${INPUT_FORCE_REFRESH}" == "true" ]]; then
+            FORCE_FLAG="--force-refresh"
+          fi
+          if [[ "${INPUT_REQUIRE_CONSENSUS_FORECAST}" == "true" ]]; then
+            FORECAST_GATE_FLAG="--require-consensus-forecast"
+          fi
+
+          case "${INPUT_COMMAND}" in
+            preflight)
+              uv run python -m services.ingestion_worker.cli preflight \
+                --markets "${INPUT_MARKET}" \
+                --require-blob \
+                --strict
+              ;;
+            deploy_gate)
+              uv run python -m services.ingestion_worker.cli deploy-gate \
+                --markets "${INPUT_MARKET}" \
+                --tickers "${INPUT_COVERAGE_TICKERS}" \
+                --require-blob \
+                ${FORECAST_GATE_FLAG} \
+                --strict
+              ;;
+            doctor)
+              uv run python -m services.ingestion_worker.cli doctor \
+                --markets "${INPUT_MARKET}" \
+                --require-blob \
+                --strict
+              ;;
+            migrate)
+              uv run alembic -c db/alembic.ini upgrade head
+              ;;
+            run_priority_e2e)
+              uv run python -m services.ingestion_worker.cli run-priority-e2e \
+                --markets "${INPUT_PRIORITY_E2E_MARKETS}" \
+                --years "${INPUT_YEARS}" \
+                --continue-on-error \
+                ${FORECAST_GATE_FLAG} \
+                ${PERSIST_FLAG} ${FORCE_FLAG} \
+                --strict
+              ;;
+            run_source_e2e)
+              if [[ -n "${INPUT_SOURCE_E2E_TICKERS}" ]]; then
+                uv run python -m services.ingestion_worker.cli run-source-e2e \
+                  --market "${INPUT_MARKET}" \
+                  --tickers "${INPUT_SOURCE_E2E_TICKERS}" \
+                  --years "${INPUT_YEARS}" \
+                  --continue-on-error \
+                  ${FORECAST_GATE_FLAG} \
+                  ${PERSIST_FLAG} ${FORCE_FLAG} \
+                  --strict
+              else
+                uv run python -m services.ingestion_worker.cli run-source-e2e \
+                  --market "${INPUT_MARKET}" \
+                  --years "${INPUT_YEARS}" \
+                  --continue-on-error \
+                  ${FORECAST_GATE_FLAG} \
+                  ${PERSIST_FLAG} ${FORCE_FLAG} \
+                  --strict
+              fi
+              ;;
+            run_p1_e2e)
+              uv run python -m services.ingestion_worker.cli run-p1-e2e \
+                --years "${INPUT_YEARS}" \
+                --continue-on-error \
+                ${FORECAST_GATE_FLAG} \
+                ${PERSIST_FLAG} ${FORCE_FLAG} \
+                --strict
+              ;;
+            normalize_us)
+              uv run python -m services.ingestion_worker.cli normalize-us \
+                --ticker "${INPUT_TICKER}" \
+                --years "${INPUT_YEARS}" \
+                ${PERSIST_FLAG} ${FORCE_FLAG}
+              ;;
+            normalize_us_batch)
+              uv run python -m services.ingestion_worker.cli normalize-us-batch \
+                --tickers "${INPUT_COVERAGE_TICKERS}" \
+                --years "${INPUT_YEARS}" \
+                --continue-on-error \
+                ${PERSIST_FLAG} ${FORCE_FLAG}
+              ;;
+            collect_market)
+              uv run python -m services.ingestion_worker.cli collect \
+                --market "${INPUT_MARKET}" \
+                --ticker "${INPUT_TICKER}" \
+                --years "${INPUT_YEARS}" \
+                ${PERSIST_FLAG} ${FORCE_FLAG}
+              ;;
+            collect_sec_bulk)
+              uv run python -m services.ingestion_worker.cli collect-sec-bulk \
+                --archives companyfacts,submissions \
+                ${PERSIST_FLAG} ${FORCE_FLAG}
+              ;;
+            load_sec_bulk_warehouse)
+              uv run python -m services.ingestion_worker.cli load-sec-bulk-warehouse \
+                --tickers "${INPUT_COVERAGE_TICKERS}" \
+                ${PERSIST_FLAG}
+              ;;
+            collect_fred)
+              uv run python -m services.ingestion_worker.cli collect-fred \
+                --series "${INPUT_FRED_SERIES}" \
+                --years "${INPUT_YEARS}" \
+                ${PERSIST_FLAG} ${FORCE_FLAG}
+              ;;
+            collect_ecos)
+              uv run python -m services.ingestion_worker.cli collect-ecos \
+                --series "${INPUT_STAT_SERIES}" \
+                --years "${INPUT_YEARS}" \
+                ${PERSIST_FLAG} ${FORCE_FLAG}
+              ;;
+            collect_kosis)
+              uv run python -m services.ingestion_worker.cli collect-kosis \
+                --tables "${INPUT_STAT_SERIES}" \
+                --years "${INPUT_YEARS}" \
+                ${PERSIST_FLAG} ${FORCE_FLAG}
+              ;;
+            collect_estat)
+              uv run python -m services.ingestion_worker.cli collect-estat \
+                --stats-data-ids "${INPUT_STAT_SERIES}" \
+                --years "${INPUT_YEARS}" \
+                ${PERSIST_FLAG} ${FORCE_FLAG}
+              ;;
+            collect_stooq_prices)
+              uv run python -m services.ingestion_worker.cli collect-stooq-prices \
+                --market "${INPUT_MARKET}" \
+                --tickers "${INPUT_COVERAGE_TICKERS}" \
+                --years "${INPUT_YEARS}" \
+                ${PERSIST_FLAG} ${FORCE_FLAG}
+              ;;
+            collect_fdr_prices)
+              uv run python -m services.ingestion_worker.cli collect-fdr-prices \
+                --market "${INPUT_MARKET}" \
+                --tickers "${INPUT_COVERAGE_TICKERS}" \
+                --years "${INPUT_YEARS}" \
+                ${PERSIST_FLAG} ${FORCE_FLAG}
+              ;;
+            collect_pykrx_prices)
+              uv run python -m services.ingestion_worker.cli collect-pykrx-prices \
+                --tickers "${INPUT_COVERAGE_TICKERS}" \
+                --years "${INPUT_YEARS}" \
+                ${PERSIST_FLAG} ${FORCE_FLAG}
+              ;;
+            collect_marcap)
+              uv run python -m services.ingestion_worker.cli collect-marcap \
+                --tickers "${INPUT_COVERAGE_TICKERS}" \
+                --years "${INPUT_YEARS}" \
+                ${PERSIST_FLAG} ${FORCE_FLAG}
+              ;;
+            collect_jquants)
+              uv run python -m services.ingestion_worker.cli collect-jquants \
+                --tickers "${INPUT_COVERAGE_TICKERS}" \
+                --years "${INPUT_YEARS}" \
+                ${PERSIST_FLAG} ${FORCE_FLAG}
+              ;;
+            collect_edinet)
+              uv run python -m services.ingestion_worker.cli collect-edinet \
+                --tickers "${INPUT_COVERAGE_TICKERS}" \
+                --years "${INPUT_YEARS}" \
+                ${PERSIST_FLAG} ${FORCE_FLAG}
+              ;;
+            import_market_csv)
+              uv run python -m services.ingestion_worker.cli import-market-csv \
+                --path "${INPUT_CSV_PATH}" \
+                ${PERSIST_FLAG}
+              ;;
+            import_consensus_csv)
+              uv run python -m services.ingestion_worker.cli import-consensus-csv \
+                --path "${INPUT_CSV_PATH}" \
+                ${PERSIST_FLAG}
+              ;;
+            validate_consensus_csv)
+              uv run python -m services.ingestion_worker.cli validate-consensus-csv \
+                --path "${INPUT_CSV_PATH}" \
+                --tickers "${INPUT_COVERAGE_TICKERS}" \
+                --start-year "$(date -u +%Y)" \
+                --years 5 \
+                --cases median,current \
+                --case-mode any \
+                --strict
+              ;;
+            consensus_workpaper)
+              WORKPAPER_PATH="${INPUT_CSV_PATH}"
+              WORKPAPER_PATH="${WORKPAPER_PATH%.csv}_workpaper.md"
+              uv run python -m services.ingestion_worker.cli consensus-workpaper \
+                --tickers "${INPUT_COVERAGE_TICKERS}" \
+                --csv-path "${INPUT_CSV_PATH}" \
+                --start-year "$(date -u +%Y)" \
+                --years 5 \
+                --template-cases median \
+                --validation-cases median,current \
+                --case-mode any \
+                --out "${WORKPAPER_PATH}"
+              ;;
+            export_consensus_template)
+              uv run python -m services.ingestion_worker.cli export-consensus-template \
+                --tickers "${INPUT_COVERAGE_TICKERS}" \
+                --start-year "$(date -u +%Y)" \
+                --years 5 \
+                --out "${INPUT_CSV_PATH}"
+              ;;
+            import_fnguide_export)
+              uv run python -m services.ingestion_worker.cli import-fnguide-export \
+                --path "${INPUT_CSV_PATH}" \
+                ${PERSIST_FLAG}
+              ;;
+            source_coverage)
+              if [[ -n "${INPUT_SOURCE_COVERAGE_TICKERS}" ]]; then
+                uv run python -m services.ingestion_worker.cli source-coverage \
+                  --market "${INPUT_SOURCE_COVERAGE_MARKET}" \
+                  --tickers "${INPUT_SOURCE_COVERAGE_TICKERS}" \
+                  ${FORECAST_GATE_FLAG} \
+                  --strict
+              else
+                uv run python -m services.ingestion_worker.cli source-coverage \
+                  --market "${INPUT_SOURCE_COVERAGE_MARKET}" \
+                  ${FORECAST_GATE_FLAG} \
+                  --strict
+              fi
+              ;;
+            secret_audit)
+              uv run python -m services.ingestion_worker.cli secret-audit --strict
+              ;;
+            data_lake_plan)
+              uv run python -m services.ingestion_worker.cli data-lake-plan \
+                --markets "${INPUT_PLAN_MARKETS}" \
+                --years "${INPUT_YEARS}" \
+                --format markdown \
+                --out storage/ingestion_plans/data_lake_plan.json
+              ;;
+            blob_sync)
+              pnpm blob:sync:dry-run
+              pnpm blob:sync
+              ;;
+            *)
+              echo "Unknown command: ${INPUT_COMMAND}"
+              exit 1
+              ;;
+          esac
+
+      - name: Sync queued raw objects to Vercel Blob
+        if: ${{ inputs.sync_blob && inputs.command != 'preflight' && inputs.command != 'deploy_gate' && inputs.command != 'doctor' && inputs.command != 'migrate' && inputs.command != 'source_coverage' && inputs.command != 'secret_audit' && inputs.command != 'data_lake_plan' && inputs.command != 'consensus_workpaper' && inputs.command != 'export_consensus_template' && inputs.command != 'validate_consensus_csv' && inputs.command != 'blob_sync' }}
+        env:
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+        run: |
+          pnpm blob:sync:dry-run
+          pnpm blob:sync
