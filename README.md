@@ -16,9 +16,9 @@
 
 ## 현재 상태
 
-2026년 10월 10일 공개 API·수집기·정적 화면은 **v110**입니다. [변경·실제 검증 기록](docs/releases/20261010-v110/ACCEPTANCE.md)과 [웹 배포·Linux CI·성능 결과](docs/releases/20261010-v110/WEB_SECURITY_UPDATE.md)에서 구현, 실제 자료, 화면, 공개 반영을 구분합니다. 기능 CI는 통과했으며 CodeQL 보안 경고의 추가 검토가 남아 있습니다.
+2026년 10월 10일 07:25 KST 공개 API·수집기·정적 화면은 **v112**입니다. [최신 변경·실제 검증 기록](docs/releases/20261010-v112/ACCEPTANCE.md)에서 구현, 실제 자료, 화면, 공개 반영을 구분합니다. 변경 없는 과거 현금흐름 재공시가 TTM 계산을 막던 오류를 수정하고 대표 세 기업의 공개 응답을 대조했습니다. 기능 CI는 통과했으며 CodeQL 보안 경고의 추가 검토가 남아 있습니다.
 
-대상 2,765종목 중 원천 마지막 페이지까지 확인한 일봉은 602종목, 투자자 수급은 344종목입니다. 이는 수집 작업 기록 기준이며 모든 데이터가 완료된 종목 수가 아닙니다. 디스크 보호로 과거 수집은 중단 상태이고 최신 갱신은 실행 중입니다. 전체 과거 자료·TTM/분할·배당 근거·실제 장중 수신·공개 성능 목표·실사용 평가가 남아 있습니다.
+10월 10일 06:50 KST 수집 작업 기록에서 대상 2,765종목 중 원천 마지막 페이지까지 확인한 일봉은 602종목, 투자자 수급은 344종목입니다. 모든 데이터가 완료된 종목 수가 아닙니다. 디스크 보호로 과거 수집은 중단 상태이고 최신 갱신은 별도 실행됩니다. 전체 과거 자료·TTM/분할·배당 근거·실제 장중 수신·공개 성능 목표·실사용 평가가 남아 있습니다. [저장 공간 후속 조치](docs/releases/20261010-v110/STORAGE_FOLLOWUP.md)와 [최근 공개 성능 측정](docs/releases/20261010-v110/WEB_SECURITY_UPDATE.md)을 함께 봅니다.
 
 ## 구조
 
@@ -60,7 +60,7 @@ pnpm build
 - [API와 옵션 계약](docs/toss-api-contract.md)
 - [출처 공유 저장](docs/SOURCE_TRACE_STORAGE.md) · [거래 자료 저장](docs/TRADING_PROJECTION_STORAGE.md)
 - [외부 백업·복구](docs/PC_OFFSITE_BACKUP.md)
-- [최신 공개 검증](docs/releases/20261010-v110/ACCEPTANCE.md)
+- [최신 공개 검증](docs/releases/20261010-v112/ACCEPTANCE.md)
 - [현재 앱 CI와 로컬 검사](docs/CI.md)
 - [이전 터미널 README](docs/history/LEGACY_TERMINAL_README.md)
 
