@@ -4,6 +4,8 @@ import hashlib
 import json
 import logging
 import os
+import re
+import stat
 import threading
 from collections import OrderedDict
 from contextlib import contextmanager, nullcontext
@@ -28,6 +30,43 @@ def next_snapshot_revision(previous, proposed):
     if candidate <= prior:
         candidate = prior + timedelta(microseconds=1)
     return candidate.isoformat(timespec='microseconds')
+
+
+def _raw_source_directory(root: Path, source: str) -> Path:
+    """Keep writer namespaces below the operator-configured storage root."""
+    if (
+        not isinstance(source, str)
+        or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,127}", source) is None
+        or source.upper() in {"CON", "PRN", "AUX", "NUL"}
+        or re.fullmatch(r"(?:COM|LPT)[1-9]", source.upper()) is not None
+    ):
+        raise ValueError("Invalid raw source directory name")
+
+    # The storage root is operator configuration; source is never a path.
+    raw_root = root.resolve() / "raw"
+    directory = raw_root / source
+
+    def check_boundary():
+        for path in (raw_root, directory):
+            try:
+                metadata = path.lstat()
+            except FileNotFoundError:
+                continue
+            if stat.S_ISLNK(metadata.st_mode) or (
+                getattr(metadata, "st_file_attributes", 0)
+                & stat.FILE_ATTRIBUTE_REPARSE_POINT
+            ):
+                raise ValueError("Raw source directory links are not supported")
+            if not stat.S_ISDIR(metadata.st_mode):
+                raise ValueError("Raw source directory must be a directory")
+        if raw_root.resolve() != raw_root or directory.resolve().parent != raw_root:
+            raise ValueError("Raw source directory escapes raw root")
+
+    check_boundary()
+    directory.mkdir(parents=True, exist_ok=True)
+    # Recheck before any archive file is opened, including compressed writers.
+    check_boundary()
+    return directory
 
 
 class Store:
@@ -113,8 +152,7 @@ class Store:
 
     def raw(self, source, url, content):
         digest = hashlib.sha256(content).hexdigest()
-        directory = self.root / "raw" / source
-        directory.mkdir(parents=True, exist_ok=True)
+        directory = _raw_source_directory(self.root, source)
         from .raw_archive import COMPRESSED_SOURCES, save_compressed
         if source in COMPRESSED_SOURCES:
             save_compressed(directory, digest, content, url, now())
