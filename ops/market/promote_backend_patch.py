@@ -19,7 +19,8 @@ BACKEND = ('market-api', 'market-worker')
 PUBLIC_HOST = 'stocks.62-171-141-206.sslip.io'
 DART_FORMAT = 'raw-dart-gzip-v2'
 RUNTIME_SCRIPTS = ('scripts/replay_dart_period_archives.py',)
-RUNTIME_OPERATIONS = ('ops/market/compact_raw_archives.py',)
+RUNTIME_OPERATIONS = ('ops/market/compact_raw_archives.py',
+                      'ops/market/review_samsung_comparative.py')
 
 
 def _is_link(path):
@@ -352,6 +353,8 @@ def promote(version, expected, archive_path, frontend=False):
             '/app/scripts/replay_dart_period_archives.py\n'
             'COPY --chown=market:market ops/market/compact_raw_archives.py '
             '/app/ops/market/compact_raw_archives.py\n'
+            'COPY --chown=market:market ops/market/review_samsung_comparative.py '
+            '/app/ops/market/review_samsung_comparative.py\n'
             'USER market\n', encoding='utf-8')
         run('docker', 'build', '-q', '-t', f'korea-stocks-api:{version}',
             '-f', str(dockerfile), str(release))

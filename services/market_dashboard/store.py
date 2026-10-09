@@ -296,6 +296,79 @@ class Store:
             except Exception:
                 pass
 
+    def compare_and_put(self, key, expected, payload, *, history_key, revision_guards=None):
+        """Replace an existing snapshot and preserve its history in one DB transaction.
+
+        Locks, comparisons and writes share a connection across independent Store
+        instances/processes. A missing revision guard also participates in the
+        conditional claim; no absent-row lock or process-local lock is assumed.
+        """
+        guards = dict(revision_guards or {})
+        if history_key == key or history_key in guards:
+            raise ValueError("History key must be independent of guarded snapshots")
+        changed = []
+        dialect = self.engine.dialect.name
+        if dialect == "sqlite":
+            from sqlalchemy.dialects.sqlite import insert
+        elif dialect == "postgresql":
+            from sqlalchemy.dialects.postgresql import insert
+        else:
+            raise ValueError("Market snapshots require SQLite or PostgreSQL")
+        with self.lock, self.engine.begin() as db:
+            if dialect == "sqlite":
+                # Serialize the read/compare/write, including separate file-DB
+                # connections. A deferred read-to-write upgrade may fail in WAL.
+                db.exec_driver_sql("BEGIN IMMEDIATE")
+            statement = select(self.snapshots).where(
+                self.snapshots.c.key.in_(sorted({key, *guards}))
+            ).order_by(self.snapshots.c.key)
+            if dialect == "postgresql":
+                statement = statement.with_for_update()
+            rows = {row["key"]: row for row in db.execute(statement).mappings()}
+            current = rows.get(key)
+            if current is None or json.loads(current["payload"]) != expected:
+                return False
+            if any((rows[name]["updated_at"] if name in rows else None) != revision
+                   for name, revision in guards.items()):
+                return False
+            if expected == payload:
+                return False
+            # Linearize the comparison at a conditional write. This also checks
+            # guards that were absent during SELECT (and thus could not be locked).
+            claim = self.snapshots.update().where(
+                self.snapshots.c.key == key,
+                self.snapshots.c.payload == current["payload"],
+                self.snapshots.c.updated_at == current["updated_at"],
+            )
+            guard_table = self.snapshots.alias("snapshot_guard")
+            for name, revision in guards.items():
+                actual = select(guard_table.c.updated_at).where(
+                    guard_table.c.key == name
+                ).scalar_subquery()
+                claim = claim.where(actual.is_(None) if revision is None else actual == revision)
+            claimed = db.execute(claim.values(payload=current["payload"])
+                                 .returning(self.snapshots.c.key)).first()
+            if claimed is None:
+                return False
+            history = insert(self.snapshots).values(
+                key=history_key, payload=current["payload"], updated_at=now()
+            ).on_conflict_do_nothing(index_elements=[self.snapshots.c.key])
+            inserted = db.execute(history.returning(self.snapshots.c.key)).first()
+            if inserted:
+                self._drop_cached(history_key)
+                changed.append(history_key)
+            else:
+                saved = db.execute(select(self.snapshots.c.payload).where(
+                    self.snapshots.c.key == history_key
+                )).scalar_one()
+                if json.loads(saved) != expected:
+                    raise ValueError("Immutable snapshot history differs")
+            if self.put(key, payload, _connection=db):
+                changed.append(key)
+        for name in changed:
+            self.notify_changed(name)
+        return key in changed
+
     def revisions(self, keys):
         """Small cross-process revision check without fetching large JSON payloads."""
         keys = tuple(keys)

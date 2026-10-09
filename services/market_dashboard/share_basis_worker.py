@@ -1,5 +1,6 @@
 """Advance reviewed share units only through complete source-backed disclosure windows."""
 import asyncio
+from copy import deepcopy
 from datetime import UTC, date, datetime, timedelta
 import hashlib
 import json
@@ -11,7 +12,7 @@ from zoneinfo import ZoneInfo
 
 from .raw_archive import read_original
 from .share_basis import extend_reviewed_history, valid_evidence
-from .share_basis_review_store import load_reviews, review_revision
+from .share_basis_review_store import load_reviews, review_index_key, review_revision
 from .store import now
 
 log = logging.getLogger('share-basis-review')
@@ -105,14 +106,13 @@ def apply_reviewed_window(store, code, company, evidence, job, revision):
     updated = extend_reviewed_history(evidence, security_code=code, company_id=company,
         target_end=job['end'], disclosure_end=job['end'], disclosure_type='I',
         pages=pages, filings=filings, issuer_trace=evidence['source_trace'], filing_reviews=reviews)
-    # An intervening explicit review wins; neither its basis nor its ledger may
-    # be replaced by an in-flight disclosure window.
-    if (store.get('share-basis:'+code, {}, use_redis=False) != evidence
-            or review_revision(store, code) != revision):
-        raise ValueError('Share basis or filing review changed during review')
     history = hashlib.sha256(json.dumps(evidence, sort_keys=True).encode()).hexdigest()
-    store.put('share-basis-history:'+code+':'+history[:32], evidence)
-    store.put('share-basis:'+code, updated)
+    # A final Python equality check leaves a race before the subsequent writes.
+    # Compare, preserve history and replace the basis on one locked DB connection.
+    if not store.compare_and_put('share-basis:'+code, evidence, updated,
+            history_key='share-basis-history:'+code+':'+history[:32],
+            revision_guards={review_index_key(code): revision}):
+        raise ValueError('Share basis or filing review changed during review')
     result = {**job, 'status': 'ready', 'reviewed_end': job['end'], 'updated_at': now()}
     result.pop('next_at', None)
     result.pop('error', None)
@@ -124,7 +124,9 @@ async def review_share_basis(source, code):
     store = source.store
     if code not in set(store.listed_codes()):
         return {'status': 'out_of_scope'}
-    evidence = store.get('share-basis:'+code, {})
+    # A reviewer may mutate a decoded Store.get dictionary before putting it.
+    # Keep the expectation independent throughout provider/archive processing.
+    evidence = deepcopy(store.get('share-basis:'+code, {}, use_redis=False))
     company = store.get('dart-corporations', {}).get('codes', {}).get(code)
     if not company or not valid_evidence(evidence, company) or evidence.get('security_code') != code:
         return {'status': 'initial_share_unit_review_required'}

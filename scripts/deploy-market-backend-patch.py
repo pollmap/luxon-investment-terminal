@@ -43,6 +43,7 @@ def package(destination, frontend=False):
         'ops/market/retain_releases.py',
         'ops/market/compact_raw_archives.py',
         'ops/market/enable_financial_traces.py',
+        'ops/market/review_samsung_comparative.py',
     )]
     if any(not path.is_file() or path.is_symlink() for path in operations):
         raise RuntimeError('Required plain operations source is missing or linked')

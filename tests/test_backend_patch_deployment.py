@@ -14,14 +14,16 @@ ROOT = Path(__file__).resolve().parents[1]
 BACKEND = {'services/market_dashboard/source_support.py': b'# new source',
            'services/market_dashboard/toss_backfill.py': b'# backfill',
            'scripts/replay_dart_period_archives.py': b'# archive reader',
-           'ops/market/compact_raw_archives.py': b'# bounded compactor'}
+           'ops/market/compact_raw_archives.py': b'# bounded compactor',
+           'ops/market/review_samsung_comparative.py': b'# reviewed unit operator'}
 OPERATIONS = {'ops/market/audit_toss_coverage.py': b'# audit',
               'ops/market/promote_backend_patch.py': b'# promotion',
               'ops/market/monitor.py': b'# static monitor',
               'ops/market/backup.py': b'# verified retention',
               'ops/market/retain_releases.py': b'# protected releases',
               'ops/market/compact_raw_archives.py': b'# bounded compactor',
-              'ops/market/enable_financial_traces.py': b'# guarded financial writer'}
+              'ops/market/enable_financial_traces.py': b'# guarded financial writer',
+              'ops/market/review_samsung_comparative.py': b'# reviewed unit operator'}
 FRONTEND = {'web-build/BUILD_ID': b'new-build',
             'web-build/server/app/stocks/page.js': b'new page',
             'web-build/static/new.js': b'new chunk',
