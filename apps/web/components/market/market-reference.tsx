@@ -1,11 +1,9 @@
 "use client";
 import {useState} from "react";
 import {useVisibleQuery} from "./use-visible-query";
+import {calendarSessions,type CalendarSnapshot} from "./market-calendar";
 
-type Session={startTime?:string;endTime?:string};
-type Day={date:string;integrated?:Record<string,Session|null>} & Record<string,unknown>;
-type Snapshot={status?:string;calendar?:{today?:Day;nextBusinessDay?:Day}};
-export type MarketContext={indicators?:{rows?:{code:string;price:number|null;unit:string}[]};exchange_rate?:{rate?:number;unit?:string;status?:string;as_of?:string};calendars?:Record<string,Snapshot>};
+export type MarketContext={indicators?:{rows?:{code:string;price:number|null;unit:string}[]};exchange_rate?:{rate?:number;unit?:string;status?:string;as_of?:string};calendars?:Record<string,CalendarSnapshot>};
 
 export function usePublicData<T>(path:string,initial:T){
   const result=useVisibleQuery<T>(path,60000);
@@ -32,11 +30,10 @@ export function ContextDateControls({onApply}:{onApply:(query:string)=>void}){
 }
 
 export function CalendarTable({calendars}:{calendars:MarketContext['calendars']}){
-  return <div className="mk-table-scroll"><table className="mk-data-table"><thead><tr><th>시장</th><th>기준일</th><th>다음 거래일</th><th>거래시간 · 한국 시각</th></tr></thead><tbody>{(['KR','US'] as const).map(c=>{
+  return <div className="mk-table-scroll"><table className="mk-data-table"><thead><tr><th>시장</th><th>기준일 · 현지</th><th>다음 거래일 · 현지</th><th>거래시간 · 한국 시각</th></tr></thead><tbody>{(['KR','US'] as const).map(c=>{
     const snapshot=calendars?.[c],today=snapshot?.calendar?.today;
-    const sessions=c==='KR'?today?.integrated:today;
-    const times=Object.entries(sessions||{}).filter((entry):entry is [string,Session]=>!!entry[1]&&typeof entry[1]==='object'&&'startTime' in entry[1]);
-    return <tr key={c}><th>{c==='KR'?'국내':'미국'}</th><td>{today?.date||'—'}</td><td>{snapshot?.calendar?.nextBusinessDay?.date||'—'}</td><td>{!today?(snapshot?.status==='error'?'불러오지 못했어요':'조회 중'):times.length?times.map(([key,s])=><div key={key}>{({preMarket:'프리마켓',regularMarket:'정규장',afterMarket:'애프터마켓',dayMarket:'주간거래'} as Record<string,string>)[key]||key} {s.startTime?.slice(11,16)}–{s.endTime?.slice(11,16)}</div>):'휴장'}</td></tr>;
+    const times=calendarSessions(today,c);
+    return <tr key={c}><th>{c==='KR'?'국내 · 통합':'미국'}</th><td>{today?.date||'—'}</td><td>{snapshot?.calendar?.nextBusinessDay?.date||'—'}</td><td>{!today?(snapshot?.status==='error'?'불러오지 못했어요':'조회 중'):times.rows.length?times.rows.map(s=><div key={s.key}>{s.label} {s.time}</div>):times.status==='closed'?'휴장':'시간 정보 없음'}</td></tr>;
   })}</tbody></table></div>;
 }
 
