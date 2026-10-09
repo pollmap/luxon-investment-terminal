@@ -1,0 +1,322 @@
+{
+  "release": "20261010-share-review-v113",
+  "public": {
+    "at": "2026-10-09T23:27:01.205821+00:00",
+    "release": "20261010-share-review-v113",
+    "source_commit": "ee44ce061f313cab11e835a07ae3a4a5f6e7dfb1",
+    "manifest_sha256": "0e2aed3b07c385d968392bc9b77337e4735639b00c8176dd5461272c24d14e12",
+    "checks": [
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/build-manifest.json",
+        "status": 200,
+        "exact_bytes": true
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/stocks",
+        "status": 200,
+        "sha256": "15a2faccc7aa06157316c2dbe9be7469caddde06857bb74ecc4d25313d595526"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/_next/static/css/56d4c3297aff6eef.css",
+        "status": 200,
+        "sha256": "bfa719c1a38d040e116184ef6b4b2033a0f49b220fc68c7ad0e7ab724e90f802"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/_next/static/chunks/109-1709464bfe5e04e8.js",
+        "status": 200,
+        "sha256": "a1daef3feae74028d37262bac41d33614d37414d5ababb5e7010e8c40f73ad3b"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/stocks/fonts/PretendardVariable.woff2",
+        "status": 200,
+        "sha256": "9599f12fd42fc0bce1cd50b47a0c022e108d7aa64dd0d1bb0ed44f3282d900b4"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/health",
+        "status": 200,
+        "bytes": 614
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/search?q=005930",
+        "status": 200,
+        "bytes": 3715
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/securities/005930?view=summary",
+        "status": 200,
+        "bytes": 1868
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/securities/094800?view=summary",
+        "status": 200,
+        "bytes": 1102
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/build-manifest.json",
+        "status": 200,
+        "exact_bytes": true
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/stocks",
+        "status": 200,
+        "sha256": "15a2faccc7aa06157316c2dbe9be7469caddde06857bb74ecc4d25313d595526"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/_next/static/css/56d4c3297aff6eef.css",
+        "status": 200,
+        "sha256": "bfa719c1a38d040e116184ef6b4b2033a0f49b220fc68c7ad0e7ab724e90f802"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/_next/static/chunks/109-1709464bfe5e04e8.js",
+        "status": 200,
+        "sha256": "a1daef3feae74028d37262bac41d33614d37414d5ababb5e7010e8c40f73ad3b"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/stocks/fonts/PretendardVariable.woff2",
+        "status": 200,
+        "sha256": "9599f12fd42fc0bce1cd50b47a0c022e108d7aa64dd0d1bb0ed44f3282d900b4"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/health",
+        "status": 200,
+        "bytes": 615
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/search?q=005930",
+        "status": 200,
+        "bytes": 3715
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/securities/005930?view=summary",
+        "status": 200,
+        "bytes": 1868
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/securities/094800?view=summary",
+        "status": 200,
+        "bytes": 1102
+      }
+    ],
+    "load_test": false,
+    "fresh_stream_test": false,
+    "passed": true
+  },
+  "application": {
+    "at": "2026-10-09T23:22:22.716998+00:00",
+    "finished_at": "2026-10-09T23:24:23.327636+00:00",
+    "applied": true,
+    "worker_resumed": true,
+    "saved_basis_verified": true,
+    "passed": true
+  },
+  "ocf": {
+    "at": "2026-10-09T23:27:01.205821+00:00",
+    "passed": true,
+    "checks": [
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "code": "000660",
+        "matched": true,
+        "period_end": "2026-06-30",
+        "exact_value": "181181.3235474611955270514044"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "code": "005380",
+        "matched": true,
+        "period_end": "2026-06-30",
+        "exact_value": "-10379.67201593582738374199946"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "code": "005930",
+        "matched": true,
+        "period_end": "2026-06-30",
+        "exact_value": "33720.78624657357018560835179"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "code": "000660",
+        "matched": true,
+        "period_end": "2026-06-30",
+        "exact_value": "181181.3235474611955270514044"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "code": "005380",
+        "matched": true,
+        "period_end": "2026-06-30",
+        "exact_value": "-10379.67201593582738374199946"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "code": "005930",
+        "matched": true,
+        "period_end": "2026-06-30",
+        "exact_value": "33720.78624657357018560835179"
+      }
+    ]
+  },
+  "browser": {
+    "release": "20261010-share-review-v113",
+    "host": "korea-stocks-edge.lch68-workers.workers.dev",
+    "ttm": {
+      "code": "005930",
+      "metric": "OCF",
+      "value": "33,720.79",
+      "comparison": "337,208",
+      "periodEnd": "2026-06-30"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "documentWidth": 375,
+      "previousDate": "2026-10-02",
+      "recentDate": "2026-10-08",
+      "selectionPreservedAfterViewportReset": true
+    },
+    "calendar": {
+      "localTradingDate": "2026-10-08",
+      "displayTimezone": "Asia/Seoul",
+      "krRegular": "09:00–15:30",
+      "usRegular": "22:30–10/09 05:00",
+      "usAfter": "10/09 05:00–10/09 08:50",
+      "holidayDate": "2026-10-10",
+      "holidayShownForBoth": true
+    },
+    "scope": "In-app browser; not real-device or user evaluation"
+  },
+  "local_storage": {
+    "input_checksum": {
+      "rows": 16895854,
+      "sum_sha256_mod_2_256": "933f5c31682c9a980766023c1950cf943a2ae3d1d192151e62ec82b08934102e",
+      "xor_sha256": "6e49092569f05ad403f8d05986517e74d38d4a8995c6783ee4089dda0a135e34"
+    },
+    "output_checksum": {
+      "rows": 16895854,
+      "sum_sha256_mod_2_256": "933f5c31682c9a980766023c1950cf943a2ae3d1d192151e62ec82b08934102e",
+      "xor_sha256": "6e49092569f05ad403f8d05986517e74d38d4a8995c6783ee4089dda0a135e34"
+    },
+    "physical": [
+      {
+        "table": "market_time_series",
+        "heap_bytes": 8588279808,
+        "index_bytes": 1789689856,
+        "total_bytes": 10380107776
+      },
+      {
+        "table": "market_source_traces",
+        "heap_bytes": 98836480,
+        "index_bytes": 10428416,
+        "total_bytes": 109314048
+      },
+      {
+        "table": "copy_checkpoint",
+        "heap_bytes": 2367488,
+        "index_bytes": 16384,
+        "total_bytes": 2416640
+      }
+    ],
+    "passed": true,
+    "local_cluster_stopped": true,
+    "finished_at": "2026-10-09T23:14:15.314387+00:00"
+  },
+  "pg_checks": [
+    {
+      "name": "case_success",
+      "passed": true
+    },
+    {
+      "name": "case_copy_failure",
+      "passed": true
+    },
+    {
+      "name": "case_lock_timeout",
+      "passed": true
+    },
+    {
+      "name": "case_cancel",
+      "passed": true
+    },
+    {
+      "name": "case_permission",
+      "passed": true
+    },
+    {
+      "name": "case_bad_proof",
+      "passed": true
+    },
+    {
+      "name": "case_review_success",
+      "passed": true
+    },
+    {
+      "name": "case_review_rollback",
+      "passed": true
+    },
+    {
+      "name": "case_store_cas",
+      "passed": true
+    }
+  ],
+  "cutover_checks": [
+    {
+      "name": "cut_success_rollback",
+      "passed": true
+    },
+    {
+      "name": "cut_owner_mismatch",
+      "passed": true
+    },
+    {
+      "name": "cut_acl_mismatch",
+      "passed": true
+    },
+    {
+      "name": "cut_view_dependency",
+      "passed": true
+    },
+    {
+      "name": "cut_mid_move_failure",
+      "passed": true
+    },
+    {
+      "name": "cut_new_write_rollback",
+      "passed": true
+    },
+    {
+      "name": "cut_lock_timeout",
+      "passed": true
+    },
+    {
+      "name": "cut_cancel",
+      "passed": true
+    },
+    {
+      "name": "cut_retire_without_recovery",
+      "passed": true
+    }
+  ],
+  "production_timeseries_swapped": false,
+  "fresh_stream_test": false,
+  "new_performance_test": false,
+  "whole_dataset_complete": false
+}
