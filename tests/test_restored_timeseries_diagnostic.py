@@ -6,10 +6,18 @@ from pathlib import Path
 
 import pytest
 
-SCRIPT = Path(__file__).resolve().parents[1] / "work/storage-v106/diagnose_restored_timeseries.py"
+SCRIPT = Path(__file__).resolve().parents[1] / "ops/market/diagnose_restored_timeseries.py"
 SPEC = importlib.util.spec_from_file_location("local_timeseries_diagnostic", SCRIPT)
 module = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(module)
+
+
+def test_portable_source_keeps_isolated_restore_and_output_paths():
+    root = Path(__file__).resolve().parents[1]
+    assert module.ROOT == root
+    assert module.DATA == root / "work/restore-daily-20261010-v106/cluster-data"
+    assert module.OUTPUT == root / "work/storage-v106/local-whole-history.json"
+    assert module.HOST == "127.0.0.1" and module.PORT == 54420
 
 
 def prepare(monkeypatch, tmp_path):

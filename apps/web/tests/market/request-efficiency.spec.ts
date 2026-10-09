@@ -2,6 +2,9 @@ import {test,expect,type Page} from '@playwright/test';
 
 // Non-production fixtures verify requests and navigation, not financial coverage.
 async function fixture(page:Page){
+  // The CI namespace has loopback only. Its OS network state can be offline even
+  // though every endpoint below is fulfilled locally; model that fixture state.
+  await page.addInitScript(()=>Object.defineProperty(navigator,'onLine',{configurable:true,get:()=>true}));
   const calls:string[]=[];const subscriptions=new Map<number,string[]>();let socketId=0;
   const stock={code:'005930',name:'삼성전자',market:'KOSPI',price:100,change:1,volume:10,value:1000,cap:10000,foreign:null,per:null,pbr:null,roe:null,dividend:null,foreign_net:null,institution_net:null,revenue:null,operating_profit:null,as_of:'2026-10-08T15:30:00+09:00',received_at:'2026-10-08T15:30:00+09:00',market_status:'CLOSE',facts:{}};
   await page.routeWebSocket('**/api/market/v1/stream',ws=>{
@@ -49,6 +52,12 @@ test('index day responses are shared, closed detail and hidden pages stop pollin
 test('detail pauses the hidden market stream and restores the original list on return',async({page})=>{
   const state=await fixture(page);await page.goto('/stocks');
   await expect(page.locator('.mk-stock-link').first()).toBeVisible();
+  await expect.poll(()=>state.subscriptions.size).toBe(1);
+  // Keep the production offline guard in this same fixture: do not merely force
+  // an always-online environment and leave disconnection untested.
+  await page.evaluate(()=>{Object.defineProperty(navigator,'onLine',{configurable:true,get:()=>false});window.dispatchEvent(new Event('offline'));});
+  await expect.poll(()=>state.subscriptions.size).toBe(0);
+  await page.evaluate(()=>{Object.defineProperty(navigator,'onLine',{configurable:true,get:()=>true});window.dispatchEvent(new Event('online'));});
   await expect.poll(()=>state.subscriptions.size).toBe(1);
   const overviewCount=state.count('/overview');
   await page.locator('.mk-stock-link').first().click();

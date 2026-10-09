@@ -20,10 +20,8 @@ from ctypes import wintypes
 from datetime import UTC, datetime
 from pathlib import Path
 
-LIBRARY = Path(__file__).resolve().parents[2] / "work/tools/backup-crypto"
-sys.path.insert(0, str(LIBRARY))
-import cryptography  # noqa: E402
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes  # noqa: E402
+import cryptography
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 MAGIC = b"KSDGCM01"
 KEY_MAGIC = b"KSDKEY01"

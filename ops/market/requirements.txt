@@ -8,3 +8,5 @@ psycopg[binary]==3.3.6
 redis==8.1.0
 pyarrow==25.0.0
 duckdb==1.5.5
+anyio==4.15.1
+soupsieve==2.10

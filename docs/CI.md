@@ -21,6 +21,10 @@ Python 실행기는 별도로 기존 공급자·DB 환경변수를 제거하고 
 
 정적 검증 서버는 `/stocks`를 `stocks.html`로 연결합니다. `/api`, `/internal`, `/ops`의 요청을 외부 서비스로 전달하지 않으며, 경로 탈출과 디렉터리 목록도 허용하지 않습니다. 브라우저 검사에서 실제 데이터가 필요해지면 해당 fixture를 보완해야 합니다.
 
+loopback만 있는 Linux 환경은 `navigator.onLine=false`일 수 있습니다. 요청 효율 fixture는 로컬 가상 연결을 online으로 명시하고, offline 전환 시 구독 해제와 online 복귀 시 단일 재구독도 검사합니다. 운영 코드의 오프라인 보호는 변경하지 않습니다.
+
+로컬 복원 진단의 mock 회귀는 `ops/market/diagnose_restored_timeseries.py`를 사용합니다. 실행 증거·개인별 복원 파일을 넣는 `work/`의 Python 소스에 의존하지 않습니다. 실제 진단은 별도 실행이며 CI에서는 DB 연결을 mock으로 대체합니다.
+
 ## 로컬 실행
 
 의존성을 설치한 Python 환경과 Node.js 24, pnpm 10.29.3을 사용합니다. Windows에서는 아래 `python`을 `.venv/Scripts/python.exe`로 바꿀 수 있습니다.
