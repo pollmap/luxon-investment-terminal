@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import tarfile
 from pathlib import Path, PurePosixPath
@@ -23,6 +24,69 @@ SSH = [
 ]
 REMOTE = "/srv/services/korea-stocks/backups/inactive-releases-20261008.tar.gz"
 HELPER = "/srv/services/korea-stocks/current/ops/market/retain_releases.py"
+CHUNK_BYTES = 1024**2
+MIN_FREE_BYTES = 1024**3
+
+
+class InsufficientLocalSpace(RuntimeError):
+    """Stop before spending the reserved space; keep all existing artifacts."""
+
+
+def require_local_space(directory, minimum=MIN_FREE_BYTES, incoming=0):
+    free = shutil.disk_usage(directory).free
+    if free < minimum + incoming:
+        raise InsufficientLocalSpace(
+            f"Local free space {free} bytes is below reserve {minimum} "
+            f"plus next write {incoming}; partial files were preserved"
+        )
+
+
+def guarded_copy(source, output, directory, minimum=MIN_FREE_BYTES):
+    """Bound memory and check the destination volume before every write."""
+    checksum = hashlib.sha256()
+    for chunk in iter(lambda: source.read(CHUNK_BYTES), b""):
+        require_local_space(directory, minimum, len(chunk))
+        output.write(chunk)
+        output.flush()
+        checksum.update(chunk)
+    return checksum.digest()
+
+
+def stop_download(child):
+    """Terminate only this invocation's child, never other SSH/archive jobs."""
+    if child.poll() is None:
+        child.terminate()
+        try:
+            child.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            child.kill()
+            child.wait(timeout=5)
+
+
+def download_archive(pending, command, minimum=MIN_FREE_BYTES):
+    if pending.exists():
+        raise FileExistsError("Archive partial already exists; use --resume to verify it")
+    require_local_space(pending.parent, minimum, CHUNK_BYTES)
+    with pending.open("xb") as output:
+        child = subprocess.Popen(command, stdout=subprocess.PIPE)
+        try:
+            guarded_copy(child.stdout, output, pending.parent, minimum)
+            result = child.wait()
+            if result:
+                raise subprocess.CalledProcessError(result, command)
+        except BaseException:
+            stop_download(child)
+            raise
+        finally:
+            child.stdout.close()
+
+
+def file_digest(path):
+    checksum = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(CHUNK_BYTES), b""):
+            checksum.update(chunk)
+    return checksum.digest()
 
 
 def archive_paths(date, batch=None):
@@ -157,7 +221,14 @@ def main():
         action="store_true",
         help="Verify an already downloaded partial against its remote manifest",
     )
+    parser.add_argument(
+        "--min-free-gib", type=int, default=1,
+        help="Keep at least this much local free space during download and restore (minimum 1)",
+    )
     args = parser.parse_args()
+    if args.min_free_gib < 1:
+        parser.error("--min-free-gib must be at least 1")
+    minimum = args.min_free_gib * 1024**3
     OUT, REMOTE = archive_paths(args.date, args.batch)
     OUT.mkdir(parents=True, exist_ok=True)
     target = OUT / PurePosixPath(REMOTE).name
@@ -165,12 +236,9 @@ def main():
         raise ValueError("Completed archive already exists; do not overwrite it")
     pending = target.with_suffix(".partial")
     if not args.resume:
-        with pending.open("xb") as stream:
-            subprocess.run(
-                [*SSH, f"python3 {HELPER} archive --stream --archive {REMOTE}"],
-                stdout=stream,
-                check=True,
-            )
+        download_archive(
+            pending, [*SSH, f"python3 {HELPER} archive --stream --archive {REMOTE}"], minimum
+        )
     h = hashlib.sha256()
     with pending.open("rb") as stream:
         for chunk in iter(lambda: stream.read(1024**2), b""):
@@ -190,10 +258,12 @@ def main():
         raise ValueError("Restore verification directory already exists")
     if restored.is_symlink() or (reuse_restore and not restored.is_dir()):
         raise ValueError("Unexpected restore verification path")
-    if not reuse_restore:
-        restored.mkdir()
     selected = next(iter(expected), None)
     if not reuse_restore:
+        # Hard links are restored as independent files, as counted by the
+        # verified manifest. Budget the entire selected release before starting.
+        require_local_space(OUT, minimum, expected[selected])
+        restored.mkdir()
         with tarfile.open(pending, "r:gz") as tar:
             for member in tar:
                 if member.name.split("/")[0] != selected:
@@ -204,13 +274,11 @@ def main():
                 if not destination.is_relative_to(restored.resolve()):
                     raise ValueError("Restore path escapes verification directory")
                 destination = filesystem_path(destination)
+                require_local_space(OUT, minimum, member.size)
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 with tar.extractfile(member) as source, destination.open("xb") as output:
-                    expected_hash = hashlib.sha256()
-                    for chunk in iter(lambda: source.read(1024**2), b""):
-                        expected_hash.update(chunk)
-                        output.write(chunk)
-                if hashlib.sha256(destination.read_bytes()).digest() != expected_hash.digest():
+                    expected_hash = guarded_copy(source, output, OUT, minimum)
+                if file_digest(destination) != expected_hash:
                     raise ValueError("Restored file checksum mismatch")
     # On resume a pre-existing directory is read-only: never overwrite or fill
     # partial contents. Every file/byte/hash must match the verified archive.
@@ -218,21 +286,23 @@ def main():
     measured = verify_restored_release(restored / selected, candidate)
     restored_bytes, restored_files = measured["bytes"], measured["files"]
     tree_hash = measured["content_sha256"]
-    pending.replace(target)
     report = {
         **manifest,
         "local_archive": str(target),
         "verified_files": count,
         "verification_version": 2,
         "all_release_hashes_verified": True,
-        "compressed_bytes": target.stat().st_size,
+        "compressed_bytes": pending.stat().st_size,
         "restored_release": selected,
         "restored_files": restored_files,
         "restored_bytes": restored_bytes,
         "restored_tree_sha256": tree_hash,
         "restore_verified": True,
     }
-    (OUT / "release-archive-verified.json").write_text(json.dumps(report, indent=2))
+    report_text = json.dumps(report, indent=2)
+    require_local_space(OUT, minimum, len(report_text.encode("utf-8")))
+    pending.replace(target)
+    (OUT / "release-archive-verified.json").write_text(report_text, encoding="utf-8")
     print(
         json.dumps(
             {

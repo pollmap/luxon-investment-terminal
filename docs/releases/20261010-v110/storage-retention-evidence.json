@@ -1,0 +1,350 @@
+{
+  "at": "2026-10-09T21:50:54.976808+00:00",
+  "application_release": "20261010-storage-writes-v110",
+  "archive": {
+    "archive_sha256": "aeac355aaf4f2b7c25f0d698aeb9e78f2e44139f473624e2c49518d4c666fc7b",
+    "candidate_bytes": 2009107130,
+    "compressed_bytes": 102250766,
+    "verified_files": 13059,
+    "restored_release": "20261010-chart-projection-v102",
+    "restored_files": 2373,
+    "restored_bytes": 399743432,
+    "restored_tree_sha256": "756d8d7f7f4739307979a9da795a1ea09e18a28b46e5975d1605142d88b264f2",
+    "restore_verified": true
+  },
+  "cleanup": {
+    "removed": 6,
+    "reclaimed_bytes": 2009107130,
+    "kept": [
+      "20261005-share-universe-archive-v73",
+      "20261009-first-interaction-v93",
+      "20261010-dividend-reconcile-v108",
+      "20261010-reader-floor-v109",
+      "20261010-storage-writes-v110"
+    ]
+  },
+  "post": {
+    "at": "2026-10-09T21:50:40.867322+00:00",
+    "inventory": {
+      "inventory_version": 2,
+      "current": "20261010-storage-writes-v110",
+      "keep": [
+        "20261005-share-universe-archive-v73",
+        "20261009-first-interaction-v93",
+        "20261010-dividend-reconcile-v108",
+        "20261010-reader-floor-v109",
+        "20261010-storage-writes-v110"
+      ],
+      "protected_reasons": {
+        "20261010-storage-writes-v110": [
+          "current",
+          "container:market-api",
+          "container:market-worker",
+          "active_static_web"
+        ],
+        "20261009-first-interaction-v93": [
+          "container:market-web"
+        ],
+        "20261005-share-universe-archive-v73": [
+          "container:openalgo"
+        ],
+        "20261010-reader-floor-v109": [
+          "storage_rollback_floor",
+          "recent_successful_predecessor"
+        ],
+        "20261010-dividend-reconcile-v108": [
+          "recent_successful_predecessor"
+        ]
+      },
+      "blocked": [],
+      "candidates": [],
+      "inspection": "metadata_only",
+      "candidate_bytes": null
+    },
+    "disk": {
+      "total": 154894188544,
+      "used": 137316188160,
+      "free": 17561223168
+    },
+    "collection": {
+      "at": "2026-10-09T21:50:48.288067+00:00",
+      "universe": 2765,
+      "basis": "resumable_collection_job_metadata",
+      "kinds": {
+        "history": {
+          "securities": {
+            "older_pages_pending": 2162,
+            "last_page_received": 602,
+            "provider_catalogue_omission": 1,
+            "no_collection_job": 0
+          },
+          "reported_rows": 2231485,
+          "last_page_fraction": 0.21772151898734177,
+          "provider_catalogue_omission_fraction": 0.0003616636528028933,
+          "error_types": {},
+          "error_samples": []
+        },
+        "investor-trading": {
+          "securities": {
+            "last_page_received": 344,
+            "older_pages_pending": 2420,
+            "provider_catalogue_omission": 1,
+            "no_collection_job": 0
+          },
+          "reported_rows": 1238020,
+          "last_page_fraction": 0.1244122965641953,
+          "provider_catalogue_omission_fraction": 0.0003616636528028933,
+          "error_types": {},
+          "error_samples": []
+        },
+        "program-trades": {
+          "securities": {
+            "older_pages_pending": 2054,
+            "source_empty": 119,
+            "last_page_received": 591,
+            "provider_catalogue_omission": 1,
+            "no_collection_job": 0
+          },
+          "reported_rows": 1309492,
+          "last_page_fraction": 0.21374321880650995,
+          "provider_catalogue_omission_fraction": 0.0003616636528028933,
+          "error_types": {},
+          "error_samples": []
+        },
+        "short-selling": {
+          "securities": {
+            "last_page_received": 916,
+            "older_pages_pending": 1765,
+            "source_empty": 83,
+            "provider_catalogue_omission": 1,
+            "no_collection_job": 0
+          },
+          "reported_rows": 1280547,
+          "last_page_fraction": 0.3312839059674503,
+          "provider_catalogue_omission_fraction": 0.0003616636528028933,
+          "error_types": {},
+          "error_samples": []
+        },
+        "credit-trades": {
+          "securities": {
+            "older_pages_pending": 1722,
+            "last_page_received": 980,
+            "source_empty": 62,
+            "provider_catalogue_omission": 1,
+            "no_collection_job": 0
+          },
+          "reported_rows": 876150,
+          "last_page_fraction": 0.35443037974683544,
+          "provider_catalogue_omission_fraction": 0.0003616636528028933,
+          "error_types": {},
+          "error_samples": []
+        },
+        "securities-lending": {
+          "securities": {
+            "last_page_received": 695,
+            "older_pages_pending": 2006,
+            "source_empty": 63,
+            "provider_catalogue_omission": 1,
+            "no_collection_job": 0
+          },
+          "reported_rows": 1049079,
+          "last_page_fraction": 0.2513562386980108,
+          "provider_catalogue_omission_fraction": 0.0003616636528028933,
+          "error_types": {},
+          "error_samples": []
+        },
+        "raw-history": {
+          "securities": {
+            "last_page_received": 602,
+            "older_pages_pending": 2162,
+            "provider_catalogue_omission": 1,
+            "no_collection_job": 0
+          },
+          "reported_rows": 2255434,
+          "last_page_fraction": 0.21772151898734177,
+          "provider_catalogue_omission_fraction": 0.0003616636528028933,
+          "error_types": {},
+          "error_samples": []
+        }
+      },
+      "related_company_repair": {
+        "402340": {
+          "rows": 1,
+          "reason": "related_company_not_security"
+        }
+      },
+      "public_events_402340": 1,
+      "progress": {
+        "attempts": 56787,
+        "capacity": {
+          "free_bytes": 17568727040,
+          "limited": true,
+          "used_percent": 88.66,
+          "warning": true,
+          "write_verified": null
+        },
+        "cursor": 444,
+        "cycles": 3,
+        "last_code": "009270",
+        "last_kind": "history",
+        "last_result": "collecting",
+        "next_code": "009270",
+        "phase": 1,
+        "priority_cursor": 1399,
+        "retry_after": null,
+        "schedule": "security_then_kind",
+        "schedule_version": 3,
+        "status": "capacity_limited",
+        "universe_total": 2765,
+        "updated_at": "2026-10-09T21:50:19.546678+00:00"
+      },
+      "operating_states": {
+        "worker": {
+          "status": "ready",
+          "error": null,
+          "updated_at": "2026-10-09T21:44:09.803130+00:00"
+        },
+        "provider-toss": {
+          "status": "ready",
+          "received_at": "2026-10-09T21:38:03.612269+00:00"
+        },
+        "provider-toss-stream": {
+          "status": "subscribed",
+          "received_at": "2026-10-09T21:38:10.348748+00:00"
+        },
+        "toss-backfill-progress": {
+          "status": "capacity_limited",
+          "updated_at": "2026-10-09T21:50:19.546678+00:00",
+          "cursor": 444,
+          "universe_total": 2765
+        },
+        "enrichment_progress": {
+          "cursor": 2711,
+          "universe_total": 2765,
+          "last_batch_at": "2026-10-09T21:50:39.242120+00:00"
+        },
+        "dart-budget": {},
+        "financial-backfill-progress": {}
+      }
+    },
+    "public": [
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/build-manifest.json",
+        "status": 200,
+        "bytes": 12665,
+        "sha256": "505c2e76aa31f114fdc197127157a76992ecb3f911d0e6dbbaae942d610f0d27",
+        "release": "20261010-storage-writes-v110"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/api/market/v1/health",
+        "status": 200,
+        "bytes": 606,
+        "sha256": "a29c483b688b0695871844b25c5278387499915077967aa5ffb3111d74e4292c"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/api/market/v1/securities/005930?view=summary",
+        "status": 200,
+        "bytes": 1868,
+        "sha256": "a4ec46f96610d06bdfacc55d55952e4a353d2a5bd2b1614629a8e3a31b2b1fc4",
+        "code": "005930",
+        "status_value": "ready"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/build-manifest.json",
+        "status": 200,
+        "bytes": 12665,
+        "sha256": "505c2e76aa31f114fdc197127157a76992ecb3f911d0e6dbbaae942d610f0d27",
+        "release": "20261010-storage-writes-v110"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/api/market/v1/health",
+        "status": 200,
+        "bytes": 606,
+        "sha256": "ea72428e7588cf446ae5cd2470914854e44024ef7b8f909f81721da1d5ae1eca"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/api/market/v1/securities/005930?view=summary",
+        "status": 200,
+        "bytes": 1868,
+        "sha256": "a4ec46f96610d06bdfacc55d55952e4a353d2a5bd2b1614629a8e3a31b2b1fc4",
+        "code": "005930",
+        "status_value": "ready"
+      }
+    ],
+    "finished_at": "2026-10-09T21:50:54.976808+00:00"
+  },
+  "ntfs": {
+    "files": [
+      {
+        "name": "17168.1",
+        "size": 1073741824,
+        "allocated_before": 1073741824,
+        "allocated_after": 484904960,
+        "original_sha256": "b606ffdf1b1c34916973fa8f7138065c867815bf53b4e1e2c175d1b324de1a4d",
+        "final_sha256": "b606ffdf1b1c34916973fa8f7138065c867815bf53b4e1e2c175d1b324de1a4d",
+        "proof_unchanged": true,
+        "passed": true
+      },
+      {
+        "name": "17168.10",
+        "size": 1073741824,
+        "allocated_before": 1073741824,
+        "allocated_after": 470511616,
+        "original_sha256": "a3542a701b7cdec7770f743a89c3956f1a7d6568dcdc85e48cb27efe3bf3a5d2",
+        "final_sha256": "a3542a701b7cdec7770f743a89c3956f1a7d6568dcdc85e48cb27efe3bf3a5d2",
+        "proof_unchanged": true,
+        "passed": true
+      },
+      {
+        "name": "17168.2",
+        "size": 1073741824,
+        "allocated_before": 1073741824,
+        "allocated_after": 474394624,
+        "original_sha256": "892a9fddcbe15f1f505410319e3dbbb7f5e70a3da7ede38686f1d170c8b507c6",
+        "final_sha256": "892a9fddcbe15f1f505410319e3dbbb7f5e70a3da7ede38686f1d170c8b507c6",
+        "proof_unchanged": true,
+        "passed": true
+      },
+      {
+        "name": "17168.3",
+        "size": 1073741824,
+        "allocated_before": 1073741824,
+        "allocated_after": 480645120,
+        "original_sha256": "912397616dd34f8063ad499135ced2e4b4e7122116a8f3d213f03942f166a600",
+        "final_sha256": "912397616dd34f8063ad499135ced2e4b4e7122116a8f3d213f03942f166a600",
+        "proof_unchanged": true,
+        "passed": true
+      },
+      {
+        "name": "17168.4",
+        "size": 1073741824,
+        "allocated_before": 1073741824,
+        "allocated_after": 520630272,
+        "original_sha256": "d56639481aab3cc2207ee8ef10bed3ea1473122e1b94ba79ab8fd3a4ae278273",
+        "final_sha256": "d56639481aab3cc2207ee8ef10bed3ea1473122e1b94ba79ab8fd3a4ae278273",
+        "proof_unchanged": true,
+        "passed": true
+      },
+      {
+        "name": "17168",
+        "size": 1073741824,
+        "allocated_before": 1073741824,
+        "allocated_after": 647479296,
+        "original_sha256": "694129cd405b01234654d165f84a098f7d6ed8c6a5e9a57c665685a717ef1451",
+        "final_sha256": "694129cd405b01234654d165f84a098f7d6ed8c6a5e9a57c665685a717ef1451",
+        "proof_unchanged": true,
+        "passed": true
+      }
+    ],
+    "saved_allocated_bytes": 3363885056,
+    "database_content_changed": false,
+    "scope": "six files in stopped isolated verification DB; not production"
+  },
+  "full_rehearsal_status": "running; not verified"
+}

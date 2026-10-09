@@ -38,7 +38,7 @@ def test_date_contract_unchanged(date):
 def test_existing_batch_archive_or_partial_never_overwritten(tmp_path, monkeypatch, pending):
     monkeypatch.setattr(archive, "ROOT", tmp_path)
     monkeypatch.setattr(sys, "argv", ["archive", "--date", "20261009", "--batch", "2"])
-    monkeypatch.setattr(archive.subprocess, "run", lambda *a, **k: pytest.fail("Unexpected SSH"))
+    monkeypatch.setattr(archive.subprocess, "Popen", lambda *a, **k: pytest.fail("Unexpected SSH"))
     original, _ = archive.archive_paths("20261009")
     original.mkdir(parents=True)
     previous = original / "inactive-releases-20261009.tar.gz"
@@ -120,7 +120,7 @@ def resume_fixture(tmp_path, monkeypatch):
         archive.subprocess, "check_output", lambda *a, **k: json.dumps(manifest).encode()
     )
     monkeypatch.setattr(
-        archive.subprocess, "run", lambda *a, **k: pytest.fail("No new archive download")
+        archive.subprocess, "Popen", lambda *a, **k: pytest.fail("No new archive download")
     )
     return out, pending, directory, manifest
 
