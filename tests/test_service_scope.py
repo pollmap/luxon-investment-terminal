@@ -1,9 +1,12 @@
 import importlib
 from types import SimpleNamespace
+
 import pytest
 from fastapi.testclient import TestClient
+
+from services.market_dashboard.service_scope import REVIEWED_NON_SHARE_INSTRUMENTS, universe_view
 from services.market_dashboard.store import Store
-from services.market_dashboard.service_scope import universe_view,REVIEWED_NON_SHARE_INSTRUMENTS
+
 
 def seeded(tmp_path):
     s=Store('sqlite://',tmp_path)
@@ -17,7 +20,8 @@ def seeded(tmp_path):
 def test_service_scope_excludes_konex_without_deleting_source_or_history(tmp_path):
     s=seeded(tmp_path)
     s.put('prices:402420',{'rows':[{'date':'2020-01-01','close':1}]})
-    s.request('402420');s.request('005930')
+    s.request('402420')
+    s.request('005930')
     assert s.listed_codes()==('000660','005930')
     assert s.active()==['005930']
     public=universe_view(s.get('universe'))
@@ -36,7 +40,9 @@ def test_search_index_and_analysis_do_not_reintroduce_konex(tmp_path,monkeypatch
     assert client.get('/api/market/v1/securities/402420/price-window').status_code==404
 
 
-def test_health_reports_current_in_scope_count_without_mutating_worker_snapshot(tmp_path,monkeypatch):
+def test_health_reports_current_in_scope_count_without_mutating_worker_snapshot(
+    tmp_path, monkeypatch,
+):
     app=importlib.import_module('services.market_dashboard.app')
     s=seeded(tmp_path)
     s.put('worker',{'status':'ready','listed_securities':3})
@@ -73,7 +79,9 @@ def test_listed_fund_units_are_outside_share_universe_but_source_rows_survive(tm
     assert s.listed_codes()==('005930','094800')
     public=universe_view(s.get('universe'))
     assert {r['code'] for r in public['rows']}=={'005930','094800'}
-    assert public['coverage']==[{'market':'KOSPI','received':4,'eligible_rows':2,'excluded_non_share_instruments':2}]
+    assert public['coverage']==[{
+        'market':'KOSPI','received':4,'eligible_rows':2,'excluded_non_share_instruments':2,
+    }]
     assert public['excluded_instruments']==REVIEWED_NON_SHARE_INSTRUMENTS
     assert [r['code'] for r in s.get('universe')['rows']]==[r['code'] for r in rows]
     assert s.get('universe')['rows'][1]['code']=='0106J0'
@@ -107,3 +115,50 @@ async def test_reconcile_archives_old_fund_jobs_without_dropping_cursor_or_sourc
     archived=s.get('toss-backfill-out-of-scope:0106J0:history')
     assert archived['state']==previous and archived['state']['next_before']=='2015-01-01'
     assert s.get('toss-backfill:005930:history')['status']=='queued'
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('name', ['맵스리얼티1', '맵스리얼티'])
+async def test_maps_common_share_catalogue_omission_stays_visible_and_in_scope(
+    tmp_path, monkeypatch, name,
+):
+    from services.market_dashboard.toss_backfill import TossBackfill
+
+    app = importlib.import_module('services.market_dashboard.app')
+    store = Store('sqlite://', tmp_path)
+    source = {
+        'rows': [
+            {'code': '094800', 'name': name, 'market': 'KOSPI',
+             'isin': 'KR7094800000', 'security_type': 'stock'},
+            {'code': '0106J0', 'name': '상장형 수익증권', 'market': 'KOSPI'},
+        ],
+        'source_trace': {'source': 'fixture_non_production'},
+        'coverage': [{'market': 'KOSPI', 'received': 2}],
+    }
+    history = {'rows': [{'date': '2020-01-02', 'close': 100}],
+               'source_trace': {'source': 'fixture_non_production'}}
+    job = {
+        'status': 'not_in_provider_catalogue', 'http_status': 404,
+        'next_before': '2019-12-31', 'visits': 2,
+        'provider_catalogue_revision': 'fixture_non_production',
+        'diagnosis': {'status': 'provider_catalogue_omission'},
+    }
+    store.put('universe', source)
+    store.put('prices:094800', history)
+    store.put('toss-backfill:094800:history', job)
+    store.request('094800')
+
+    assert store.listed_codes() == ('094800',)
+    assert store.active() == ['094800']
+    await TossBackfill(SimpleNamespace(store=store)).reconcile(store.listed_codes())
+    assert store.get('toss-backfill:094800:history') == job
+    assert store.get('toss-backfill-out-of-scope:094800:history') is None
+    assert store.get('universe') == source
+    assert store.get('prices:094800') == history
+
+    monkeypatch.setattr(app, 'get_store', lambda: store)
+    result = TestClient(app.app).get('/api/market/v1/search-index')
+    assert result.status_code == 200
+    assert [(row['code'], row['name']) for row in result.json()['rows']] == [
+        ('094800', name),
+    ]

@@ -1,0 +1,80 @@
+{
+  "recorded_at": "2026-10-09T21:32:16.759824+00:00",
+  "public_release": "20261010-storage-writes-v110",
+  "isolated_storage_checkpoint": {
+    "started_at": "2026-10-09T21:30:44.957592+00:00",
+    "passed": true,
+    "max_seconds": 60,
+    "production_contacted": false,
+    "table_writes": false,
+    "row_scans": false,
+    "copy_restarted": false,
+    "restore_proof_sha256": "10a1ee205e660b708882d8ed7f19a1e06a2b8a33e653e79239b166ae63b670ed",
+    "starting_free_bytes": 6522060800,
+    "checkpoint": {
+      "version": 1,
+      "stage": "copy",
+      "checked_at": "2026-10-09T21:20:55.415587+00:00",
+      "source_dump_sha256": "58eb5398f8e7ea9c74a01eb272d7cd848c940a783d6302e7531cda9fab8435a9",
+      "source_rows": 16895854,
+      "committed_rows": 15792000,
+      "remaining_rows": 1103854,
+      "input_checksum_at_checkpoint": {
+        "rows": 15792000,
+        "sum_sha256_mod_2_256": "7184bd410670bc5da8f88177695e45e6f1e5f7b64af47af173d2d81d21da0404",
+        "xor_sha256": "1e6f6e85369e0266e1b9bb846a47130068a838730eadedb9caccb51df731e430"
+      },
+      "full_copy_recorded": false,
+      "independent_full_checksum_verified_by_this_diagnostic": false
+    },
+    "candidate_physical": {
+      "market_time_series_total_bytes": 9581543424,
+      "market_source_traces_total_bytes": 98549760,
+      "combined_total_bytes": 9680093184,
+      "scope": "two candidate tables including their indexes and TOAST"
+    },
+    "stop_exit_code": 0,
+    "local_cluster_stopped": true,
+    "cluster_start_attempted": true,
+    "ending_free_bytes": 6521921536,
+    "elapsed_seconds": 2.11,
+    "finished_at": "2026-10-09T21:30:47.059938+00:00",
+    "restore_proof_unchanged": true
+  },
+  "local_raw_compaction": {
+    "sources": [
+      "fnguide"
+    ],
+    "verified_archives": 1000,
+    "unique_archives": 1000,
+    "logical_saved_bytes": 111461564,
+    "all_originals_and_legacy_verified": true,
+    "free_before": 6426165248,
+    "free_after": 6516047872
+  },
+  "local_build_cleanup": {
+    "paths": 7,
+    "file_bytes": 538011712,
+    "observed_free_change_bytes": 535244800
+  },
+  "scope_check": {
+    "code": "094800",
+    "in_scope": true,
+    "universe_denominator": 2765,
+    "kind_document": "https://kind.krx.co.kr/external/2025/10/28/000476/20251028001174/68155.htm",
+    "observed_at": "2026-10-09T21:27:51.839242+00:00",
+    "summary_http": 200,
+    "bars_http": 200,
+    "bars_count": 25,
+    "last_date": "2026-10-08",
+    "venue_verified": false,
+    "toss_realtime_verified": false
+  },
+  "evidence_hashes": {
+    "checkpoint-observation-2026-10-09T213044.957592Z.json": "542f31c6d310393c8b30b7583d44395cee774e187f08fea881f4a17d48a65b74",
+    "local-source-compaction-result.json": "f9536f13d205f30f05063ad5ba439de2ad14bc266795df2f15ee754e92c79298",
+    "cleanup-result.json": "443462b7cf3fca7674c7c8410ae7c41ac06ed9489a115ecf37585aeb2533ce2c",
+    "public-check.json": "3a0f30d04ecc2a221a3e0e575b2ba615065aac2b381f06798d0fa633bfc4b13a"
+  },
+  "full_storage_migration_verified": false
+}

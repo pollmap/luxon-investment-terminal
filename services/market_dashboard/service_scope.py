@@ -3,6 +3,9 @@ VERSION=2
 
 # KIND classifies these as listed trust units, not ordinary/preferred company
 # shares. Keep their historical observations and source listings untouched.
+# A broker catalogue omission is not evidence of a non-share instrument.
+# 094800 is a registered common share (KR7094800000), including after its rename:
+# https://kind.krx.co.kr/external/2025/10/28/000476/20251028001174/68155.htm
 REVIEWED_NON_SHARE_INSTRUMENTS={
     '0106J0': {
         'name':'대신 KOSPI200인덱스 X클래스',
