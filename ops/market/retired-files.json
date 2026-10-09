@@ -1,0 +1,13 @@
+[
+  "services/market_dashboard/kiwoom_stream.py",
+  "services/market_dashboard/kiwoom_rest.py",
+  "services/market_dashboard/kiwoom_events.py",
+  "services/market_dashboard/kis_supplements.py",
+  "services/market_dashboard/event_archive.py",
+  "tests/test_kiwoom_market_pipeline.py",
+  "tests/test_market_stream_recovery.py",
+  "tests/test_broker_read_only.py",
+  "tests/test_microstructure.py",
+  "scripts/install-broker-tools.ps1",
+  "scripts/verify_broker_mcp.py"
+]

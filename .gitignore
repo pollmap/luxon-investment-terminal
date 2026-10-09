@@ -1,5 +1,8 @@
 node_modules/
+storage/public-market/
+work/market-test-results/
 .next/
+apps/web/.next-market-*/
 .vercel/
 .devstack/
 .local-backups/
@@ -35,3 +38,37 @@ playwright-report/
 test-results/
 
 .vercel
+
+# Dashboard intermediate deployment artifacts and browser traces
+/work/
+/apps/web/.next-*/
+/apps/web/out/
+/apps/web/out.previous/
+/ops/cloudflare/.wrangler/
+
+# Private runtime material and generated nested diagnostics.
+/apps/web/work/
+/ops/cloudflare/work/
+/log/
+/logs/
+/pytest-of-lch68/
+.env.*
+!.env.example
+!**/.env.example
+**/secrets/
+**/toss-token*.json
+**/toss*.env
+.pgpass
+*.key
+*.pem
+*.pfx
+*.p12
+*.sqlite*
+*.duckdb*
+*.db
+*.db-wal
+*.db-shm
+*.dump
+*.dump.*
+*.backup
+*.enc

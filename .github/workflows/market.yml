@@ -1,0 +1,102 @@
+name: Current market app
+
+on:
+  pull_request:
+  push:
+    branches: [master, codex/public-stock-dashboard]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: market-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fixtures:
+    name: Market Python fixtures (offline)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version-file: .python-version
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install dependencies (network permitted only during installation)
+        run: |
+          python -m pip install ".[dev,market]"
+          python -m pip check
+      - name: Run current root fixtures without external networking
+        shell: bash
+        run: |
+          sudo unshare --net bash -c '
+            ip link set lo up
+            exec setpriv --reuid="$1" --regid="$2" --init-groups env PATH="$3" HOME="$4" bash -euo pipefail
+          ' market-ci "$(id -u)" "$(id -g)" "$PATH" "$HOME" <<'OFFLINE'
+          python scripts/run_market_tests.py --junitxml work/ci/python.xml
+          python -m ruff check scripts/run_market_tests.py tests/test_market_ci_runner.py
+          OFFLINE
+
+  web:
+    name: Market static candidate and fixture browsers (offline)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      MARKET_RELEASE: ci-candidate
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version-file: .python-version
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 10.29.3
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install dependencies and Chromium
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --dir apps/web exec playwright install --with-deps chromium
+      - name: Run pure tests, types, export and fixture browsers without external networking
+        shell: bash
+        run: |
+          sudo unshare --net bash -c '
+            ip link set lo up
+            exec setpriv --reuid="$1" --regid="$2" --init-groups env PATH="$3" HOME="$4" bash -euo pipefail
+          ' market-ci "$(id -u)" "$(id -g)" "$PATH" "$HOME" <<'OFFLINE'
+          export NEXT_TELEMETRY_DISABLED=1 MARKET_RELEASE=ci-candidate
+          export MARKET_WEB_URL=http://127.0.0.1:3219
+          node --test apps/web/tests/market/*.node.test.mjs apps/web/tests/market/search-proxy.test.mjs
+          node --test ops/cloudflare/worker.test.mjs scripts/market_benchmark_metrics.test.mjs
+          pnpm --dir apps/web exec next typegen
+          pnpm --dir apps/web typecheck
+          node scripts/build-market-static.mjs
+          node scripts/check-market-static.mjs
+          python scripts/run_market_tests.py --serve-static --port 3219 > /tmp/market-fixture-server.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          python - <<'PY'
+          import time, urllib.request
+          for attempt in range(30):
+              try:
+                  with urllib.request.urlopen('http://127.0.0.1:3219/stocks', timeout=1) as response:
+                      assert response.status == 200
+                  break
+              except OSError:
+                  if attempt == 29:
+                      raise
+                  time.sleep(0.2)
+          PY
+          pnpm --dir apps/web exec playwright test --config playwright.market.config.ts first-chart.spec.ts request-efficiency.spec.ts --reporter=list --output=../../work/ci/browser-results
+          OFFLINE

@@ -33,6 +33,7 @@ include = ["backend*", "data*", "mcp*", "packages*", "services*"]
 namespaces = false
 
 [project.optional-dependencies]
+market = ["redis>=5.0.0", "websockets>=15.0.0"]
 ingestion = [
   "beautifulsoup4>=4.14.0",
   "finance-datareader>=0.9.96",

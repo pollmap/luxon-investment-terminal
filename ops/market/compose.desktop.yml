@@ -1,0 +1,78 @@
+name: korea-stocks
+x-log: &logging
+  driver: json-file
+  options: {max-size: 10m, max-file: '3'}
+services:
+  market-api:
+    image: korea-stocks-api:${RELEASE}
+    environment: &common
+      MARKET_DATABASE_URL: ${MARKET_DATABASE_URL}
+      MARKET_REDIS_URL: redis://market-redis:6379/0
+      MARKET_STORAGE_DIR: /app/storage/public-market
+      MARKET_PUBLIC_ORIGIN: https://stocks.62-171-141-206.sslip.io
+      MARKET_INTERNAL_KEY_FILE: /run/market/internal.key
+      MARKET_RELEASE: ${RELEASE}
+      MARKET_OPENALGO_URL: http://openalgo:8261
+    volumes:
+      - market-sources:/app/storage/public-market
+      - /srv/services/korea-stocks/shared/secrets/internal.key:/run/market/internal.key:ro
+    ports: [127.0.0.1:8211:8210]
+    mem_limit: 1280m
+    cpus: 1.5
+    logging: *logging
+    restart: unless-stopped
+  market-worker:
+    image: korea-stocks-api:${RELEASE}
+    command: [python, -m, services.market_dashboard.worker]
+    environment:
+      <<: *common
+      TOSS_TOKEN_FILE: /run/toss/toss-token.json
+      TOSS_CREDENTIAL_FILE: /run/toss/toss.env
+      DART_API_KEY: ${DART_API_KEY:-}
+      DART_DAILY_REQUEST_BUDGET: '12000'
+      MARKET_ENRICHMENT_BATCH: '1'
+      MARKET_UNIVERSE_INTERVAL: '900'
+    volumes:
+      - market-sources:/app/storage/public-market
+      - /srv/services/korea-stocks/shared/secrets:/run/toss
+    mem_limit: 1536m
+    cpus: 1.0
+    logging: *logging
+    restart: unless-stopped
+  market-web:
+    image: korea-stocks-web:${RELEASE}
+    environment:
+      MARKET_API_BASE_URL: http://market-api:8210
+      MARKET_PUBLIC_ORIGIN: https://stocks.62-171-141-206.sslip.io
+      PORT: '3210'
+      HOSTNAME: 0.0.0.0
+    ports: [127.0.0.1:3211:3210]
+    mem_limit: 256m
+    cpus: 1.0
+    logging: *logging
+    restart: unless-stopped
+  openalgo:
+    image: korea-stocks-openalgo:${RELEASE}
+    environment:
+      OPENALGO_SOURCE: /opt/openalgo
+      OPENALGO_STATE_DIR: /state
+      OPENALGO_HOST: 0.0.0.0
+      MARKET_CANONICAL_URL: http://market-api:8210
+      MARKET_INTERNAL_KEY_FILE: /run/market/internal.key
+      PORT: '8261'
+      TZ: Asia/Seoul
+    volumes:
+      - /srv/services/korea-stocks/shared/data/openalgo:/state
+      - /srv/services/korea-stocks/shared/secrets/internal.key:/run/market/internal.key:ro
+    mem_limit: 256m
+    cpus: 0.5
+    logging: *logging
+    restart: unless-stopped
+volumes:
+  market-sources:
+    external: true
+    name: hannun-public-market_market-sources
+networks:
+  default:
+    external: true
+    name: korea-stocks-private

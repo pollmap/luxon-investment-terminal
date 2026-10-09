@@ -1,0 +1,2 @@
+import {defineConfig} from '@playwright/test';
+export default defineConfig({testDir:'./tests/market',timeout:45000,workers:1,fullyParallel:false,reporter:[['list'],['json',{outputFile:'../../docs/market-browser-results.json'}]],use:{baseURL:process.env.MARKET_WEB_URL||'http://127.0.0.1:3210',viewport:{width:1440,height:1000},screenshot:'only-on-failure',trace:'retain-on-failure'},outputDir:'../../work/market-test-results'});

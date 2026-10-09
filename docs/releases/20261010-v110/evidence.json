@@ -1,0 +1,403 @@
+{
+  "generated_at": "2026-10-09T20:35:12.370579+00:00",
+  "api_release": "20261010-storage-writes-v110",
+  "frontend_release": "20261010-chart-projection-v102",
+  "frontend_changed": false,
+  "packages": {
+    "v109": "bc045e7c7acb58a5516e8bb441a513d2c5d38dfee022871ab8913ca4c9f0cc95",
+    "v110": "f0159c182689e5549447cb993cad85ad2b20e13ea3cca30d8f11a9bbac5a7d45"
+  },
+  "readers": [
+    {
+      "container": "/korea-stocks-market-api-1",
+      "image": "sha256:dd1d9e3decd70ec76b6e71df3bb8c60dcc06c6e6bf34ef0eeb1a3f6a414db9d3",
+      "flags": {
+        "MARKET_SHARED_FINANCIAL_TRACES": "0",
+        "MARKET_COMPRESS_DART_RAW": "0",
+        "MARKET_SHARED_SOURCE_TRACES": "1",
+        "MARKET_COMPACT_TRADING_PROJECTIONS": "1"
+      },
+      "reader": {
+        "inline_financial_facts": true,
+        "read_formats": [
+          "financial-source-trace-sha256-v1"
+        ],
+        "reference_write_env": "MARKET_SHARED_FINANCIAL_TRACES",
+        "reference_writes_default": false
+      },
+      "files": {
+        "services/market_dashboard/app.py": "cfab3dfbe7f1066e9f2941197938c36d3168286cd14f3375754de360158f9d85",
+        "services/market_dashboard/fact_store.py": "e93dd8e157509238aca538f2a1ec4c31ccdf684b1ebc91e57a9954ae335e1e57",
+        "services/market_dashboard/source_trace_store.py": "9ae746d0c4172c12713cef7c785f13b202f17f4a1568f75a7f8e50af3c07f70c",
+        "services/market_dashboard/store.py": "ae075354b73f4fcb04ed8b3d18872e2538c6cf72351a52fbe8d603059e07543a",
+        "services/market_dashboard/raw_archive.py": "86280aa520ee3bd8f2ad3c8f056f9f7580c90a8bd87250a41f5a3f6b331b8a8b",
+        "scripts/replay_dart_period_archives.py": "ef071d76520c584c22c941782deddc4f7ec37faf0f01fed1db88281e3607848f",
+        "ops/market/compact_raw_archives.py": "928c2fc211a5df1fe33d0db161e7fc4ce21757bf86e101c6aeb059c446f68a1e"
+      }
+    },
+    {
+      "container": "/korea-stocks-market-worker-1",
+      "image": "sha256:dd1d9e3decd70ec76b6e71df3bb8c60dcc06c6e6bf34ef0eeb1a3f6a414db9d3",
+      "flags": {
+        "MARKET_SHARED_FINANCIAL_TRACES": "1",
+        "MARKET_COMPRESS_DART_RAW": "1",
+        "MARKET_SHARED_SOURCE_TRACES": "1",
+        "MARKET_COMPACT_TRADING_PROJECTIONS": "1"
+      },
+      "reader": {
+        "inline_financial_facts": true,
+        "read_formats": [
+          "financial-source-trace-sha256-v1"
+        ],
+        "reference_write_env": "MARKET_SHARED_FINANCIAL_TRACES",
+        "reference_writes_default": false
+      },
+      "files": {
+        "services/market_dashboard/app.py": "cfab3dfbe7f1066e9f2941197938c36d3168286cd14f3375754de360158f9d85",
+        "services/market_dashboard/fact_store.py": "e93dd8e157509238aca538f2a1ec4c31ccdf684b1ebc91e57a9954ae335e1e57",
+        "services/market_dashboard/source_trace_store.py": "9ae746d0c4172c12713cef7c785f13b202f17f4a1568f75a7f8e50af3c07f70c",
+        "services/market_dashboard/store.py": "ae075354b73f4fcb04ed8b3d18872e2538c6cf72351a52fbe8d603059e07543a",
+        "services/market_dashboard/raw_archive.py": "86280aa520ee3bd8f2ad3c8f056f9f7580c90a8bd87250a41f5a3f6b331b8a8b",
+        "scripts/replay_dart_period_archives.py": "ef071d76520c584c22c941782deddc4f7ec37faf0f01fed1db88281e3607848f",
+        "ops/market/compact_raw_archives.py": "928c2fc211a5df1fe33d0db161e7fc4ce21757bf86e101c6aeb059c446f68a1e"
+      }
+    }
+  ],
+  "public_checks": [
+    {
+      "route": "/health",
+      "status": 200,
+      "milliseconds": 1123.47,
+      "bytes": 616,
+      "keys": [
+        "status",
+        "worker",
+        "database",
+        "mode",
+        "release"
+      ],
+      "sha256": "ea2ff50af65e4970d4b4046a718e3da658895507c6f708e1ec0f537095b72f4b"
+    },
+    {
+      "route": "/securities/005930/quote",
+      "status": 200,
+      "milliseconds": 1182.64,
+      "bytes": 20383,
+      "keys": [
+        "as_of",
+        "cap",
+        "change",
+        "code",
+        "company",
+        "dividend",
+        "facts",
+        "foreign",
+        "foreign_net",
+        "institution_net",
+        "issuer_id",
+        "logo_url",
+        "market",
+        "market_status",
+        "name",
+        "operating_profit",
+        "pbr",
+        "per"
+      ],
+      "sha256": "39d782ef221d9773469ecba8ea18223f06ddb44ba966dd4275f2b0eb7f519637"
+    },
+    {
+      "route": "/securities/005930/financials",
+      "status": 200,
+      "milliseconds": 1137.52,
+      "bytes": 18597,
+      "keys": [
+        "available_periods",
+        "reports",
+        "indicators"
+      ],
+      "sha256": "8583705a8d042b8aa44a16ad97d2042eb53c2945aaf7d0658b3cacc6b2faee63"
+    },
+    {
+      "route": "/securities/005930?view=summary",
+      "status": 200,
+      "milliseconds": 898.3,
+      "bytes": 1868,
+      "keys": [
+        "security",
+        "detail",
+        "prices",
+        "status",
+        "company",
+        "official",
+        "filings"
+      ],
+      "sha256": "a4ec46f96610d06bdfacc55d55952e4a353d2a5bd2b1614629a8e3a31b2b1fc4"
+    }
+  ],
+  "disk_observation": {
+    "free_bytes": 17700286464,
+    "guard_used_percent": 88.57265941970962
+  },
+  "raw_canary": {
+    "apply": true,
+    "sources": [
+      "dart"
+    ],
+    "files": 5,
+    "verified_bytes": 6843359,
+    "reclaimed_bytes": 13584500,
+    "errors": 0,
+    "error_types": {},
+    "records": [
+      {
+        "source": "dart",
+        "sha256": "0445405dfe6f35cfcaffd2bfb0d06a70d7da0d244e1df6831af3481eee0f1c6b",
+        "original_bytes": 1554551,
+        "status": "compacted",
+        "original_hash_verified": true,
+        "metadata_preserved": true,
+        "legacy_envelope_preserved": true
+      },
+      {
+        "source": "dart",
+        "sha256": "4d82714cb2156034cf8b1dcee3054442e4909bda9db71c67b5f8ca858c715a0e",
+        "original_bytes": 1292894,
+        "status": "compacted",
+        "original_hash_verified": true,
+        "metadata_preserved": true,
+        "legacy_envelope_preserved": true
+      },
+      {
+        "source": "dart",
+        "sha256": "5039bebcc827ca856cd17cf8f37ae94c3157a685b7b484229a25d69d7b089db9",
+        "original_bytes": 1357520,
+        "status": "compacted",
+        "original_hash_verified": true,
+        "metadata_preserved": true,
+        "legacy_envelope_preserved": true
+      },
+      {
+        "source": "dart",
+        "sha256": "722c1f0bc9a48b8b7a19ea17c62c1694daefec75c700c2ec6f47f14ab060f882",
+        "original_bytes": 1242053,
+        "status": "compacted",
+        "original_hash_verified": true,
+        "metadata_preserved": true,
+        "legacy_envelope_preserved": true
+      },
+      {
+        "source": "dart",
+        "sha256": "b9d576397467b88b92cd8dffd1295a20768f357306600041b1e94174145dd221",
+        "original_bytes": 1396341,
+        "status": "compacted",
+        "original_hash_verified": true,
+        "metadata_preserved": true,
+        "legacy_envelope_preserved": true
+      }
+    ],
+    "stop_reason": "selection_finished",
+    "elapsed_seconds": 0.947,
+    "disk_used_percent": 88.47,
+    "new_dart_writer_enabled": false,
+    "release": "20261010-storage-writes-v110",
+    "rollback_release": "20261010-reader-floor-v109",
+    "durable_reader_requirement": true
+  },
+  "raw_largest_batch": {
+    "selected_files": 500,
+    "processed_files": 500,
+    "reclaimed_logical_bytes": 1065046743,
+    "failed_batches": 0,
+    "stop_reason": "selected_files_complete",
+    "selection_at": "2026-10-09T20:25:35.849713+00:00",
+    "elapsed_seconds": 243.09,
+    "verified_bytes": 535442764,
+    "all_original_hashes_verified": true,
+    "all_metadata_preserved": true,
+    "all_legacy_envelopes_preserved": true,
+    "operating_system_space_reclaimed_claimed": false
+  },
+  "post_compaction": {
+    "free_bytes": 17606344704,
+    "guard_used_percent": 88.63330840911526,
+    "public_checks": [
+      {
+        "route": "/health",
+        "status": 200,
+        "milliseconds": 1995.14,
+        "bytes": 606,
+        "keys": [
+          "status",
+          "worker",
+          "database",
+          "mode",
+          "release"
+        ],
+        "sha256": "b0352bf19dc555b0df54d44f8aa50ee35fef91ab7cb2a0c553973f71cdb16190"
+      },
+      {
+        "route": "/securities/005930/quote",
+        "status": 200,
+        "milliseconds": 1187.95,
+        "bytes": 20383,
+        "keys": [
+          "as_of",
+          "cap",
+          "change",
+          "code",
+          "company",
+          "dividend",
+          "facts",
+          "foreign",
+          "foreign_net",
+          "institution_net",
+          "issuer_id",
+          "logo_url",
+          "market",
+          "market_status",
+          "name",
+          "operating_profit",
+          "pbr",
+          "per"
+        ],
+        "sha256": "d75590da841d21c534abe44ae1da1361e4becfeb91f4791c39efb6ce93e12d2e"
+      },
+      {
+        "route": "/securities/005930/financials",
+        "status": 200,
+        "milliseconds": 1184.31,
+        "bytes": 18597,
+        "keys": [
+          "available_periods",
+          "reports",
+          "indicators"
+        ],
+        "sha256": "8583705a8d042b8aa44a16ad97d2042eb53c2945aaf7d0658b3cacc6b2faee63"
+      },
+      {
+        "route": "/securities/005930?view=summary",
+        "status": 200,
+        "milliseconds": 886.47,
+        "bytes": 1868,
+        "keys": [
+          "security",
+          "detail",
+          "prices",
+          "status",
+          "company",
+          "official",
+          "filings"
+        ],
+        "sha256": "a4ec46f96610d06bdfacc55d55952e4a353d2a5bd2b1614629a8e3a31b2b1fc4"
+      }
+    ],
+    "passed": true
+  },
+  "financial_writer": {
+    "status": "enabled",
+    "format": "financial-source-trace-sha256-v1",
+    "existing_rows_rewritten": 0,
+    "canary": "awaiting_actual_collection_and_read",
+    "api_unchanged": true
+  },
+  "raw_writer": {
+    "status": "enabled",
+    "flag": "MARKET_COMPRESS_DART_RAW",
+    "existing_rows_rewritten": 0,
+    "actual_new_receipt_verified": false,
+    "api_unchanged": true
+  },
+  "collection": {
+    "at": "2026-10-09T20:19:49.907764+00:00",
+    "universe": 2765,
+    "basis": "resumable_collection_job_metadata",
+    "kinds": {
+      "history": {
+        "older_pages_pending": 2162,
+        "last_page_received": 602,
+        "provider_catalogue_omission": 1,
+        "no_collection_job": 0
+      },
+      "investor-trading": {
+        "older_pages_pending": 2420,
+        "last_page_received": 344,
+        "provider_catalogue_omission": 1,
+        "no_collection_job": 0
+      },
+      "program-trades": {
+        "older_pages_pending": 2054,
+        "source_empty": 119,
+        "last_page_received": 591,
+        "provider_catalogue_omission": 1,
+        "no_collection_job": 0
+      },
+      "short-selling": {
+        "older_pages_pending": 1765,
+        "last_page_received": 916,
+        "provider_catalogue_omission": 1,
+        "source_empty": 83,
+        "no_collection_job": 0
+      },
+      "credit-trades": {
+        "last_page_received": 980,
+        "source_empty": 62,
+        "older_pages_pending": 1722,
+        "provider_catalogue_omission": 1,
+        "no_collection_job": 0
+      },
+      "securities-lending": {
+        "older_pages_pending": 2006,
+        "last_page_received": 695,
+        "provider_catalogue_omission": 1,
+        "source_empty": 63,
+        "no_collection_job": 0
+      },
+      "raw-history": {
+        "last_page_received": 602,
+        "older_pages_pending": 2162,
+        "provider_catalogue_omission": 1,
+        "no_collection_job": 0
+      }
+    },
+    "states": {
+      "worker": {
+        "status": "collecting",
+        "error": null,
+        "updated_at": "2026-10-09T20:18:57.714870+00:00"
+      },
+      "provider-toss": {
+        "status": "ready",
+        "received_at": "2026-10-09T20:18:26.627834+00:00"
+      },
+      "provider-toss-stream": {
+        "status": "subscribed",
+        "received_at": "2026-10-09T20:17:49.059529+00:00"
+      },
+      "toss-backfill-progress": {
+        "status": "capacity_limited",
+        "updated_at": "2026-10-09T20:18:53.097968+00:00",
+        "cursor": 444,
+        "universe_total": 2765
+      },
+      "enrichment_progress": {
+        "cursor": 2508,
+        "universe_total": 2765,
+        "last_batch_at": "2026-10-09T20:18:38.567804+00:00"
+      },
+      "dart-budget": {},
+      "financial-backfill-progress": {}
+    }
+  },
+  "completed_all_data": false,
+  "market_session_receipt_verified": false,
+  "public_load_target_passed": false,
+  "source_files_sha256": {
+    "services/market_dashboard/app.py": "cfab3dfbe7f1066e9f2941197938c36d3168286cd14f3375754de360158f9d85",
+    "services/market_dashboard/fact_store.py": "e93dd8e157509238aca538f2a1ec4c31ccdf684b1ebc91e57a9954ae335e1e57",
+    "services/market_dashboard/source_trace_store.py": "9ae746d0c4172c12713cef7c785f13b202f17f4a1568f75a7f8e50af3c07f70c",
+    "services/market_dashboard/store.py": "ae075354b73f4fcb04ed8b3d18872e2538c6cf72351a52fbe8d603059e07543a",
+    "services/market_dashboard/raw_archive.py": "86280aa520ee3bd8f2ad3c8f056f9f7580c90a8bd87250a41f5a3f6b331b8a8b",
+    "scripts/replay_dart_period_archives.py": "ef071d76520c584c22c941782deddc4f7ec37faf0f01fed1db88281e3607848f",
+    "ops/market/compact_raw_archives.py": "928c2fc211a5df1fe33d0db161e7fc4ce21757bf86e101c6aeb059c446f68a1e"
+  }
+}

@@ -1,0 +1,65 @@
+name: hannun-public-market
+services:
+  market-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: market
+      POSTGRES_USER: market
+      POSTGRES_PASSWORD: ${MARKET_DB_PASSWORD:?Set MARKET_DB_PASSWORD}
+    volumes: [market-db:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U market -d market"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+  market-redis:
+    image: redis:7-alpine
+    command: [redis-server, --maxmemory, 128mb, --maxmemory-policy, allkeys-lru]
+    restart: unless-stopped
+  market-api:
+    build: {context: ., dockerfile: ops/market/Dockerfile.api}
+    environment: &market-env
+      MARKET_DATABASE_URL: postgresql+psycopg://market:${MARKET_DB_PASSWORD}@market-db/market
+      MARKET_REDIS_URL: redis://market-redis:6379/0
+      MARKET_PUBLIC_ORIGIN: ${MARKET_PUBLIC_ORIGIN:-}
+      MARKET_UNIVERSE_INTERVAL: ${MARKET_UNIVERSE_INTERVAL:-300}
+      MARKET_FILINGS_INTERVAL: ${MARKET_FILINGS_INTERVAL:-900}
+      MARKET_HISTORY_INTERVAL: ${MARKET_HISTORY_INTERVAL:-86400}
+      MARKET_ENRICHMENT_BATCH: ${MARKET_ENRICHMENT_BATCH:-3}
+      DART_DAILY_REQUEST_BUDGET: ${DART_DAILY_REQUEST_BUDGET:-12000}
+    volumes: [market-sources:/app/storage/public-market]
+    ports: [127.0.0.1:8210:8210]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8210/api/market/v1/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    depends_on:
+      market-db: {condition: service_healthy}
+      market-redis: {condition: service_started}
+    restart: unless-stopped
+  market-worker:
+    build: {context: ., dockerfile: ops/market/Dockerfile.api}
+    command: [python, -m, services.market_dashboard.worker]
+    environment:
+      <<: *market-env
+      DART_API_KEY: ${DART_API_KEY:-}
+      TOSS_CLIENT_ID: ${TOSS_CLIENT_ID:-}
+      TOSS_CLIENT_SECRET: ${TOSS_CLIENT_SECRET:-}
+      TOSS_TOKEN_FILE: /app/storage/public-market/runtime/toss-token.json
+    volumes: [market-sources:/app/storage/public-market]
+    depends_on:
+      market-api: {condition: service_healthy}
+    restart: unless-stopped
+  market-web:
+    build: {context: ., dockerfile: ops/market/Dockerfile.web}
+    environment:
+      MARKET_API_BASE_URL: http://market-api:8210
+      MARKET_PUBLIC_ORIGIN: ${MARKET_PUBLIC_ORIGIN:-}
+    ports: [127.0.0.1:3210:3210]
+    depends_on: [market-api]
+    restart: unless-stopped
+volumes:
+  market-db:
+  market-sources:

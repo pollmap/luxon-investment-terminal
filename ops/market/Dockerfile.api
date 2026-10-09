@@ -1,0 +1,10 @@
+FROM python:3.13-slim
+WORKDIR /app
+COPY ops/market/requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt && useradd -m market
+COPY packages/core /app/packages/core
+COPY services/market_dashboard /app/services/market_dashboard
+RUN mkdir -p /app/storage/public-market && chown -R market:market /app
+USER market
+ENV MARKET_STORAGE_DIR=/app/storage/public-market
+CMD ["python", "-m", "uvicorn", "services.market_dashboard.app:app", "--host", "0.0.0.0", "--port", "8210", "--ws", "websockets-sansio"]
