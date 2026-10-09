@@ -12,7 +12,7 @@ from .eps_calculation import days, local, quarters_at
 from .financial_dates import publication_date
 from .taxonomy import full_ifrs_account
 
-VERSION = "fundamental-metrics-v3"
+VERSION = "fundamental-metrics-v4"
 ACCOUNTS = {
     "WeightedAverageShares": "shares",
     "CashFlowsFromUsedInOperatingActivities": "ocf",

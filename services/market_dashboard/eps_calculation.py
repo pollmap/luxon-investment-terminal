@@ -114,6 +114,25 @@ def eps_inputs(facts):
             'per_share_basis':share_basis,'formula_version':VERSION})
     return {'rows':rows,'rejected':dict(rejected)}
 
+def _same_verified_ocf_input(left, right):
+    """An unchanged comparative is not a new accounting amount or share unit."""
+    fields = (
+        'company_id', 'basis', 'metric', 'period_start', 'period_end', 'share_class',
+        'currency', 'unit', 'days', 'formula', 'formula_version', 'per_share_basis',
+        'attribution', 'dimensions',
+    )
+    return (
+        left.get('metric') == right.get('metric') == 'OCF'
+        and bool(right.get('per_share_basis'))
+        and all(row.get('period_verified') is True
+                and row.get('share_class_verified') is True for row in (left, right))
+        and all(left.get(key) == right.get(key) for key in fields)
+        and all(numeric(left.get(key)) is not None
+                and numeric(left.get(key)) == numeric(right.get(key))
+                for key in ('profit', 'weighted_shares'))
+    )
+
+
 def quarters_at(rows, as_of):
     eligible=[r for r in rows if r.get('published_at') and r['published_at']<=as_of]
     latest={}
@@ -133,7 +152,21 @@ def quarters_at(rows, as_of):
         # A newly corrected earlier cumulative amount cannot be subtracted from
         # an older, unrevised later amount. Wait for matching later disclosure.
         if previous['published_at'] > row['published_at']:
-            continue
+            if (row.get('metric') != 'OCF' or previous.get('metric') != 'OCF'
+                    or row.get('per_share_basis') != previous.get('per_share_basis')):
+                continue
+            versions = [r for r in eligible if (r['period_start'], r['period_end'])
+                        == (previous['period_start'], previous['period_end'])]
+            earlier = [r for r in versions if r['published_at'] <= row['published_at']]
+            original = max(earlier, key=lambda r: (r['published_at'], r.get('filing_id') or ''),
+                           default=None)
+            # Keep original public evidence only for an unchanged comparative.
+            # A real correction, even if later reversed, must remain blocked.
+            if (original is None or any(not _same_verified_ocf_input(version, previous)
+                    for version in versions
+                    if version['published_at'] >= original['published_at'])):
+                continue
+            previous = original
         start=(date.fromisoformat(previous['period_end'])+timedelta(days=1)).isoformat()
         key=(start,row['period_end'])
         if key in quarters and quarters[key]['published_at'] >= row['published_at']:

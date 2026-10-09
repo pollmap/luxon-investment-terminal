@@ -6,7 +6,7 @@ from sqlalchemy.exc import OperationalError
 
 logger = logging.getLogger(__name__)
 
-PROJECTION_VERSION = 13
+PROJECTION_VERSION = 14
 FIELDS = {
     'company': ('company', 'report_facts', 'source_trace', 'company_source_trace', 'issuer_link'),
     'fundamentals': ('company', 'statements', 'source_trace', 'financials_received_at',
