@@ -1,4 +1,4 @@
-import { cp, mkdir, readFile, readdir, realpath, rename, rm, stat, symlink, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, readdir, realpath, rename, rm, symlink, writeFile } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
@@ -20,8 +20,13 @@ async function digestFiles(directory, base = directory) {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     const file = path.join(directory, entry.name);
     if (entry.isDirectory()) files.push(...await digestFiles(file, base));
-    else files.push({ path: path.relative(base, file).replaceAll('\\', '/'), bytes: (await stat(file)).size,
-      sha256: createHash('sha256').update(await readFile(file)).digest('hex') });
+    else {
+      // Size and checksum must describe the same read, even if another process
+      // replaces an asset while the build manifest is being generated.
+      const contents = await readFile(file);
+      files.push({ path: path.relative(base, file).replaceAll('\\', '/'), bytes: contents.byteLength,
+        sha256: createHash('sha256').update(contents).digest('hex') });
+    }
   }
   return files.sort((a, b) => a.path.localeCompare(b.path));
 }

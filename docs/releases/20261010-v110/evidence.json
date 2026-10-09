@@ -1,8 +1,8 @@
 {
   "generated_at": "2026-10-09T20:35:12.370579+00:00",
   "api_release": "20261010-storage-writes-v110",
-  "frontend_release": "20261010-chart-projection-v102",
-  "frontend_changed": false,
+  "frontend_release": "20261010-storage-writes-v110",
+  "frontend_changed": true,
   "packages": {
     "v109": "bc045e7c7acb58a5516e8bb441a513d2c5d38dfee022871ab8913ca4c9f0cc95",
     "v110": "f0159c182689e5549447cb993cad85ad2b20e13ea3cca30d8f11a9bbac5a7d45"
@@ -399,5 +399,7 @@
     "services/market_dashboard/raw_archive.py": "86280aa520ee3bd8f2ad3c8f056f9f7580c90a8bd87250a41f5a3f6b331b8a8b",
     "scripts/replay_dart_period_archives.py": "ef071d76520c584c22c941782deddc4f7ec37faf0f01fed1db88281e3607848f",
     "ops/market/compact_raw_archives.py": "928c2fc211a5df1fe33d0db161e7fc4ce21757bf86e101c6aeb059c446f68a1e"
-  }
+  },
+  "initial_frontend_release": "20261010-chart-projection-v102",
+  "web_update_evidence": "web-evidence.json"
 }

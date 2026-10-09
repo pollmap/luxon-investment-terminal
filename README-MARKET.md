@@ -6,7 +6,7 @@
 
 같은 정적 화면의 Cloudflare 주소: https://korea-stocks-edge.lch68-workers.workers.dev/stocks
 
-현재 서비스의 구현·연결·공개 검증은 이 문서와 [v110 변경·검증 기록](docs/releases/20261010-v110/ACCEPTANCE.md)을 기준으로 확인합니다. API·수집기는 v110이며 화면은 변경 없는 v102 산출물을 사용합니다. Cloudflare Worker의 캐시 계약은 Origin별로 분리한 `public-read-v3-origin`입니다. 전체 데이터 확보와 공개 성능 목표는 아직 완료되지 않았습니다. [이전 LUXON README](docs/history/LEGACY_TERMINAL_README.md)는 역사 기록으로 분리했습니다.
+현재 서비스의 구현·연결·공개 검증은 이 문서와 [v110 변경·검증 기록](docs/releases/20261010-v110/ACCEPTANCE.md)을 기준으로 확인합니다. API·수집기·정적 화면 모두 v110이며 [웹 갱신·Linux CI·성능 결과](docs/releases/20261010-v110/WEB_SECURITY_UPDATE.md)를 별도로 기록했습니다. Cloudflare Worker의 캐시 계약은 Origin별로 분리한 `public-read-v3-origin`입니다. 전체 데이터 확보와 공개 성능 목표는 아직 완료되지 않았습니다. [이전 LUXON README](docs/history/LEGACY_TERMINAL_README.md)는 역사 기록으로 분리했습니다.
 
 ## 연결과 기능
 
