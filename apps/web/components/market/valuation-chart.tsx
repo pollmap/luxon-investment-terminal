@@ -3,6 +3,7 @@ import {useEffect, useId, useMemo, useRef, useState} from "react";
 import type {ComparisonLine} from "./financial-chart";
 import {format, request} from "./types";
 import {writeMarketHistory} from "./market-history";
+import {comparisonWindow} from "./analysis-periods";
 import dynamic from "next/dynamic";
 const FinancialChart=dynamic(()=>import("./financial-chart"),{loading:()=> <div className="mk-financial-canvas" style={{height:360}} aria-busy="true"/>});
 const ReportedEps=dynamic(()=>import("./reported-eps"),{loading:()=> <p role="status">공시 실적을 여는 중…</p>});
@@ -72,6 +73,7 @@ export default function ValuationChart({code}:{code:string}){
   const index=dateIndex>=0?dateIndex:Math.max(0,rows.length-1),active=rows[index];
   const setCursor=(index:number|null)=>setCursorDate(index===null?rows.at(-1)?.date??null:rows[index]?.date??null);
   const hasComparison=rows.some(p=>p.reference_price!==null);
+  const comparisonRange=comparisonWindow(rows);
   const hasNonPositiveMetric=rows.some(p=>p.reason==="non_positive_metric");
   const basisEnd=current?.share_basis?.per_share_basis_end;
     const comparisonBasisEndsEarly=Boolean(basisEnd&&rows.at(-1)?.date&&rows.at(-1)!.date>basisEnd);
@@ -104,6 +106,7 @@ export default function ValuationChart({code}:{code:string}){
     {busy&&!rows.length&&<div className="mk-valuation-loading" role="status">주가와 실적을 불러오는 중…</div>}
     {!busy&&!error&&!rows.length&&<div className="mk-empty">선택한 기간의 주가가 없습니다.</div>}
     {!!rows.length&&<><div className="mk-analysis-legend"><span style={{color:"var(--mk-accent)"}}>━ {priceLabel}</span>{hasComparison&&<span className="mk-legend-reference" style={{color:"var(--mk-comparison)"}}>━ {label} × {shownMultiple}배</span>}{historical&&<span className="mk-legend-historical">┄ 과거 배수</span>}</div>
+      {comparisonRange&&<p className="mk-caption" aria-label="비교 가능한 실적 구간">{comparisonRange.start===comparisonRange.end?`비교 가능한 날짜 ${comparisonRange.start}`:`비교 가능한 구간 ${comparisonRange.start} ~ ${comparisonRange.end}`}{comparisonRange.gaps?' · 중간 공백 있음':''}</p>}
       {hasNonPositiveMetric&&<p className="mk-caption">0 이하인 실적은 배수 비교선에서 제외돼요.</p>}
       {comparisonBasisEndsEarly&&<p className="mk-caption">주식 수 기준은 {basisEnd}까지 확인돼요.</p>}
       <div className={`mk-valuation-body ${expanded?"mk-valuation-expanded":""}`}><div className="mk-valuation-plot"><FinancialChart rows={chartRows} rangeKey={`${code}:${years}:${from}:${to}:${interval}`} comparisons={comparisons} onSelect={setCursor} label={`${priceLabel}와 실적 배수 비교 차트`}/><div className="mk-trend-dates"><span>{rows[0].date}</span><span>{rows.at(-1)?.date}</span></div></div>

@@ -23,7 +23,6 @@ export default function MobileList({
   onFavorite: (code: string) => void;
   onSelect: (code: string) => void;
   onMetric: (metric: MetricId, row?: Stock) => void;
-  onPreview: (code: string) => void;
 }) {
   const [choosing, setChoosing] = useState(false);
   const selectionMode = (controlledSelection ?? choosing) || selected.length > 0;

@@ -205,9 +205,11 @@ def verify_restored_release(root, candidate):
 
 
 def main():
-    global OUT, REMOTE
+    global OUT, REMOTE, HELPER
     parser = argparse.ArgumentParser()
     parser.add_argument("--date", default="20261008")
+    parser.add_argument("--helper", choices=("current", "incoming"), default="current",
+                        help="Use a reviewed uploaded helper without changing the active release")
     parser.add_argument(
         "--batch", type=int, help="Positive suffix for another archive on the same day"
     )
@@ -226,6 +228,8 @@ def main():
         help="Keep at least this much local free space during download and restore (minimum 1)",
     )
     args = parser.parse_args()
+    if args.helper == "incoming":
+        HELPER = "/srv/services/korea-stocks/incoming/retain_releases.py"
     if args.min_free_gib < 1:
         parser.error("--min-free-gib must be at least 1")
     minimum = args.min_free_gib * 1024**3

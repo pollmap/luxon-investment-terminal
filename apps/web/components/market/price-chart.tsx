@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-const FinancialChart=dynamic(()=>import("./financial-chart"),{loading:()=> <div className="mk-financial-canvas" style={{height:360}} aria-busy="true"/>});
+const FinancialChart=dynamic(()=>import("./financial-chart"),{loading:()=> <div className="mk-financial-canvas" style={{height:"var(--mk-chart-height, 420px)"}} aria-busy="true"/>});
 import { request, format, type Price } from "./types";
 import type { DetailSelection } from "./detail-preferences";
 import {chartCutoff} from "./chart-period";
@@ -9,6 +9,8 @@ import {historyChartPath,type FirstChartRequest} from './first-chart-request';
 
 const validCandle = (p:Price) => [p.open,p.high,p.low,p.close].every(v=>Number.isFinite(v)&&v>0)&&p.low<=Math.min(p.open,p.close)&&p.high>=Math.max(p.open,p.close);
 const EMPTY:Price[]=[];
+const PERIODS = [[21,"1개월"],[63,"3개월"],[252,"1년"],[756,"3년"],[1260,"5년"],[2600,"10년"],[100000,"전체"]] as const;
+const SHAPES = [["line","선"],["area","영역"],["candle","캔들"],["bar","OHLC"]] as const;
 type WindowRow=Price & {ma20:number|null};
 
 export default function PriceChart({
@@ -32,8 +34,8 @@ export default function PriceChart({
   onIntraday?: () => void;
   firstRequest?:FirstChartRequest;
 }) {
-  const [localRange, setLocalRange] = useState(252);
-  const [localKind, setLocalKind] = useState("line");
+  const [localRange, setLocalRange] = useState(63);
+  const [localKind, setLocalKind] = useState("candle");
   const range = intraday ? rows.length : selection?.range ?? localRange, kind = chartKind ?? selection?.kind ?? localKind;
   const setRange = (range: number) => onSelectionChange ? onSelectionChange({range}) : setLocalRange(range);
   const setKind = (kind: string) => onSelectionChange ? onSelectionChange({kind}) : setLocalKind(kind);
@@ -94,29 +96,26 @@ export default function PriceChart({
   const setCursor=(index:number|null)=>setCursorDate(index===null?null:data[index]?.date??null);
   const labelDate = (value:string) => intraday ? value.slice(11,16) : value;
   const active = data[Math.min(cursor ?? data.length - 1, data.length - 1)];
+  const chooseRange = (value:number) => {setRange(value);setCursor(null);setTablePage(0);};
+  const chooseBar = (value:string) => {setBar(value);setCursor(null);setTablePage(0);};
   return (
     <div className="mk-chart">
       {!small && !intraday && (
-        <div className="mk-chart-controls">
+        <><div className="mk-price-controls-mobile" aria-label="가격 차트 설정">
+          <select aria-label="차트 기간 선택" value={String(range)} onChange={event=>event.target.value==='intraday'?onIntraday?.():chooseRange(Number(event.target.value))}>
+            {onIntraday && <option value="intraday">하루</option>}
+            {PERIODS.map(([value,label])=><option key={value} value={value}>{label}</option>)}
+          </select>
+          <select aria-label="차트 봉 선택" value={bar} onChange={event=>chooseBar(event.target.value)}><option value="day">일봉</option><option value="week">주봉</option><option value="month">월봉</option></select>
+          <select aria-label="가격 차트 모양" value={kind} onChange={event=>setKind(event.target.value)}>{SHAPES.map(([value,label])=><option key={value} value={value}>{label}</option>)}</select>
+        </div><div className="mk-chart-controls mk-price-controls-desktop">
           <div className="mk-segments" aria-label="차트 기간">
             {onIntraday && <button onClick={onIntraday}>하루</button>}
-            {[
-              [21, "1개월"],
-              [63, "3개월"],
-              [252, "1년"],
-              [756, "3년"],
-              [1260, "5년"],
-              [2600, "10년"],
-              [100000, "전체"],
-            ].map(([n, label]) => (
+            {PERIODS.map(([n, label]) => (
               <button
                 key={n}
                 aria-pressed={range === n}
-                onClick={() => {
-                  setRange(Number(n));
-                  setCursor(null);
-                  setTablePage(0);
-                }}
+                onClick={() => chooseRange(n)}
               >
                 {label}
               </button>
@@ -126,17 +125,13 @@ export default function PriceChart({
             <select
               aria-label="차트 봉 선택"
               value={bar}
-              onChange={(e) => {
-                setBar(e.target.value);
-                setCursor(null);
-                setTablePage(0);
-              }}
+              onChange={(e) => chooseBar(e.target.value)}
             >
               <option value="day">일봉</option>
               <option value="week">주봉</option>
               <option value="month">월봉</option>
             </select>
-            <div className="mk-segment" aria-label="가격 차트 모양">{[["line","선"],["area","영역"],["candle","캔들"],["bar","OHLC"]].map(([value,label])=><button key={value} aria-pressed={kind===value} onClick={()=>setKind(value)}>{label}</button>)}</div>
+            <div className="mk-segment" aria-label="가격 차트 모양">{SHAPES.map(([value,label])=><button key={value} aria-pressed={kind===value} onClick={()=>setKind(value)}>{label}</button>)}</div>
             <label className="mk-check">
               <input
                 type="checkbox"
@@ -146,7 +141,7 @@ export default function PriceChart({
               20{bar === "day" ? "일" : "봉"}선
             </label>
           </div>
-        </div>
+        </div></>
       )}
       {!active ? <div className="mk-chart-empty" role="status">{loadError||(!windowData||windowData.key!==selectionKey?"차트를 불러오는 중이에요.":"이 기간의 가격 자료가 없어요.")}{loadError&&<button className="mk-button" onClick={()=>{firstRequest?.reset();setLoadError("");setRetry(v=>v+1);}}>다시 시도</button>}</div> : <><div className="mk-chart-caption">
         <strong>{intraday?active.date.slice(0,16).replace("T"," "):active.date}</strong>
@@ -157,6 +152,7 @@ export default function PriceChart({
         <span>거래량 {format(Number.isFinite(active.volume)?active.volume:null)}주</span>
       </div>
       <FinancialChart rows={chartRows} kind={kind} rangeKey={`${code??'local'}:${intraday?'intraday':range}:${bar}`} movingAverage={ma} onSelect={setCursor} label={`${data[0].date}부터 ${data[data.length-1].date}까지 주가와 거래량`}/>
+      {!small && !intraday && <label className="mk-price-extra-mobile mk-check"><input type="checkbox" checked={ma} onChange={event=>setMa(event.target.checked)}/>20{bar==='day'?'일':'봉'}선</label>}
 
       {!small && <div className="mk-segment" aria-label="차트 날짜 이동"><button disabled={(cursor??data.length-1)===0} onClick={() => setCursor(Math.max(0, (cursor ?? data.length-1)-1))}>{intraday?"이전 봉":"이전 날짜"}</button><button disabled={(cursor??data.length-1)>=data.length-1} onClick={() => setCursor(Math.min(data.length-1, (cursor ?? data.length-1)+1))}>{intraday?"다음 봉":"다음 날짜"}</button><button onClick={() => setCursor(null)}>최근</button></div>}
       {!small && (

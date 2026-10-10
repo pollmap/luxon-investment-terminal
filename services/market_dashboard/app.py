@@ -1445,3 +1445,10 @@ async def stream(ws: WebSocket):
         await ws.close(code=1000)
     except (WebSocketDisconnect, TimeoutError, json.JSONDecodeError):
         return
+
+
+# Evidence retrieval is read-only. Index creation and embeddings belong to
+# bounded background jobs, never public page requests.
+from .research_search import attach_routes as attach_research_routes
+
+attach_research_routes(app, BASE, get_store)

@@ -50,13 +50,13 @@ for(const [name,query,path] of [
 
 test('summary failure does not block the independent chart request',async({page})=>{
   const calls=await fixture(page,{summaryError:true});
-  await page.goto('/stocks?code=005930');
+  await page.goto('/stocks?code=005930&mode=intraday&kind=line&period=day');
   await expect(page.locator('.mk-loading')).toContainText('종목 정보를 불러오지 못했습니다.');
   expect(calls.filter(row=>row.path==='/securities/005930/chart?period=day')).toHaveLength(1);
 });
 
 test('chart failure leaves company summary usable without a duplicate retry',async({page})=>{
-  const calls=await fixture(page,{chartError:true});await page.goto('/stocks?code=005930');
+  const calls=await fixture(page,{chartError:true});await page.goto('/stocks?code=005930&mode=intraday&kind=line&period=day');
   await expect(page.getByRole('heading',{name:'삼성전자',exact:true})).toBeVisible();
   await expect(page.locator('.mk-chart-panel').getByRole('button',{name:'일봉 차트 보기'})).toBeVisible();
   expect(calls.filter(row=>row.path==='/securities/005930/chart?period=day')).toHaveLength(1);
@@ -66,7 +66,7 @@ test('hidden delayed summary discards an expired first chart and keeps source da
   await page.clock.install();
   let release!:()=>void;const gate=new Promise<void>(resolve=>{release=resolve;});
   const calls=await fixture(page,{summaryGate:gate,summaryDelay:0});
-  await page.goto('/stocks?code=005930');
+  await page.goto('/stocks?code=005930&mode=intraday&kind=line&period=day');
   const path='/securities/005930/chart?period=day';
   await expect.poll(()=>calls.some(row=>row.path===path&&row.end)).toBe(true);
   await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'));});
@@ -87,7 +87,7 @@ test('period change and leaving detail cancel outstanding chart requests',async(
     window.fetch=(...args)=>{const path=String(args[0]);if(path.includes('/chart?'))args[1]?.signal?.addEventListener('abort',()=>target.chartAborts!.push(path),{once:true});return original(...args);};
   });
   const calls=await fixture(page,{summaryDelay:0,chartDelay:2500});
-  await page.goto('/stocks?code=005930');
+  await page.goto('/stocks?code=005930&mode=intraday&kind=line&period=day');
   await expect(page.getByRole('heading',{name:'삼성전자',exact:true})).toBeVisible();
   await page.getByRole('button',{name:'1주',exact:true}).click();
   await expect.poll(()=>page.evaluate(()=>(window as Window&{chartAborts?:string[]}).chartAborts?.some(path=>path.endsWith('period=day')))).toBe(true);

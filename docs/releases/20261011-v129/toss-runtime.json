@@ -1,0 +1,346 @@
+{
+  "observed_at": "2026-10-10T17:12:58.750561+00:00",
+  "scope": "stored receipts, not field/option validation",
+  "api_release": "20261011-candle-research-v129",
+  "in_scope": 24,
+  "endpoints": [
+    {
+      "path": "/api/v1/prices",
+      "status": "received",
+      "last_attempt_at": "2026-10-10T17:12:51.335861+00:00",
+      "last_success_at": "2026-10-10T17:12:51.335122+00:00",
+      "source_sha256": "fcddfa59e4aa8ec3f79c3499d88b253c7e9bbeb7849d288999502c8f83611b61",
+      "session_requests": 7,
+      "session_successes": 7,
+      "last_rows": 2,
+      "last_upstream_ms": 2206.64
+    },
+    {
+      "path": "/api/v1/orderbook",
+      "status": "received",
+      "last_attempt_at": "2026-10-10T17:12:57.092400+00:00",
+      "last_success_at": "2026-10-10T17:12:57.091724+00:00",
+      "source_sha256": "bbdb032d1a8ab30365019fc6b176df35476f7f5cf3b48f3a1f41e8efd0e41b0a",
+      "session_requests": 6,
+      "session_successes": 6,
+      "last_rows": 20,
+      "last_upstream_ms": 3581.54
+    },
+    {
+      "path": "/api/v1/trades",
+      "status": "received",
+      "last_attempt_at": "2026-10-10T17:12:57.439178+00:00",
+      "last_success_at": "2026-10-10T17:12:57.438346+00:00",
+      "source_sha256": "d7f886a485bdba01bb7212cd6c57f21f8eed777930e8d1f922fed3c270a43eb3",
+      "session_requests": 6,
+      "session_successes": 6,
+      "last_rows": 50,
+      "last_upstream_ms": 335.84
+    },
+    {
+      "path": "/api/v1/price-limits",
+      "status": "received",
+      "last_attempt_at": "2026-10-10T16:46:30.498553+00:00",
+      "last_success_at": "2026-10-10T16:46:30.484047+00:00",
+      "source_sha256": "2fabb3d3a9c576fa4fcbf7b345c19038f19c45d0f03c2d3765b322f8ab140779",
+      "session_requests": 8,
+      "session_successes": 8,
+      "last_rows": 0,
+      "last_upstream_ms": 323.92
+    },
+    {
+      "path": "/api/v1/candles",
+      "status": "received",
+      "last_attempt_at": "2026-10-10T17:12:24.431485+00:00",
+      "last_success_at": "2026-10-10T17:12:24.340433+00:00",
+      "source_sha256": "19407e1b7b2cc55673209fbf33ddb5ad09fa2885d5ba4db92baa6637f8668904",
+      "session_requests": 2,
+      "session_successes": 2,
+      "last_rows": null,
+      "last_upstream_ms": null
+    },
+    {
+      "path": "/api/v1/stocks",
+      "status": "received",
+      "last_attempt_at": "2026-10-10T16:45:32.422038+00:00",
+      "last_success_at": "2026-10-10T16:45:32.402764+00:00",
+      "source_sha256": "8bd15649a78f63abdee14f4469bad7074e094b1dcac74e5bcad1c27f57ff9477",
+      "session_requests": 2,
+      "session_successes": 2,
+      "last_rows": 7,
+      "last_upstream_ms": 636.26
+    },
+    {
+      "path": "/api/v1/stocks/all",
+      "status": "received",
+      "last_attempt_at": "2026-10-10T16:05:44.214771+00:00",
+      "last_success_at": "2026-10-10T16:05:44.212012+00:00",
+      "source_sha256": "63c49671e4c0faf619ee397c992e45e4c411dce55a4ef9410067b01fc9c93a0f",
+      "session_requests": 4,
+      "session_successes": 3,
+      "last_rows": 0,
+      "last_upstream_ms": 861.36
+    },
+    {
+      "path": "/api/v1/stocks/{symbol}/warnings",
+      "status": "received",
+      "last_attempt_at": "2026-10-10T17:12:24.656318+00:00",
+      "last_success_at": "2026-10-10T17:12:24.655293+00:00",
+      "source_sha256": "63c49671e4c0faf619ee397c992e45e4c411dce55a4ef9410067b01fc9c93a0f",
+      "session_requests": 2,
+      "session_successes": 2,
+      "last_rows": 0,
+      "last_upstream_ms": 1756.0
+    },
+    {
+      "path": "/api/v1/stocks/{symbol}/investor-trading",
+      "status": "received",
+      "last_attempt_at": "2026-10-10T17:09:04.638397+00:00",
+      "last_success_at": "2026-10-10T17:09:04.608419+00:00",
+      "source_sha256": "776de119374d571aae3cc27f8754066854ae866e21b67eb749cdadd79bc2b7f1",
+      "session_requests": 33,
+      "session_successes": 33,
+      "last_rows": 100,
+      "last_upstream_ms": 2142.97
+    },
+    {
+      "path": "/api/v1/stocks/{symbol}/program-trades",
+      "status": "received",
+      "last_attempt_at": "2026-10-10T17:09:31.578699+00:00",
+      "last_success_at": "2026-10-10T17:09:31.568142+00:00",
+      "source_sha256": "de0972d95b510d4cbde42a5a2862506638b752ba955d93a2f56db0e9d32a93ca",
+      "session_requests": 33,
+      "session_successes": 33,
+      "last_rows": 100,
+      "last_upstream_ms": 2431.78
+    },
+    {
+      "path": "/api/v1/stocks/{symbol}/short-selling",
+      "status": "received",
+      "last_attempt_at": "2026-10-10T17:09:53.555693+00:00",
+      "last_success_at": "2026-10-10T17:09:53.545423+00:00",
+      "source_sha256": "be28e8c8cc29523947bb4d433f57483effae151cc419a4b911c4d315682acc9d",
+      "session_requests": 28,
+      "session_successes": 28,
+      "last_rows": 11,
+      "last_upstream_ms": 1006.06
+    },
+    {
+      "path": "/api/v1/stocks/{symbol}/credit-trades",
+      "status": "received",
+      "last_attempt_at": "2026-10-10T17:10:03.794803+00:00",
+      "last_success_at": "2026-10-10T17:10:03.770927+00:00",
+      "source_sha256": "e9ce81fd583dd1129d283ca47b31d1264be1badb99206d219b75b7f86bb1c8a7",
+      "session_requests": 17,
+      "session_successes": 17,
+      "last_rows": 46,
+      "last_upstream_ms": 329.51
+    },
+    {
+      "path": "/api/v1/stocks/{symbol}/securities-lending",
+      "status": "received",
+      "last_attempt_at": "2026-10-10T17:10:13.710204+00:00",
+      "last_success_at": "2026-10-10T17:10:13.693414+00:00",
+      "source_sha256": "11128db541ffb81021801d76bff425974457423f328933d0e0ec309606b4b75c",
+      "session_requests": 20,
+      "session_successes": 20,
+      "last_rows": 100,
+      "last_upstream_ms": 562.69
+    },
+    {
+      "path": "/api/v1/exchange-rate",
+      "status": "received",
+      "last_attempt_at": "2026-10-10T17:12:12.271294+00:00",
+      "last_success_at": "2026-10-10T17:12:12.257560+00:00",
+      "source_sha256": "be86ef6182f2c38b290fe8cd18985e4399d4e8cfe370255392a11997466fda62",
+      "session_requests": 1,
+      "session_successes": 1,
+      "last_rows": 0,
+      "last_upstream_ms": 327.87
+    },
+    {
+      "path": "/api/v1/market-calendar/KR",
+      "status": "received",
+      "last_attempt_at": "2026-10-10T16:55:29.109138+00:00",
+      "last_success_at": "2026-10-10T16:55:29.106948+00:00",
+      "source_sha256": "dc1e3aefaaba21b0f8cb90443ca08451a04c225ff5149e72075fc21761e98596",
+      "session_requests": 1,
+      "session_successes": 1,
+      "last_rows": 0,
+      "last_upstream_ms": 319.73
+    },
+    {
+      "path": "/api/v1/market-calendar/US",
+      "status": "received",
+      "last_attempt_at": "2026-10-10T17:04:54.204132+00:00",
+      "last_success_at": "2026-10-10T17:04:54.200754+00:00",
+      "source_sha256": "cbdcb659a74dc8dbe5cfd4b24164682e8903d14184c277cebb364d055c96079f",
+      "session_requests": 1,
+      "session_successes": 1,
+      "last_rows": 0,
+      "last_upstream_ms": 679.02
+    },
+    {
+      "path": "/api/v1/rankings",
+      "status": "received",
+      "last_attempt_at": "2026-10-10T17:12:30.118503+00:00",
+      "last_success_at": "2026-10-10T17:12:30.117725+00:00",
+      "source_sha256": "e5160e7e17bb1db58958d92ce220e6fce3c614cff3047b8aa73808c5bb932d68",
+      "session_requests": 6,
+      "session_successes": 6,
+      "last_rows": 100,
+      "last_upstream_ms": 524.04
+    },
+    {
+      "path": "/api/v1/market-indicators/prices",
+      "status": "received",
+      "last_attempt_at": "2026-10-10T17:12:43.374835+00:00",
+      "last_success_at": "2026-10-10T17:12:43.374018+00:00",
+      "source_sha256": "0c7343730ab2e471875a24ac314fb9ee75c6c93c7cb3cb5f0948b98c294f86b6",
+      "session_requests": 2,
+      "session_successes": 2,
+      "last_rows": 8,
+      "last_upstream_ms": 279.52
+    },
+    {
+      "path": "/api/v1/market-indicators/{symbol}/candles",
+      "status": "received",
+      "last_attempt_at": "2026-10-10T17:12:22.854768+00:00",
+      "last_success_at": "2026-10-10T17:12:22.854056+00:00",
+      "source_sha256": "bcc3bb8cf98d79daeb53d772512cad1bc22088333146bb3540eff25c0f0173b9",
+      "session_requests": 2,
+      "session_successes": 2,
+      "last_rows": 200,
+      "last_upstream_ms": 6806.15
+    },
+    {
+      "path": "/api/v1/market-indicators/{symbol}/investor-trading",
+      "status": "received",
+      "last_attempt_at": "2026-10-10T17:09:18.298475+00:00",
+      "last_success_at": "2026-10-10T17:09:18.295341+00:00",
+      "source_sha256": "3e70934f204115f3f77ee525b4d02f8a7967549b0db4db7b84323d8ccea6126f",
+      "session_requests": 2,
+      "session_successes": 2,
+      "last_rows": 100,
+      "last_upstream_ms": 2744.8
+    },
+    {
+      "path": "/api/v1/sectors",
+      "status": "received",
+      "last_attempt_at": "2026-10-10T16:05:35.168926+00:00",
+      "last_success_at": "2026-10-10T16:05:35.165868+00:00",
+      "source_sha256": "2512d31a424140f296ac131b0b551912d2223a6e9e4cd532d57baa1e0c593bae",
+      "session_requests": 1,
+      "session_successes": 1,
+      "last_rows": 0,
+      "last_upstream_ms": 491.07
+    },
+    {
+      "path": "/api/v1/sectors/rankings",
+      "status": "received",
+      "last_attempt_at": "2026-10-10T17:12:15.957929+00:00",
+      "last_success_at": "2026-10-10T17:12:15.957120+00:00",
+      "source_sha256": "78ef8775d9c124c2607b062aed0b4097d0237b88b2c14ed04299071db1bb9113",
+      "session_requests": 1,
+      "session_successes": 1,
+      "last_rows": 99,
+      "last_upstream_ms": 3526.37
+    },
+    {
+      "path": "/api/v1/sectors/{sectorId}",
+      "status": "received",
+      "last_attempt_at": "2026-10-08T17:09:08.263285+00:00",
+      "last_success_at": "2026-10-08T17:09:08.259280+00:00",
+      "source_sha256": "174da49404ef6077b72e9d6ee42736b74ebe9177fab5834be4b6bd6caea1942c",
+      "session_requests": 2,
+      "session_successes": 2,
+      "last_rows": 0,
+      "last_upstream_ms": 7276.77
+    },
+    {
+      "path": "/api/v1/sectors/{sectorId}/stocks",
+      "status": "received",
+      "last_attempt_at": "2026-10-08T18:01:27.791290+00:00",
+      "last_success_at": "2026-10-08T18:01:27.790860+00:00",
+      "source_sha256": "01d95a91b320bb4c97aef3d220a962f730841856f45b551a5b395fdc4ba100cc",
+      "session_requests": 37,
+      "session_successes": 37,
+      "last_rows": 64,
+      "last_upstream_ms": 393.63
+    }
+  ],
+  "capacity": {
+    "toss-backfill-progress": {
+      "status": "capacity_limited",
+      "profile": "default",
+      "used_percent": 92.67,
+      "free_bytes": 11356057600,
+      "stop_used_percent": 90,
+      "resume_below_used_percent": 80,
+      "write_verified": null,
+      "at": "2026-10-10T17:12:43.038197+00:00"
+    },
+    "storage-capacity:price-history": {
+      "status": "capacity_limited",
+      "profile": "default",
+      "used_percent": 92.67,
+      "free_bytes": 11356065792,
+      "stop_used_percent": 90,
+      "resume_below_used_percent": 80,
+      "write_verified": null,
+      "at": "2026-10-10T17:12:34.388927+00:00"
+    },
+    "storage-capacity:financial-reports": {
+      "status": "capacity_limited",
+      "profile": "default",
+      "used_percent": 92.67,
+      "free_bytes": 11356364800,
+      "stop_used_percent": 90,
+      "resume_below_used_percent": 80,
+      "write_verified": null,
+      "at": "2026-10-10T17:11:48.730789+00:00"
+    },
+    "storage-capacity:xbrl": {
+      "status": "capacity_limited",
+      "profile": "default",
+      "used_percent": 92.67,
+      "free_bytes": 11356123136,
+      "stop_used_percent": 90,
+      "resume_below_used_percent": 80,
+      "write_verified": null,
+      "at": "2026-10-10T17:12:09.789646+00:00"
+    },
+    "storage-capacity:dated-accounts": {
+      "status": "capacity_limited",
+      "profile": "default",
+      "used_percent": 92.67,
+      "free_bytes": 11356123136,
+      "stop_used_percent": 90,
+      "resume_below_used_percent": 80,
+      "write_verified": null,
+      "at": "2026-10-10T17:12:09.814639+00:00"
+    },
+    "storage-capacity:share-basis": {
+      "status": "capacity_limited",
+      "profile": "default",
+      "used_percent": 92.67,
+      "free_bytes": 11356213248,
+      "stop_used_percent": 90,
+      "resume_below_used_percent": 80,
+      "write_verified": null,
+      "at": "2026-10-10T17:12:08.156931+00:00"
+    }
+  },
+  "provider_calls": 0,
+  "writes": 0,
+  "stream": {
+    "status": "subscribed",
+    "accepted": 4,
+    "rejected": 0,
+    "received_at": "2026-10-10T17:12:32.102599+00:00",
+    "last_event_at": null,
+    "lossy": true,
+    "actual_market_session_verified": false
+  },
+  "successful_receipts": 24
+}

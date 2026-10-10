@@ -22,7 +22,7 @@ export default function FinancialChart({rows,kind="line",rangeKey="",movingAvera
     if(!container.current)return;
     const host=container.current, app=host.closest('.mk-app');
     const css=(key:string)=>getComputedStyle(host).getPropertyValue(key).trim();
-    const chart=createChart(host,{autoSize:true,height:360,layout:{background:{type:ColorType.Solid,color:'transparent'},textColor:css('--mk-muted'),fontFamily:'Pretendard, sans-serif',fontSize:12,attributionLogo:true},grid:{vertLines:{visible:false},horzLines:{color:css('--mk-line')}},rightPriceScale:{borderVisible:false,scaleMargins:{top:.08,bottom:.24}},timeScale:{borderVisible:false,secondsVisible:false,tickMarkFormatter:(t:Time)=>typeof t==='number'?new Date(t*1000).toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false}):null},localization:{locale:'ko-KR',timeFormatter:(t:Time)=>typeof t==='number'?new Date(t*1000).toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}):timeKey(t),priceFormatter:(v:number)=>v.toLocaleString('ko-KR',{maximumFractionDigits:2})},handleScroll:{vertTouchDrag:false}});
+    const chart=createChart(host,{autoSize:true,height:420,layout:{background:{type:ColorType.Solid,color:'transparent'},textColor:css('--mk-muted'),fontFamily:'Pretendard, sans-serif',fontSize:12,attributionLogo:true},grid:{vertLines:{visible:false},horzLines:{color:css('--mk-line')}},rightPriceScale:{borderVisible:false,scaleMargins:{top:.08,bottom:.24}},timeScale:{borderVisible:false,secondsVisible:false,tickMarkFormatter:(t:Time)=>typeof t==='number'?new Date(t*1000).toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false}):null},localization:{locale:'ko-KR',timeFormatter:(t:Time)=>typeof t==='number'?new Date(t*1000).toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}):timeKey(t),priceFormatter:(v:number)=>v.toLocaleString('ko-KR',{maximumFractionDigits:2})},handleScroll:{vertTouchDrag:false}});
     const price=addPrice(chart,'line');
     const volume=chart.addSeries(HistogramSeries,{priceFormat:{type:'volume'},priceScaleId:'volume'});
     volume.priceScale().applyOptions({scaleMargins:{top:.82,bottom:0}});
@@ -91,6 +91,6 @@ export default function FinancialChart({rows,kind="line",rangeKey="",movingAvera
     state.times=rows.map(row=>row.time);
     state.rangeKey=rangeKey;
   },[rows,kind,rangeKey,movingAverage,comparisons]);
-  return <div ref={container} className="mk-financial-canvas" role="img" aria-label={label} style={{height:360,width:'100%',minWidth:0}}/>;
+  return <div ref={container} className="mk-financial-canvas" role="img" aria-label={label} style={{height:'var(--mk-chart-height, 420px)',width:'100%',minWidth:0}}/>;
 }
 

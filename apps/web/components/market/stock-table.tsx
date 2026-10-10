@@ -6,7 +6,6 @@ import {
   ArrowUp,
   ArrowUpDown,
   Star,
-  PanelRightOpen,
   Info,
 } from "lucide-react";
 import {
@@ -30,7 +29,6 @@ type Props = {
   onOpen: (code: string) => void;
   onFavorite: (code: string) => void;
   onSelect: (code: string) => void;
-  onPreview: (code: string) => void;
   onSort: (key: MetricId) => void;
   onMetric: (key: MetricId, row?: Stock) => void;
 };
@@ -90,14 +88,14 @@ export default function StockTable(p: Props) {
                 </div>
               </th>
             ))}
-            <th className="mk-preview-cell">
-              <span className="mk-sr">빠른 확인</span>
-            </th>
           </tr>
         </thead>
         <tbody>
           {p.rows.map((row, index) => (
-            <tr key={row.code} data-selected={p.selected.includes(row.code)}>
+            <tr key={row.code} data-selected={p.selected.includes(row.code)} onClick={event=>{
+              if ((event.target as HTMLElement).closest("button,input,a,label,select") || !window.getSelection()?.isCollapsed) return;
+              p.onOpen(row.code);
+            }}>
               {showSelection&&<td className="mk-select-cell">
                 <input
                   type="checkbox"
@@ -151,15 +149,6 @@ export default function StockTable(p: Props) {
                   </span>
                 </td>
               ))}
-              <td className="mk-preview-cell">
-                <button
-                  className="mk-icon"
-                  aria-label={`${row.name} 빠른 확인`}
-                  onClick={() => p.onPreview(row.code)}
-                >
-                  <PanelRightOpen size={16} />
-                </button>
-              </td>
             </tr>
           ))}
         </tbody>

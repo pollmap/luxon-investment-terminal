@@ -13,10 +13,10 @@ from datetime import date, datetime
 from urllib.parse import urlsplit, urlunsplit
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import Column, Index, MetaData, String, Table, Text, func, inspect, select
+from sqlalchemy import Column, Index, MetaData, String, Table, Text, func, inspect, select, text
 
 from .service_scope import included
-from .store import now
+from .store import now, next_snapshot_revision
 
 VERSION = 'market-context-v1'
 KST = ZoneInfo('Asia/Seoul')
@@ -145,7 +145,28 @@ class ContextRepository:
                 'recorded_at': now(), 'payload': encoded(payload)})
             links.append({'document_id': document_id, 'code': code})
         with self.store.engine.begin() as db:
-            insert_ignore(self.store, db, DOCUMENTS, documents)
+            # Receipt clocks can tie on fast corrections. Order actual revisions
+            # by a monotonic internal receipt, without changing publication dates
+            # or rewriting original observations. Serialize this writer on both
+            # supported databases; stable document order avoids lock inversion.
+            if self.store.engine.dialect.name == 'sqlite':
+                db.exec_driver_sql('BEGIN IMMEDIATE')
+            for document in sorted(documents, key=lambda item: item['document_id']):
+                identifier = document['document_id']
+                if self.store.engine.dialect.name == 'postgresql':
+                    db.execute(text('SELECT pg_advisory_xact_lock(:key)'),
+                               {'key': int(identifier[:16], 16) % (2**63)})
+                exists = db.execute(select(DOCUMENTS.c.revision).where(
+                    DOCUMENTS.c.document_id == identifier,
+                    DOCUMENTS.c.revision == document['revision'])).scalar_one_or_none()
+                if exists is not None:
+                    continue
+                prior = db.execute(select(func.max(DOCUMENTS.c.recorded_at)).where(
+                    DOCUMENTS.c.document_id == identifier)).scalar_one_or_none()
+                document['recorded_at'] = (
+                    next_snapshot_revision(prior, document['recorded_at']) if prior else
+                    datetime.fromisoformat(document['recorded_at']).isoformat(timespec='microseconds'))
+                insert_ignore(self.store, db, DOCUMENTS, [document])
             insert_ignore(self.store, db, LINKS, links)
         return len(documents)
 
@@ -274,8 +295,16 @@ class ContextRepository:
             'relation_id': relation_id})
         revision = digest(payload)
         with self.store.engine.begin() as db:
+            if self.store.engine.dialect.name == 'sqlite':
+                db.exec_driver_sql('BEGIN IMMEDIATE')
+            elif self.store.engine.dialect.name == 'postgresql':
+                db.execute(text('SELECT pg_advisory_xact_lock(:key)'),
+                           {'key': int(relation_id[:16], 16) % (2**63)})
+            prior = db.execute(select(func.max(RELATIONS.c.recorded_at)).where(
+                RELATIONS.c.relation_id == relation_id)).scalar_one_or_none()
+            receipt = next_snapshot_revision(prior, now()) if prior else now()
             insert_ignore(self.store, db, RELATIONS, [{'relation_id': relation_id, 'revision': revision,
-                'subject_code': subject, 'object_code': target, 'recorded_at': now(), 'payload': encoded(payload)}])
+                'subject_code': subject, 'object_code': target, 'recorded_at': receipt, 'payload': encoded(payload)}])
         return relation_id
 
     def relations(self, code, *, day=None):

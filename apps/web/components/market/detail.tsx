@@ -16,6 +16,7 @@ import {StockIntraday} from "./market-pulse";
 import ValuationHistory from "./valuation-chart";
 import EarningsVisual from "./earnings-overview";
 import CompanyLogo from "./company-logo";
+import Dialog from "./dialog";
 import DartCompanyFacts from "./dart-company-facts";
 import EventsPanel from "./events-panel";
 const TtmPanel = dynamic(() => import("./company-research").then(m=>m.TtmPanel),{loading:()=> <p role="status">최근 12개월 실적을 불러오는 중이에요.</p>});
@@ -45,6 +46,7 @@ export default function StockDetail({
   onBack,
   onMetric,
   preview = false,
+  initialSecurity,
 }: {
   code: string;
   favorite: boolean;
@@ -52,6 +54,7 @@ export default function StockDetail({
   onBack: () => void;
   onMetric: (id: MetricId, row?: Stock) => void;
   preview?: boolean;
+  initialSecurity?: Stock;
 }) {
   const [snapshot, setData] = useState<Detail | null>(null), [error, setError] = useState("");
   const [summaryRetry, setSummaryRetry] = useState(0);
@@ -59,17 +62,22 @@ export default function StockDetail({
   const [extraError, setExtraError] = useState("");
   const [extraBusy, setExtraBusy] = useState(false), [extraRetry, setExtraRetry] = useState(0);
   const [depthOpen, setDepthOpen] = useState(false);
+  const [wideWorkspace, setWideWorkspace] = useState(false);
+  useEffect(() => {
+    const media = matchMedia("(min-width: 1280px)");
+    const sync = () => { setWideWorkspace(media.matches); if (media.matches) setDepthOpen(false); };
+    sync(); media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
   const [analysisOpen,setAnalysisOpen] = useState(false);
   const [clock,setClock]=useState(0);
   useEffect(()=>{setClock(Date.now());const timer=setInterval(()=>setClock(Date.now()),30000);return()=>clearInterval(timer);},[]);
   const data = snapshot ? {...snapshot, ...extra, security: snapshot.security,
     detail: {...snapshot.detail, ...extra.detail}} : null;
-  const [selection, updateSelection] = useDetailSelection(code, preview);
+  const [selection, updateSelection, selectionReady, resetChart] = useDetailSelection(code, preview);
   const tab = selection.tab, chartMode = selection.mode;
   // Let shared/saved preferences resolve before choosing the first request.
-  const [chartReadyCode,setChartReadyCode]=useState<string|null>(null);
-  useEffect(()=>setChartReadyCode(code),[code]);
-  const firstChartPath=chartReadyCode===code&&(preview||tab==='요약'||tab==='차트')
+  const firstChartPath=selectionReady&&(preview||tab==='요약'||tab==='차트')
     ? detailChartPath(code,selection) : null;
   const firstChart=useMemo(()=>firstChartPath?createFirstChartRequest(firstChartPath):undefined,[firstChartPath]);
   useEffect(()=>{
@@ -141,15 +149,8 @@ export default function StockDetail({
       document.removeEventListener("visibilitychange", visible);
     };
   }, [code, summaryRetry]);
-  if (!data)
-    return (
-      <div className="mk-loading" role="status">
-        {error || "종목 자료를 불러오고 있습니다…"}
-        {error && <div className="mk-toolbar"><button className="mk-button" onClick={() => {setError(""); setSummaryRetry(value => value + 1);}}>다시 시도</button><button className="mk-button" onClick={onBack}>목록으로 돌아가기</button></div>}
-      </div>
-    );
-  const s = data.security,
-    details = data.detail,
+  const s = data?.security ?? initialSecurity,
+    details: Detail["detail"] = data?.detail ?? {facts:{}},
     financials = (details.financials || []).filter(
       (f) =>
         f.frequency === frequency &&
@@ -174,6 +175,12 @@ export default function StockDetail({
     {label:"기업 분석", target:"기업·주주", members:["기업·주주","재무·지표"]},
     {label:"공시·뉴스", target:"공시·자료", members:["공시·자료"]},
   ];
+  if (!data || !s) return <section className="mk-detail" aria-busy={!error}>
+    {!preview && <button className="mk-back" onClick={onBack}><ArrowLeft size={17}/>목록으로 돌아가기</button>}
+    <div className="mk-security-header"><div><div className="mk-eyebrow">{s?.market} · {code}</div><h1 className="mk-company-title">{s && <CompanyLogo url={s.logo_url} name={s.name} large/>}{s?.name || code}</h1>{s && <div className="mk-security-price">{format(s.price)}<span>원</span><b className={tone(s.change)}>{format(s.change,"change")}</b></div>}{s && <p className="mk-caption">마지막 확인 가격{s.as_of ? ' · '+s.as_of.slice(0,10) : ''}</p>}</div></div>
+    {!preview && <div className="mk-tabs mk-detail-nav-desktop" role="tablist" aria-label="종목 상세">{tabs.map(t=><button key={t.target} role="tab" aria-selected={t.members.includes(tab)} onClick={()=>setTab(t.target)}>{t.label}</button>)}</div>}
+    <div className="mk-loading mk-workspace-loading" role="status">{error || "종목 자료를 불러오는 중…"}{error && <button className="mk-button" onClick={()=>{setError("");setSummaryRetry(v=>v+1);}}>다시 시도</button>}</div>
+  </section>;
   return (
     <section className="mk-detail">
       {!preview && (
@@ -213,8 +220,6 @@ export default function StockDetail({
           {error} 기존 화면은 계속 볼 수 있습니다.
         </div>
       )}
-      {extraError && view && <div className="mk-notice" role="status">{extraError} <button onClick={() => setExtraRetry(v => v+1)}>다시 불러오기</button></div>}
-      {extraBusy && view && <p role="status" className="mk-muted">자료를 불러오는 중…</p>}
       {!preview && (
         <div className="mk-tabs mk-detail-nav-desktop" role="tablist" aria-label="종목 상세">
           {tabs.map((t) => (
@@ -229,6 +234,7 @@ export default function StockDetail({
           ))}
         </div>
       )}
+      {view && <div className="mk-detail-section-status" role="status">{extraError ? <>{extraError} <button onClick={()=>setExtraRetry(v=>v+1)}>다시 불러오기</button></> : extraBusy ? "자료를 불러오는 중…" : null}</div>}
       {!preview && ["수급·거래원","공매도"].includes(tab) && <div className="mk-section-navigation" aria-label="수급 상세">
         {[["flows","투자자"],["brokers","거래원"],["program","프로그램"],["short","공매도"],["financing","대차·신용"]].map(([key,label])=><button key={key} aria-pressed={key==="short"?tab==="공매도":tab==="수급·거래원"&&selection.activity===key} onClick={()=>key==="short"?setTab("공매도"):updateSelection({tab:"수급·거래원",activity:key})}>{label}</button>)}
       </div>}
@@ -240,10 +246,12 @@ export default function StockDetail({
       {(preview || tab === "요약" || tab === "차트") && (
         <div className="mk-detail-overview">
           <div className="mk-panel mk-chart-panel">
-            {chartMode==='intraday'?<StockIntraday code={code} name={s.name} quoteDate={s.as_of} firstRequest={firstChart} onHistory={()=>setChartMode('history')} period={selection.period} kind={selection.kind} lineInterval={selection.lineInterval} onLineIntervalChange={lineInterval=>updateSelection({lineInterval})} onKindChange={kind=>updateSelection({kind,...(['candle','bar'].includes(kind)?{period:'day'}:{})})} onPeriodChange={period => updateSelection({period,...(period==='week'?{kind:'line'}:{})})}/>:<PriceChart code={code} firstRequest={firstChart} selection={selection} onSelectionChange={updateSelection} onIntraday={()=>setChartMode('intraday')}/>}
+            <div className="mk-workspace-chart-actions"><button className="mk-button" onClick={resetChart}>기본 차트로</button>{!preview && !wideWorkspace && <button className="mk-button" onClick={()=>setDepthOpen(true)}>호가·체결 보기</button>}</div>
+            {selectionReady && (chartMode==='intraday'?<StockIntraday code={code} name={s.name} quoteDate={s.as_of} firstRequest={firstChart} onHistory={()=>setChartMode('history')} period={selection.period} kind={selection.kind} lineInterval={selection.lineInterval} onLineIntervalChange={lineInterval=>updateSelection({lineInterval})} onKindChange={kind=>updateSelection({kind,...(['candle','bar'].includes(kind)?{period:'day'}:{})})} onPeriodChange={period => updateSelection({period,...(period==='week'?{kind:'line'}:{})})}/>:<PriceChart code={code} firstRequest={firstChart} selection={selection} onSelectionChange={updateSelection} onIntraday={()=>setChartMode('intraday')}/>)}
             {!preview && <PriceContextPanel key={code} code={code} name={s.name}/>}
           </div>
-          <div className="mk-panel">
+          {!preview && wideWorkspace && <aside className="mk-workspace-depth"><DepthPanel code={code}/></aside>}
+          <div className="mk-panel mk-workspace-stats">
             <div className="mk-section-head">
               <h2>핵심 지표</h2>
 
@@ -281,10 +289,8 @@ export default function StockDetail({
       {!preview && tab === "차트" && (
         <ValuationHistory code={code}/>
       )}
-      {!preview && ["요약", "차트"].includes(tab) && <details className="mk-company-description" onToggle={event => setDepthOpen(event.currentTarget.open)}>
-        <summary>호가·체결 보기</summary>{depthOpen && <DepthPanel code={code}/>}
-      </details>}
-      {!preview&&(tab==='요약'||tab==='재무·지표')&&<EarningsVisual code={code} financials={details.financials||[]}/>}
+      {!preview && !wideWorkspace && depthOpen && <Dialog title="호가·체결" onClose={()=>setDepthOpen(false)}><DepthPanel code={code}/></Dialog>}
+      {!preview&&tab==='재무·지표'&&<EarningsVisual code={code} financials={details.financials||[]}/>}
       {!preview&&tab==='재무·지표'&&<details className="mk-company-description" onToggle={event=>setAnalysisOpen(event.currentTarget.open)}><summary>주가·실적 비교와 계산기</summary>{analysisOpen&&<ValuationHistory code={code}/>}</details>}
       {!preview&&tab==='재무·지표'&&<TtmPanel code={code}/>}
       {!preview&&tab==='재무·지표'&&<OfficialStatements code={code} data={data.official||{company:{},statements:[]}}/>}
@@ -388,7 +394,7 @@ export default function StockDetail({
       )}
       {!preview && tab === "기업·주주" && (
         <>
-          {analysisSection === "valuation" && <><ValuationHistory key={code} code={code}/><div className="mk-panel">
+          {analysisSection === "valuation" && <><ValuationHistory key={code} code={code}/><EarningsVisual code={code} financials={details.financials||[]}/><div className="mk-panel">
             <details className="mk-company-description"><summary>기업 소개 · {s.name}</summary>
             {data.official?.company&&<dl className="mk-company-facts"><div><dt>공시 법인명</dt><dd>{data.official.company.corp_name}</dd></div><div><dt>대표자</dt><dd>{data.official.company.ceo_nm||'—'}</dd></div><div><dt>설립일</dt><dd>{data.official.company.est_dt?.replace(/^(\d{4})(\d{2})(\d{2})$/,'$1.$2.$3')||'—'}</dd></div><div><dt>결산월</dt><dd>{data.official.company.acc_mt?`${data.official.company.acc_mt}월`:'—'}</dd></div></dl>}
             <p>

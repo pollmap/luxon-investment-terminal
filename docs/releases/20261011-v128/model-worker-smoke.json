@@ -1,0 +1,25 @@
+{
+  "actual_int8_inference": true,
+  "production_evidence": false,
+  "test_scope": "local synthetic text / authentication / body contract",
+  "model_revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+  "model_sha256": "739c8f25bbe6d8a6001cd2f048701da9879140cc67d4e9327716111e869dd717",
+  "dimensions": 384,
+  "tokenize_ms": 14.062299975194037,
+  "inference_ms": [
+    7.30880000628531,
+    28.34609994897619,
+    31.420900020748377
+  ],
+  "similarity_comparison": [
+    0.874217114758298,
+    0.8166882908623081
+  ],
+  "checks": {
+    "unauthorized": 401,
+    "unknown_path": 404,
+    "wrong_query_type": 422
+  },
+  "quality_50_questions_passed": false,
+  "vps_resource_cap_verified": false
+}

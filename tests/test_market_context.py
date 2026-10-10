@@ -121,6 +121,22 @@ def test_unknown_news_date_is_not_replaced_with_collection_time(setup_context):
     assert repo.relations('005930')['rows'] == []
 
 
+def test_correction_with_identical_receipt_clock_preserves_latest_and_original(setup_context, monkeypatch):
+    _, repo, _ = setup_context
+    monkeypatch.setattr('services.market_dashboard.market_context.now', lambda: '2026-10-11T00:00:00+00:00')
+    repo.ingest_news('005930', snapshot(title='원래 제목'))
+    repo.ingest_news('005930', snapshot(title='정정된 제목'))
+    assert repo.news()['rows'][0]['title'] == '정정된 제목'
+    with repo.store.read_connection() as db:
+        observations = db.execute(select(DOCUMENTS).order_by(DOCUMENTS.c.recorded_at)).mappings().all()
+    assert len(observations) == 2
+    assert observations[0]['recorded_at'] < observations[1]['recorded_at']
+    assert observations[0]['published_at'] == observations[1]['published_at']
+    # Refetch of an older unchanged version must not make it the latest revision.
+    repo.ingest_news('005930', snapshot(title='원래 제목'))
+    assert repo.news()['rows'][0]['title'] == '정정된 제목'
+
+
 def test_news_association_is_not_promoted_to_business_relation(setup_context):
     _, repo, client = setup_context
     repo.ingest_news('005930', snapshot())
@@ -142,7 +158,8 @@ def business_relation(**patch):
             'excerpt': 'Fixture evidence only', 'published_at': '2026-10-02'}, **patch}
 
 
-def test_business_evidence_validity_and_candidate_separation(setup_context):
+def test_business_evidence_validity_and_candidate_separation(setup_context, monkeypatch):
+    monkeypatch.setattr('services.market_dashboard.market_context.now', lambda: '2026-10-11T00:00:00+00:00')
     _, repo, _ = setup_context
     repo.save_relation(business_relation(review_status='candidate'))
     assert repo.relations('005930', day='2026-10-03')['rows'] == []

@@ -32,6 +32,7 @@ import {
 import Dialog, {consumeDialogCloseNavigation} from "./dialog";
 import {detailRouteKeys, writeMarketHistory} from "./market-history";
 import StockTable from "./stock-table";
+import WorkspaceList from "./workspace-list";
 import HeaderSearch from "./header-search";
 import {useStockSearch} from "./use-stock-search";
 import type {SearchIdentity} from "./search-index";
@@ -127,7 +128,6 @@ export default function Dashboard() {
     [error, setError] = useState(""),
     [offline, setOffline] = useState(false);
   const [modal, setModal] = useState<string | null>(null),
-    [preview, setPreview] = useState<string | null>(null),
     [metric, setMetric] = useState<{ id: MetricId; row?: Stock } | null>(null),
     [metrics, setMetrics] = useState<Record<string, Metric>>({}),
     [toast, setToast] = useState("");
@@ -184,7 +184,7 @@ export default function Dashboard() {
       setCode(n.code);
       setQuery(n.query);
       setSelected(n.selected);
-      requestAnimationFrame(() => window.scrollTo(0, scrollRef.current));
+      requestAnimationFrame(() => window.scrollTo(0, n.code ? 0 : scrollRef.current));
     };
     const on = () => setOffline(false),
       off = () => setOffline(true);
@@ -395,24 +395,24 @@ export default function Dashboard() {
   };
   const returnFromComparison=()=>{const saved=comparisonReturn.current;setPage(saved.page);setOffset(saved.offset);requestAnimationFrame(()=>window.scrollTo(0,saved.scroll));};
   const open = (c: string) => {
-    scrollRef.current = window.scrollY;
+    if (c === code) return;
+    if (!code) scrollRef.current = window.scrollY;
     focusCode.current = c;
     const next = new URL(location.href);
     if (next.searchParams.get("code") !== c)
       detailRouteKeys.forEach(key => next.searchParams.delete(key));
     next.searchParams.set("code", c);
-    // A search/preview dialog already owns an entry. Reuse it so Back returns
+    // A search dialog already owns an entry. Reuse it so Back returns
     // directly to the list, and never enqueue the old URL in the Next router.
     writeMarketHistory(history.state?.__marketDialog ? "replace" : "push", next, {__marketDialog:undefined});
     routeSearch.current = location.search;
     setCode(c);
     setModal(null);
-    setPreview(null);
     setPrefs((p) => ({
       ...p,
       recent: [c, ...p.recent.filter((x) => x !== c)].slice(0, 12),
     }));
-    window.scrollTo(0, 0);
+    requestAnimationFrame(() => window.scrollTo(0, 0));
   };
   const back = () => {
     setCode(null);
@@ -607,7 +607,7 @@ export default function Dashboard() {
               </button>
             ))}
           </nav>
-          <HeaderSearch onOpen={open}/><button className="mk-button mk-sidebar-toggle" aria-pressed={!prefs.sidebarHidden} onClick={()=>updatePrefs({sidebarHidden:!prefs.sidebarHidden})}>관심 목록 {prefs.sidebarHidden?"열기":"접기"}</button>
+          <HeaderSearch onOpen={open}/>{!code && <button className="mk-button mk-sidebar-toggle" aria-pressed={!prefs.sidebarHidden} onClick={()=>updatePrefs({sidebarHidden:!prefs.sidebarHidden})}>관심 목록 {prefs.sidebarHidden?"열기":"접기"}</button>}
           <button className="mk-button mk-text-size" aria-label="글자 크기" onClick={() => setModal("text-size")}><span className="mk-text-size-label">글자 크기</span><ALargeSmall className="mk-text-size-glyph" size={22} aria-hidden="true"/></button>
           <button
             className="mk-icon"
@@ -629,14 +629,15 @@ export default function Dashboard() {
       )}
       <main id="market-main" className="mk-main">
         {!ready ? <div className="mk-panel" style={{minHeight:420}} role="status" aria-busy="true">화면을 여는 중…</div> : code ? (
-          <div className="mk-detail-workspace"><StockDetail
+          <div className="mk-detail-workspace"><WorkspaceList rows={data?.rows ?? []} code={code} favorites={prefs.favorites} onOpen={open} onFavorite={favorite}/><StockDetail
             key={code}
             code={code}
+            initialSecurity={data?.rows.find(row=>row.code===code) ?? savedRows.find(row=>row.code===code)}
             favorite={prefs.favorites.includes(code)}
             onFavorite={() => favorite(code)}
             onBack={back}
             onMetric={onMetric}
-          />{contextSidebar}</div>
+          /></div>
         ) : (
           <>
             <div className="mk-page-heading">
@@ -1082,7 +1083,6 @@ export default function Dashboard() {
                             onFavorite={favorite}
                             onSelect={select}
                             onMetric={onMetric}
-                            onPreview={setPreview}
                           />
                           <StockTable
                             rows={data.rows}
@@ -1097,7 +1097,6 @@ export default function Dashboard() {
                             onOpen={open}
                             onFavorite={favorite}
                             onSelect={select}
-                            onPreview={setPreview}
                             onSort={sort}
                             onMetric={onMetric}
                           />
@@ -1276,28 +1275,6 @@ export default function Dashboard() {
             <X size={14} />
           </button>
         </div>
-      )}
-      {preview && (
-        <Dialog title="종목 빠른 확인" onClose={() => setPreview(null)} wide>
-          <StockDetail
-            key={preview}
-            code={preview}
-            favorite={prefs.favorites.includes(preview)}
-            onFavorite={() => favorite(preview)}
-            onBack={() => setPreview(null)}
-            onMetric={onMetric}
-            preview
-          />
-          <div className="mk-dialog-actions">
-            <button
-              className="mk-button mk-primary"
-              onClick={() => open(preview)}
-            >
-              종목 상세 보기
-              <ArrowRight size={16} />
-            </button>
-          </div>
-        </Dialog>
       )}
       {metric && (
         <Dialog title={labels[metric.id]} onClose={() => setMetric(null)}>

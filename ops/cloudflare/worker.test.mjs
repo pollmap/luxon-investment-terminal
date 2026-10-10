@@ -358,6 +358,20 @@ test('blocked internal paths do not call the origin and cannot be cached',async(
   assert.equal(calls.length,0);assert.equal(stored.size,0);
  });
 });
+
+test('evidence search only exposes explicit reads and never uses shared cache',async()=>{
+ await withRuntime(async({request,calls,stored})=>{
+  for(const path of ['/api/market/v1/research/index','/api/market/v1/research/embeddings','/api/market/v1/research/documents/invalid']){
+   const response=await request(path);assert.equal(response.status,404);
+  }
+  assert.equal(calls.length,0);
+  for(const path of ['/api/market/v1/research/search?q=test','/api/market/v1/research/documents/'+'a'.repeat(64)]){
+   const response=await request(path);assert.equal(response.status,200);
+   assert.equal(response.headers.get('x-market-edge'),'BYPASS');
+  }
+  assert.equal(calls.length,2);assert.equal(stored.size,0);
+ });
+});
 test('upstream cache age is part of the one-second budget; errors never cache',()=>{
  const rules={seconds:1,live:true};
  assert.equal(deadline(new Response('{}',{headers:{'x-market-validated-at':'1000'}}),rules,1700,1800),2000);

@@ -1,0 +1,76 @@
+{
+  "at": "2026-10-10T17:34:55.510397+00:00",
+  "release": "20261011-candle-research-v130",
+  "cloudflare_version": "c6e3bd10-c43d-4cb0-a57b-df91041d9d72",
+  "checks": [
+    {
+      "site": "https://stocks.62-171-141-206.sslip.io",
+      "path": "/_next/static/css/56d4c3297aff6eef.css",
+      "status": 200,
+      "bytes": 77313,
+      "hash_match": true
+    },
+    {
+      "site": "https://stocks.62-171-141-206.sslip.io",
+      "path": "/_next/static/css/79c213b045563466.css",
+      "status": 200,
+      "bytes": 192009,
+      "hash_match": true
+    },
+    {
+      "site": "https://stocks.62-171-141-206.sslip.io",
+      "path": "/_next/static/css/f82563c53846862e.css",
+      "status": 200,
+      "bytes": 25458,
+      "hash_match": true
+    },
+    {
+      "site": "https://stocks.62-171-141-206.sslip.io",
+      "path": "/stocks",
+      "status": 200,
+      "bytes": 12774,
+      "hash_match": true
+    },
+    {
+      "site": "https://stocks.62-171-141-206.sslip.io",
+      "path": "/api/market/v1/health",
+      "status": 200,
+      "release": "20261011-candle-research-v130"
+    },
+    {
+      "site": "https://korea-stocks-edge.lch68-workers.workers.dev",
+      "path": "/_next/static/css/56d4c3297aff6eef.css",
+      "status": 200,
+      "bytes": 77313,
+      "hash_match": true
+    },
+    {
+      "site": "https://korea-stocks-edge.lch68-workers.workers.dev",
+      "path": "/_next/static/css/79c213b045563466.css",
+      "status": 200,
+      "bytes": 192009,
+      "hash_match": true
+    },
+    {
+      "site": "https://korea-stocks-edge.lch68-workers.workers.dev",
+      "path": "/_next/static/css/f82563c53846862e.css",
+      "status": 200,
+      "bytes": 25458,
+      "hash_match": true
+    },
+    {
+      "site": "https://korea-stocks-edge.lch68-workers.workers.dev",
+      "path": "/stocks",
+      "status": 200,
+      "bytes": 12774,
+      "hash_match": true
+    },
+    {
+      "site": "https://korea-stocks-edge.lch68-workers.workers.dev",
+      "path": "/api/market/v1/health",
+      "status": 200,
+      "release": "20261011-candle-research-v130"
+    }
+  ],
+  "transport": "curl HTTPS verified certificates; initial urllib GET returned 403"
+}

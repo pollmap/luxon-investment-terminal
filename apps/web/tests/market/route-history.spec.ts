@@ -54,6 +54,8 @@ for (const width of [1440,390]) {
     await search.press('Enter');
     await expect(page.getByRole('heading',{name:'삼성전자',exact:true})).toBeVisible();
     await expectRoute(page,{code:'005930'});
+    if(width<768) await page.getByRole('combobox',{name:'차트 기간 선택',exact:true}).selectOption('intraday');
+    else await page.getByRole('button',{name:'하루',exact:true}).click();
     await page.getByRole('button',{name:'캔들 · 5분',exact:true}).click();
     await expectRoute(page,{code:'005930',kind:'candle',period:'day'});
     await page.getByRole('button',{name:'관심종목에 추가',exact:true}).click();
@@ -98,15 +100,13 @@ test('direct shared chart options override stored choices and dialogs preserve t
   await expect(page.getByRole('dialog')).toHaveCount(0);
 });
 
-test('PC quick preview keeps the list URL while the stock name opens full detail', async({page}) => {
+test('PC stock row opens full workspace without a preview dialog', async({page}) => {
   await fixture(page);await page.goto('/stocks');
-  await page.getByRole('button',{name:'삼성전자 빠른 확인',exact:true}).click();
-  await expect(page.getByRole('dialog')).toBeVisible();await expectRoute(page,{code:null});
-  await page.getByRole('dialog').getByRole('button',{name:'닫기',exact:true}).click();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
-  await page.locator('.mk-stock-link[data-code="005930"]').click();
+  await expect(page.locator('.mk-stock-link[data-code="005930"]')).toBeVisible();
+  await expect(page.getByRole('button',{name:'삼성전자 빠른 확인',exact:true})).toHaveCount(0);
+  await page.locator('.mk-stock-table tbody tr').first().locator('td').nth(1).click();
   await expect(page.getByRole('heading',{name:'삼성전자',exact:true})).toBeVisible();
-  await expectRoute(page,{code:'005930'});
+  await expectRoute(page,{code:'005930'});await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.getByRole('button',{name:'목록으로 돌아가기',exact:true}).click();
   await expectRoute(page,{code:null});
   await expect(page.locator('.mk-stock-link[data-code="005930"]')).toBeFocused();

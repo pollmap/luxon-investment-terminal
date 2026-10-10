@@ -13,6 +13,7 @@ import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { format, request, tone, type Overview } from "./types";
 
 type Point = { time: string; value: number };
+const EMPTY_POINTS: Point[] = [];
 export type Series = {
   points: Point[];
   baseline?: number;
@@ -59,7 +60,9 @@ export function LinePlot({
   rangeKey?:string;
 }) {
   const [hover, setHover] = useState<string | null>(null);
-  const points = data.points;
+  const validPoints = Array.isArray(data.points) && data.points.every(point =>
+    point && typeof point.time === "string" && typeof point.value === "number" && Number.isFinite(point.value));
+  const points = validPoints ? data.points : EMPTY_POINTS;
   const selectPoint = (index:number|null) => setHover(index===null ? null : points[Math.max(0,Math.min(points.length-1,index))]?.time ?? null);
   const chartRows=useMemo(()=>points.map(p=>({time:p.time,close:p.value})),[points]);
 
@@ -70,7 +73,7 @@ export function LinePlot({
           ? ""
           : data.status === "loading" || data.status === "collecting" || data.status === "pending"
             ? "차트를 불러오는 중…"
-            : data.status === "unavailable" || data.status === "error"
+            : !validPoints || data.status === "unavailable" || data.status === "error"
               ? "차트를 불러오지 못했어요."
               : "이 기간의 차트 자료가 없어요."}
       </div>

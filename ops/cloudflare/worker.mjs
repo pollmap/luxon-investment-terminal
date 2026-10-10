@@ -121,6 +121,12 @@ export default {
     if(url.pathname.startsWith('/internal')||url.pathname.startsWith('/ops/')||
        /^\/api\/(?:auth|pf|market-auth|market-account)(?:\/|$)/.test(url.pathname)||
        /^\/api\/market\/v1\/(?:account|internal|ops)(?:\/|$)/.test(url.pathname))return unavailable();
+    // Explicit evidence-read allowlist. Do not expose future indexing,
+    // embedding or document administration paths through the public proxy.
+    if(url.pathname.startsWith(PREFIX+'/research/')&&
+       !(/^\/api\/market\/v1\/research\/(?:search|documents\/[a-f0-9]{64})$/.test(url.pathname)))return unavailable();
+    if(url.pathname.startsWith(PREFIX+'/research/')&&
+       !['GET','HEAD','OPTIONS'].includes(request.method))return new Response(null,{status:405,headers:{Allow:'GET, HEAD, OPTIONS','Cache-Control':'no-store'}});
     const target=legacyDestination(url);
     if(target){
       if(!['GET','HEAD'].includes(request.method))return new Response(null,{status:405,headers:{Allow:'GET, HEAD','Cache-Control':'no-store'}});
