@@ -1,0 +1,119 @@
+{
+  "observed_at": "2026-10-10T17:42:08.746192+00:00",
+  "release": "20261011-candle-research-v130",
+  "default_branch_open_alerts": 11,
+  "runtime": {
+    "anyio": "4.15.1",
+    "soupsieve": "2.10",
+    "starlette": "1.7.0",
+    "fastapi": "0.141.1"
+  },
+  "node_lock": {
+    "next": "16.3.8",
+    "undici": "6.28.1",
+    "sharp": "0.35.5",
+    "js-yaml": "4.3.2"
+  },
+  "checks": [
+    {
+      "alert": 26,
+      "package": "undici",
+      "current": "6.28.1",
+      "patched_minimum": "6.28.1",
+      "verified_in": "current_frontend_lock",
+      "above_alert_patch": true,
+      "advisory": "https://github.com/advisories/GHSA-3wwx-pv8p-q78v"
+    },
+    {
+      "alert": 25,
+      "package": "anyio",
+      "current": "4.15.1",
+      "patched_minimum": "4.14.2",
+      "verified_in": "running_API",
+      "above_alert_patch": true,
+      "advisory": "https://github.com/advisories/GHSA-82r6-8w77-94w6"
+    },
+    {
+      "alert": 24,
+      "package": "anyio",
+      "current": "4.15.1",
+      "patched_minimum": "4.14.2",
+      "verified_in": "running_API",
+      "above_alert_patch": true,
+      "advisory": "https://github.com/advisories/GHSA-5p39-cfhj-2xmp"
+    },
+    {
+      "alert": 23,
+      "package": "soupsieve",
+      "current": "2.10",
+      "patched_minimum": "2.9.0",
+      "verified_in": "running_API",
+      "above_alert_patch": true,
+      "advisory": "https://github.com/advisories/GHSA-gjv8-xp57-g29c"
+    },
+    {
+      "alert": 22,
+      "package": "soupsieve",
+      "current": "2.10",
+      "patched_minimum": "2.9.0",
+      "verified_in": "running_API",
+      "above_alert_patch": true,
+      "advisory": "https://github.com/advisories/GHSA-j934-xhv5-fg8f"
+    },
+    {
+      "alert": 21,
+      "package": "js-yaml",
+      "current": "4.3.2",
+      "patched_minimum": "4.3.2",
+      "verified_in": "current_frontend_lock",
+      "above_alert_patch": true,
+      "advisory": "https://github.com/advisories/GHSA-2883-xcg3-v3hh"
+    },
+    {
+      "alert": 20,
+      "package": "next",
+      "current": "16.3.8",
+      "patched_minimum": "16.3.3",
+      "verified_in": "current_frontend_lock",
+      "above_alert_patch": true,
+      "advisory": "https://github.com/advisories/GHSA-p293-qw3h-jr36"
+    },
+    {
+      "alert": 19,
+      "package": "next",
+      "current": "16.3.8",
+      "patched_minimum": "16.3.3",
+      "verified_in": "current_frontend_lock",
+      "above_alert_patch": true,
+      "advisory": "https://github.com/advisories/GHSA-p293-qw3h-jr36"
+    },
+    {
+      "alert": 18,
+      "package": "next",
+      "current": "16.3.8",
+      "patched_minimum": "16.3.3",
+      "verified_in": "current_frontend_lock",
+      "above_alert_patch": true,
+      "advisory": "https://github.com/advisories/GHSA-2xp9-vwfh-vxw4"
+    },
+    {
+      "alert": 17,
+      "package": "next",
+      "current": "16.3.8",
+      "patched_minimum": "16.3.3",
+      "verified_in": "current_frontend_lock",
+      "above_alert_patch": true,
+      "advisory": "https://github.com/advisories/GHSA-2xp9-vwfh-vxw4"
+    },
+    {
+      "alert": 16,
+      "package": "sharp",
+      "current": "0.35.5",
+      "patched_minimum": "0.35.4",
+      "verified_in": "current_frontend_lock",
+      "above_alert_patch": true,
+      "advisory": "https://github.com/advisories/GHSA-rgj7-g3m4-5g8c"
+    }
+  ],
+  "scope": "Specific default-branch alerts only; not a full security audit"
+}

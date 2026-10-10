@@ -121,3 +121,7 @@ API·수집기는 v130으로 전환하고 PostgreSQL·Redis·OpenAlgo는 그대�
 실제 제목 검색에서 원천 수집의 종목 연결과 제목 주제가 맞지 않는 사례가 보였습니다. 예: 068270에 연결된 ‘반도체 무관한 신세계·달바는 9개월째 순매수’. 뉴스의 원천 부가 연결을 검증된 사업 관계로 사용할 수 없으며 **회사 연결 오류 0건 조건은 미통과**입니다. 본문 색인 전 회사 식별·기사별 연결 근거를 검수하고 미검증 연결은 후보로 분리해야 합니다. 현재 제목 결과가 있다는 이유로 해당 회사의 사업 관계나 주가 원인이라고 해석하지 않습니다.
 
 최종 정적·API 버전 및 자산 해시 대조는 [배포 기록](deployment.json), 실제 화면은 [PC](public-desktop-candle.png)·[휴대폰](public-mobile-candle.png)·[JYP 분석](public-jyp-analysis.png)·[제목 검색](public-research-search.png)에 있습니다. 초기 urllib 확인의 403 이후 TLS 검증을 유지한 curl로 자산을 대조했습니다. 성능 재시험으로 계산하지 않습니다.
+
+### GitHub 기본 브랜치 보안 경고 대조
+
+푸시에서 표시된 11개 open Dependabot 경고를 공식 GitHub API의 패치 최소 버전과 대조했습니다. 현재 프런트엔드 lock의 Next 16.3.8·Undici 6.28.1·Sharp 0.35.5·js-yaml 4.3.2, 실행 중 API의 AnyIO 4.15.1·SoupSieve 2.10은 해당 경고의 패치 버전 이상입니다. [대조 기록](dependency-alerts.json). 기본 브랜치 경고와 배포 브랜치·실행 컨테이너를 구분하며, 이 11개 대조를 전체 보안 감사 완료로 해석하지 않습니다. 기본 브랜치를 자동 병합하거나 경고를 임의 해제하지 않았습니다.
