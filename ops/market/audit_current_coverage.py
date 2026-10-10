@@ -3,6 +3,8 @@
 --run uses one SSH process and one already-running market-api container. It never
 constructs Store, hydrates series, calculates facts, enqueues work, or calls a
 provider. This report is not a whole-dataset or comparison-verification receipt.
+The one universe identity projection allows 10 seconds; other statements allow
+3 seconds, with the same 120-second total snapshot deadline and no retry.
 """
 
 from __future__ import annotations
@@ -332,13 +334,26 @@ FROM projected
 """
 
 
+def read_universe(db):
+    # A single large JSON value must be parsed even though only identities leave
+    # PostgreSQL. This exception applies to this exact PK SELECT, not the batches.
+    # SET LOCAL is transaction-scoped: failure takes main()'s ROLLBACK path and
+    # ends the audit. Never retry a timed-out statement or mask its SQLSTATE.
+    check()
+    db.execute('SET LOCAL statement_timeout=10000')
+    row = execute(db, UNIVERSE_SQL, ('universe',)).fetchone()
+    db.execute('SET LOCAL statement_timeout=3000')
+    check()
+    return row
+
+
 def coverage_report(db, captured, included, scope_version):
     global stage
     stage = 'universe_projection'
     # A future scope contract must be reviewed before reducing its input fields.
     if scope_version != 2:
         raise Refused('scope_version_review_required')
-    universe = execute(db, UNIVERSE_SQL, ('universe',)).fetchone()
+    universe = read_universe(db)
     if universe is None or universe[4] is None:
         raise Refused('universe_required')
     revision, source_bytes, row_count, projection_bytes, encoded = universe
@@ -498,6 +513,8 @@ def main():
     if not args.run:
         print(json.dumps({"executed": False, "batch_keys": 256,
                           "diagnostic_selects": 2 if args.diagnose_universe else None,
+                          "universe_projection_timeout_seconds":
+                          3 if args.diagnose_universe else 10,
                           "statement_timeout_seconds": 3, "snapshot_deadline_seconds": 120}))
         return
     if args.output is None or not args.output.is_absolute() or not args.output.parent.is_dir():

@@ -4,6 +4,7 @@ import ast
 import json
 import sys
 from datetime import UTC, datetime
+from types import SimpleNamespace
 
 import pytest
 
@@ -33,6 +34,7 @@ def test_default_is_offline(no_process, monkeypatch, capsys):
     result = json.loads(capsys.readouterr().out)
     assert result == {
         "executed": False, "batch_keys": 256, "diagnostic_selects": None,
+        "universe_projection_timeout_seconds": 10,
         "statement_timeout_seconds": 3, "snapshot_deadline_seconds": 120,
     }
 
@@ -123,15 +125,27 @@ def test_identity_projection_preserves_current_scope_without_full_payload(inner)
     observation = ("2026-01-01T00:00:00Z", 40_000_000, len(rows), len(encoded), encoded)
 
     class DB:
-        def execute(self, query, params):
+        timeout = 3000
+
+        def execute(self, query, params=()):
+            if query in ('SET LOCAL statement_timeout=10000',
+                         'SET LOCAL statement_timeout=3000'):
+                self.timeout = int(query.rsplit('=', 1)[1])
+                return self
             assert query == sql and params == ("universe",)
+            assert self.timeout == 10000
             return self
 
         def fetchone(self):
             return observation
 
     seen = []
-    inner["controls"] = lambda db: {}
+
+    def controls(db):
+        assert db.timeout == 3000
+        return {}
+
+    inner["controls"] = controls
     for name in ("collect", "jobs", "projections"):
         inner[name] = lambda db, codes: seen.append(codes) or {}
     result = inner["coverage_report"](
@@ -215,3 +229,107 @@ def test_cache_numeric_presence_is_not_comparison_validation(inner):
     assert result["comparison_verified"] is None
     assert result["comparison_tested"] == 0
     assert result["comparison_not_verified"] == 2
+
+
+@pytest.mark.parametrize('fail_at', ['projection', 'reset'])
+def test_projection_failure_rolls_back_local_timeout_without_retry_or_leaking_error(
+    inner, monkeypatch, capsys, fail_at,
+):
+    class QueryCanceled(Exception):
+        sqlstate = '57014'
+
+    calls = []
+
+    class DB:
+        timeout = 3000
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            assert self.timeout == 3000
+
+        def execute(self, sql, params=()):
+            calls.append(sql)
+            if sql.startswith('SELECT transaction_timestamp()'):
+                return SimpleNamespace(fetchone=lambda: (
+                    datetime(2026, 1, 1, tzinfo=UTC), 'on', 'repeatable read',
+                ))
+            if sql == 'SET LOCAL statement_timeout=10000':
+                assert self.timeout == 3000
+                self.timeout = 10000
+            elif sql == inner['UNIVERSE_SQL']:
+                assert self.timeout == 10000 and params == ('universe',)
+                if fail_at == 'projection':
+                    raise QueryCanceled('fixture-secret-statement-and-dsn')
+                return SimpleNamespace(fetchone=lambda: None)
+            elif sql == 'SET LOCAL statement_timeout=3000':
+                assert fail_at == 'reset'
+                raise QueryCanceled('fixture-secret-reset')
+            elif sql == 'ROLLBACK':
+                self.timeout = 3000
+            else:
+                assert sql == 'BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY'
+            return self
+
+    def connect(url, **kwargs):
+        assert url == 'postgresql://fixture_non_production'
+        assert kwargs['options'] == (
+            '-c statement_timeout=3000 -c lock_timeout=1000 '
+            '-c idle_in_transaction_session_timeout=10000'
+        )
+        return DB()
+
+    monkeypatch.setitem(sys.modules, 'psycopg', SimpleNamespace(connect=connect))
+    monkeypatch.setitem(sys.modules, 'services.market_dashboard.official_views',
+                        SimpleNamespace(PROJECTION_VERSION=14))
+    inner['os'] = SimpleNamespace(environ={
+        'MARKET_DATABASE_URL': 'postgresql+psycopg://fixture_non_production',
+    })
+    alarms = []
+    inner['signal'] = SimpleNamespace(SIGALRM=14, signal=lambda *args: None, alarm=alarms.append)
+    with pytest.raises(QueryCanceled) as error:
+        inner['main']()
+    assert error.value.sqlstate == '57014'
+    assert inner['stage'] == 'universe_projection'
+    assert inner['queries'] == 2  # SELECT count excludes SET LOCAL / transaction control.
+    assert alarms == [120]
+    assert calls.count(inner['UNIVERSE_SQL']) == 1
+    assert calls[-1] == 'ROLLBACK'
+    assert not capsys.readouterr().out
+
+
+def test_snapshot_deadline_still_applies_after_universe_statement(inner):
+    calls = []
+    checks = 0
+
+    def check():
+        nonlocal checks
+        checks += 1
+        if checks == 3:  # execute() checks elapsed time again after the SELECT.
+            raise inner['Refused']('deadline')
+
+    class DB:
+        def execute(self, query, params=()):
+            calls.append(query)
+            return self
+
+        def fetchone(self):
+            raise AssertionError('expired snapshot must not continue')
+
+    inner['check'] = check
+    with pytest.raises(inner['Refused'], match='deadline'):
+        inner['read_universe'](DB())
+    assert inner['MAX_SECONDS'] == 120
+    assert calls == ['SET LOCAL statement_timeout=10000', inner['UNIVERSE_SQL']]
+    # main() owns rollback on any failure; no other query follows this exception.
+
+
+def test_diagnostic_plan_remains_three_seconds_and_offline(no_process, monkeypatch, capsys):
+    monkeypatch.setattr(sys, 'argv', ['audit_current_coverage.py', '--diagnose-universe'])
+    audit.main()
+    report = json.loads(capsys.readouterr().out)
+    assert report['executed'] is False
+    assert report['diagnostic_selects'] == 2
+    assert report['universe_projection_timeout_seconds'] == 3
+    assert report['snapshot_deadline_seconds'] == 120
