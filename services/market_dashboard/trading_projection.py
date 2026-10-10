@@ -286,6 +286,23 @@ def _flow_has_value(row):
                for field in ('individual', 'foreign', 'institution'))
 
 
+def _section_last_good(rows, normalized, fallback, field):
+    fields = ('volume', 'value') if field == 'trades' else ('balance', 'new', 'repaid', 'ratio')
+    def valid(row):
+        return any(isinstance(row.get(key), (int, float)) and not isinstance(row[key], bool)
+                   and math.isfinite(row[key]) for key in fields)
+    invalid = {row['date'] for row in rows if not valid(row)}
+    retained = _merge_rows(_retained_rows(normalized, field), _retained_rows(fallback, field))
+    if invalid:
+        last_good = _merge_rows(normalized.get(field, {}).get('rows', []),
+                                fallback.get(field, {}).get('rows', []))
+        last_good = [row for row in last_good if row['date'] in invalid and valid(row)]
+        dates = {row['date'] for row in last_good}
+        rows = [row for row in rows if row['date'] not in dates]
+        retained = _merge_rows(last_good, retained)
+    return _merge_rows(rows, retained), bool(invalid)
+
+
 def read_flows(store, code):
     keys = dependencies(code, 'flows')
     def build():
@@ -340,8 +357,10 @@ def read_financing(store, code, period):
             rows = _rows(store, key, source, _cutoff(last, period), last) if last else []
             result[kind] = normalize_rows(endpoint, rows, source,
                                           source.get('status', 'pending'))[kind]
-            retained = _merge_rows(_retained_rows(normalized, kind), _retained_rows(fallback, kind))
-            result[kind]['rows'] = _merge_rows(result[kind]['rows'], retained)
+            result[kind]['rows'], invalid = _section_last_good(
+                result[kind]['rows'], normalized, fallback, kind)
+            if invalid:
+                result[kind]['status'] = 'stale'
         return public_financing(result, period)
     return _stable_read(store, keys, build)
 
@@ -365,9 +384,10 @@ def read_short_selling(store, code, period):
             rows = _rows(store, keys[0], source, _cutoff(last, period), last) if last else []
             result.update(normalize_rows('short-selling', rows, source,
                                          source.get('status', 'pending')))
-            retained = _merge_rows(_retained_rows(normalized, 'trades'),
-                                   _retained_rows(legacy, 'trades'))
-            result['trades']['rows'] = _merge_rows(result['trades']['rows'], retained)
+            result['trades']['rows'], invalid = _section_last_good(
+                result['trades']['rows'], normalized, legacy, 'trades')
+            if invalid:
+                result['trades']['status'] = 'stale'
         return public_short_selling(result, period)
     return _stable_read(store, keys, build)
 
@@ -416,7 +436,7 @@ def _isolated_flows_verified(full):
     return bool(rows) and checked == len(rows)
 
 
-def _reobserved_flow_trace(code, old, new):
+def _reobserved_flow_trace(code, old, new, endpoint='investor-trading'):
     """Equal financial facts may have a later page's document identity.
 
     The original observation is archived in the same commit; none of these
@@ -434,7 +454,7 @@ def _reobserved_flow_trace(code, old, new):
             return False
         address = urlsplit(str(trace.get('source_url', '')))
         if (address.scheme != 'https' or address.netloc != 'openapi.tossinvest.com'
-                or address.path != f'/api/v1/stocks/{code}/investor-trading'):
+                or address.path != f'/api/v1/stocks/{code}/{endpoint}'):
             return False
     try:
         previous = datetime.fromisoformat(old['ingested_at'].replace('Z', '+00:00'))
@@ -475,6 +495,87 @@ def _isolated_flows_retained(code, existing, full):
 def _retained_flow_budget(rows):
     encoded = json.dumps(rows, ensure_ascii=False, sort_keys=True, allow_nan=False)
     return len(rows) <= 200 and len(encoded.encode()) <= 256 * 1024
+
+
+def _section_values_verified(endpoint, full):
+    from .collection import TRADING_SECTIONS, trading_collection_receipt
+    receipts = trading_collection_receipt(endpoint, full)
+    for name, (field, _required) in TRADING_SECTIONS[endpoint].items():
+        section = full.get(field, {})
+        rows = section.get('rows', [])
+        if not rows:
+            if section.get('status') != 'no_data':
+                return False
+            continue
+        if receipts[name]['validated_rows'] != len(rows):
+            return False
+        for row in rows:
+            trace = row.get('source_trace', {})
+            digest = trace.get('source_document_id')
+            if (trace.get('source') != 'toss' or not isinstance(digest, str)
+                    or len(digest) != 64 or any(c not in '0123456789abcdef' for c in digest)):
+                return False
+    return True
+
+
+def _reobserved_sections(code, endpoint, existing, full, fields):
+    """Permit only exact old facts with separately preserved newer-page evidence."""
+    if not _section_values_verified(endpoint, full):
+        return None
+    retained = []
+    for field in fields:
+        old, new = existing[field], full[field]
+        if not isinstance(old, dict) or not isinstance(old.get('rows'), list):
+            return None
+        if ({k: v for k, v in old.items() if k != 'rows'}
+                != {k: v for k, v in new.items() if k != 'rows'}):
+            return None
+        indexed = {row['date']: row for row in new['rows']}
+        if len(indexed) != len(new['rows']):
+            return None
+        seen = set()
+        for row in old['rows']:
+            day = row.get('date')
+            replacement = indexed.get(day)
+            if not day or day in seen or replacement is None:
+                return None
+            seen.add(day)
+            if row == replacement:
+                continue
+            if ({k: v for k, v in row.items() if k != 'source_trace'}
+                    != {k: v for k, v in replacement.items() if k != 'source_trace'}
+                    or not _reobserved_flow_trace(code, row.get('source_trace', {}),
+                                                 replacement.get('source_trace', {}), endpoint)):
+                return None
+            retained.append({'field': field, 'row': row})
+    return retained if _retained_flow_budget(retained) else None
+
+
+def _retain_section_observations(store, db, code, endpoint, observations):
+    """Insert-only evidence archive; duplicate mirrors share identical observations."""
+    from .store import now
+    if store.engine.dialect.name == 'sqlite':
+        from sqlalchemy.dialects.sqlite import insert
+    else:
+        from sqlalchemy.dialects.postgresql import insert
+    encoded_rows = {json.dumps(row, ensure_ascii=False, sort_keys=True, allow_nan=False,
+                               separators=(',', ':')) for row in observations}
+    rows = [json.loads(row) for row in sorted(encoded_rows)]
+    if not _retained_flow_budget(rows):
+        raise TradingProjectionUnavailable('Retained section evidence exceeds budget')
+    payload = {'format': 'retained-toss-section-observations-v1', 'code': code,
+               'source_key': f'toss:{endpoint}:{code}', 'observations': rows}
+    encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True,
+                         allow_nan=False, separators=(',', ':'))
+    key = (f'toss-retained-sections:{endpoint}:{code}:'
+           + hashlib.sha256(encoded.encode()).hexdigest())
+    db.execute(insert(store.snapshots).values(key=key, payload=encoded, updated_at=now())
+               .on_conflict_do_nothing(index_elements=[store.snapshots.c.key]))
+    saved = db.execute(select(store.snapshots.c.payload)
+                       .where(store.snapshots.c.key == key)).scalar_one()
+    if json.loads(saved) != payload:
+        raise TradingProjectionUnavailable('Retained section evidence identity mismatch')
+    return key
 
 
 def _retain_flow_observations(store, db, code, rows):
@@ -633,6 +734,9 @@ def compact_projection(store, code, endpoint, state):
         # Invalidate an old all-or-nothing rejection once; unchanged failures
         # under this policy still avoid repeatedly decoding the full history.
         signature['projection_policy'] = 'isolated-investor-source-v1'
+    section_policy = endpoint in ('credit-trades', 'securities-lending', 'short-selling')
+    if section_policy:
+        signature['projection_policy'] = 'retained-section-observations-v1'
     if not source.get('_series_ref') or not source.get('series_revision'):
         # Do not convert unverified legacy or clear retained last-good values.
         store.put(audit_key, {'status': 'source_unavailable', 'input': signature,
@@ -678,6 +782,8 @@ def compact_projection(store, code, endpoint, state):
         return True
     verification = attempt.get('verification')
     retained_observations = []
+    retained_sections = []
+    section_evidence_verified = marker.get('section_evidence_verified') is True
     if not valid:
         rows = _rows(store, source_key, source)
         if len(rows) != source['row_count']:
@@ -710,6 +816,14 @@ def compact_projection(store, code, endpoint, state):
             if present and projection_field_hash(existing, present) != (
                     projection_field_hash(expected, present)) and not prior_verified:
                 retained = _isolated_flows_retained(code, existing, full) if preserved else None
+                section_retained = (_reobserved_sections(code, endpoint, existing, full, present)
+                                    if section_policy else None)
+                if section_retained is not None:
+                    section_evidence_verified = True
+                    retained_subset = True
+                    retained_sections.extend(section_retained)
+                    verified_hashes[key] = projection_field_hash(existing, present)
+                    continue
                 if retained is not None:
                     retained_subset = True
                     retained_observations.extend(retained)
@@ -725,7 +839,8 @@ def compact_projection(store, code, endpoint, state):
                                               failure=TradingProjectionUnavailable())
                 return True
             verified_hashes[key] = projection_field_hash(existing, present) if present else None
-        verification = {'method': ('retained-toss-values-and-evidence-v1' if retained_observations
+        verification = {'method': ('retained-toss-section-evidence-v1' if retained_sections else
+                                   'retained-toss-values-and-evidence-v1' if retained_observations
                                    else 'retained-toss-row-subset-v1' if retained_subset else
                                    'previous-toss-projection-retained-v1' if prior_verified
                                    else 'full-owned-field-equality-v1'),
@@ -735,7 +850,8 @@ def compact_projection(store, code, endpoint, state):
         if preserved:
             verification['independent_source'] = 'toss-document-and-normalized-values-v1'
     summary = _summary(store, code, endpoint, {**source, 'status': state['status']})
-    if preserved and not _isolated_flows_verified(summary):
+    if ((preserved and not _isolated_flows_verified(summary))
+            or (section_evidence_verified and not _section_values_verified(endpoint, summary))):
         # Leave the last normal summary available to the reader after a bad new
         # page. The live reference may already see that page, so null rows must
         # not overwrite same-date retained observations in read_flows either.
@@ -780,6 +896,12 @@ def compact_projection(store, code, endpoint, state):
                 if retained_key not in retained_keys:
                     retained_keys.append(retained_key)
                 changed.append(retained_key)
+            if retained_sections:
+                retained_key = _retain_section_observations(store, db, code, endpoint,
+                                                            retained_sections)
+                if retained_key not in retained_keys:
+                    retained_keys.append(retained_key)
+                changed.append(retained_key)
             for key, payload in outputs.items():
                 if store.put(key, payload, _connection=db):
                     changed.append(key)
@@ -788,6 +910,7 @@ def compact_projection(store, code, endpoint, state):
             revisions = dict(db.execute(revision_query).all())
             marker = {'input': signature, 'compact': True, 'outputs': revisions,
                       'collection_receipt': receipt,
+                      **({'section_evidence_verified': True} if section_evidence_verified else {}),
                       'preserved_outputs': preserved,
                       'retained_observation_keys': retained_keys,
                       'output_field_hashes': {key: projection_field_hash(outputs[key], fields)
