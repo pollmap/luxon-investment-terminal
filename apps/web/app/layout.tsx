@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PUBLIC_ORIGIN } from "../components/market/public-transport";
 import "./styles.css";
 
 const siteUrl =
@@ -28,8 +29,16 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // Reuse the public transport constant, never a private server/API env value.
+  const api = new URL(PUBLIC_ORIGIN);
+  const preconnect = process.env.MARKET_WEB_OUTPUT === "static" &&
+    ["http:", "https:"].includes(api.protocol) && !api.username && !api.password &&
+    api.origin === PUBLIC_ORIGIN;
   return (
     <html lang="ko">
+      <head>
+        {preconnect && <link rel="preconnect" href={api.origin} crossOrigin="anonymous" />}
+      </head>
       <body>{children}</body>
     </html>
   );

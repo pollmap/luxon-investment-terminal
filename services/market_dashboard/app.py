@@ -859,9 +859,11 @@ def screener(query: Query):
 async def search_index(request: Request):
     from .models import _INITIALS
     store = get_store()
-    def build():
+    def build(revision):
         from .service_scope import universe_view
-        rows = universe_view(store.get('universe', {}))['rows']
+        snapshot = (universe_inputs(store, revision)[0] if revision is not None
+                    else store.get('universe', {}, use_redis=False))
+        rows = universe_view(snapshot)['rows']
         result = []
         for row in sorted(rows, key=lambda r: (-(r.get('cap') or 0), r['code'])):
             aliases = row.get('aliases') or []
@@ -874,10 +876,20 @@ async def search_index(request: Request):
             result.append({**{k: row.get(k) for k in ('code','name','market','logo_url')},
                            'tokens': list(dict.fromkeys(tokens))})
         return {'rows': result}
-    content = await _search_flights.run((store, 'search-index'),
-        lambda: _search_responses.response(store, 'search-index', ('universe',), build))
+    def read():
+        heads = timings.read_revisions(store, ('universe',))
+        revision = heads.get('universe')
+        if not isinstance(revision, str) or not revision:
+            # No known generation: preserve the initial/empty DB response, but
+            # never reuse an earlier universe or cache an unversioned result.
+            body = gzip.compress(json.dumps(build(None), ensure_ascii=False,
+                allow_nan=False, separators=(',', ':')).encode('utf-8'), compresslevel=6, mtime=0)
+            return body, False
+        return _search_responses.response(store, 'search-index', ('universe',),
+            lambda: build(revision), initial_revision=heads), True
+    content, cacheable = await _search_flights.run((store, 'search-index'), read)
     response = encoded_response(content, request)
-    response.headers['Cache-Control'] = 'public, max-age=300'
+    response.headers['Cache-Control'] = 'public, max-age=300' if cacheable else 'no-store'
     return response
 
 

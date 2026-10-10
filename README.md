@@ -63,6 +63,7 @@ pnpm build
 - [출처 공유 저장](docs/SOURCE_TRACE_STORAGE.md) · [거래 자료 저장](docs/TRADING_PROJECTION_STORAGE.md)
 - [외부 백업·복구](docs/PC_OFFSITE_BACKUP.md)
 - [최신 공개 검증](docs/releases/20261010-analysis-window-v124/ACCEPTANCE.md) · [전체 저장 대조](docs/releases/20261010-v113/STORAGE_VALIDATION.md)
+- [2,765종목의 실제 수집 상태](docs/releases/20261010-analysis-window-v124/DATA_STATUS.md) · [독립 복원·변경 자료 적용 범위](docs/releases/20261010-analysis-window-v124/LOCAL_RECOVERY.md)
 - [현재 앱 CI와 로컬 검사](docs/CI.md)
 - [이전 터미널 README](docs/history/LEGACY_TERMINAL_README.md)
 
