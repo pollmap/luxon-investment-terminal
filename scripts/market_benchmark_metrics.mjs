@@ -1,7 +1,7 @@
 // Cached Server-Timing describes the generating request, not this cache hit.
 export function applicationTiming(headers) {
   const cachedOrigin = ['HIT', 'STALE', 'UPDATING', 'REVALIDATED'].includes(headers['x-market-cache']);
-  if (headers['x-market-edge'] === 'HIT' || cachedOrigin) return null;
+  if (headers['x-market-edge'] === 'HIT' || headers['x-market-coalesced'] === '1' || cachedOrigin) return null;
   const match = /\bapp;dur=([\d.]+)/.exec(headers['server-timing'] || '');
   if (!match) return null;
   const value = Number(match[1]);
@@ -18,7 +18,7 @@ const timingNames=['app','revision_wait','revision_db','executor_wait','rows_loc
 const counterNames=[...timingNames.filter(name=>name!=='app'),'rows_built','rows_reused',
   'response_hit','flight_join','revision_join'];
 const rawHeaderNames=['server-timing','x-market-work','x-market-validated-at','date','age',
-  'cache-control','x-market-cache','x-market-edge','x-market-edge-contract','content-encoding'];
+  'cache-control','x-market-cache','x-market-edge','x-market-edge-contract','x-market-coalesced','content-encoding'];
 
 // Diagnostics are observations only. Client and server wall clocks have not
 // been synchronized; a positive budget does not prove an edge cache entry exists.

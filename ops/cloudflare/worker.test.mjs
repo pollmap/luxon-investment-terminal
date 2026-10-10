@@ -51,6 +51,104 @@ async function withRuntime(run,{match,put,upstream,assets}={}){
  finally{await drain();globalThis.fetch=originalFetch;globalThis.caches=originalCaches;}
 }
 
+const deferred=()=>{let resolve;const promise=new Promise(done=>{resolve=done;});return {promise,resolve};};
+const liveHeaders=validated=>({'Content-Type':'application/json','x-market-validated-at':String(validated),
+  'Cache-Control':'no-store','Server-Timing':'app;dur=12','X-Market-Cache':'MISS'});
+
+test('overlapping live misses share only bytes and preserve independent response bodies',async()=>{
+ const gate=deferred(),entered=deferred(),validated=Date.now();
+ await withRuntime(async({request,calls,drain})=>{
+  const first=request('/api/market/v1/search?q=fixture');await entered.promise;
+  const second=request('/api/market/v1/search?q=fixture');
+  await Promise.resolve();gate.resolve();
+  const responses=await Promise.all([first,second]);
+  assert.equal(calls.length,1);
+  assert.deepEqual(await responses[0].json(),{rows:[{code:'005930'}]});
+  assert.deepEqual(await responses[1].clone().json(),{rows:[{code:'005930'}]});
+  assert.deepEqual(await responses[1].json(),{rows:[{code:'005930'}]});
+  assert.equal(responses[1].headers.get('x-market-coalesced'),'1');
+  assert.equal(responses[1].headers.get('x-market-validated-at'),String(validated));
+  assert.equal(responses[1].headers.get('cache-control'),'no-store');await drain();
+ },{match:()=>null,upstream:async()=>{
+  entered.resolve();await gate.promise;
+  return new Response('{"rows":[{"code":"005930"}]}',{headers:liveHeaders(validated)});
+ }});
+});
+
+test('expired source clock, errors and private responses are not shared',async()=>{
+ for(const kind of ['expired','404','private']){
+  const gate=deferred(),entered=deferred(),validated=Date.now()-(kind==='expired'?2000:0);
+  await withRuntime(async({request,calls,stored,drain})=>{
+   const first=request('/api/market/v1/search?q='+kind);await entered.promise;
+   const second=request('/api/market/v1/search?q='+kind);await Promise.resolve();gate.resolve();
+   const responses=await Promise.all([first,second]);
+   for(const response of responses){assert.equal(response.headers.get('x-market-coalesced'),null);await response.text();}
+   await drain();assert.equal(calls.length,2);assert.equal(stored.size,0);
+  },{upstream:async()=>{entered.resolve();await gate.promise;
+   return new Response('{}',{status:kind==='404'?404:200,headers:{...liveHeaders(validated),
+    ...(kind==='private'?{'Cache-Control':'private, no-store'}:{})}});
+  }});
+ }
+});
+
+test('source deadline exhausted while the body arrives cannot be shared or cached',async()=>{
+ const originalNow=Date.now;let clock=10000;Date.now=()=>clock;
+ const bodyGate=deferred(),entered=deferred();let requests=0;
+ try{await withRuntime(async({request,calls,stored,drain})=>{
+  const first=request('/api/market/v1/search?q=body-deadline');await entered.promise;
+  const second=request('/api/market/v1/search?q=body-deadline');await Promise.resolve();
+  clock=11001;bodyGate.resolve();const responses=await Promise.all([first,second]);
+  await Promise.all(responses.map(response=>response.text()));await drain();
+  assert.equal(calls.length,2);assert.equal(stored.size,0);
+  assert(responses.every(response=>response.headers.get('x-market-validated-at')==='10000'));
+ },{upstream:()=>{
+  requests++;entered.resolve();
+  return new Response(requests===1?new ReadableStream({async start(controller){
+   await bodyGate.promise;controller.enqueue(new TextEncoder().encode('{}'));controller.close();
+  }}):'{}',{headers:liveHeaders(10000)});
+ }});}finally{Date.now=originalNow;}
+});
+
+test('query, Origin and conditional representation variants cannot share a pending result',async()=>{
+ const gate=deferred();
+ await withRuntime(async({request,calls,drain})=>{
+  const responses=[
+   request('/api/market/v1/search?q=a&custom=1'),request('/api/market/v1/search?q=a&custom=2'),
+   request('/api/market/v1/search?q=a&custom=1',{Origin:'https://different.test'}),
+   request('/api/market/v1/search?q=a&custom=1',{'If-None-Match':'"other"'}),
+   request('/api/market/v1/search?q=a&custom=1',{'If-Match':'"other"'}),
+   request('/api/market/v1/search?q=a&custom=1',{'If-Unmodified-Since':'Thu, 08 Oct 2026 00:00:00 GMT'}),
+  ];
+  await Promise.resolve();gate.resolve();
+  await Promise.all((await Promise.all(responses)).map(response=>response.text()));await drain();
+  assert.equal(calls.length,6);
+ },{match:()=>null,upstream:async()=>{await gate.promise;return new Response('{}',{headers:liveHeaders(Date.now())});}});
+});
+
+test('oversized live bodies retain the original body and bypass sharing',async()=>{
+ const gate=deferred(),entered=deferred();const body=JSON.stringify('x'.repeat(65536));
+ await withRuntime(async({request,calls,drain})=>{
+  const first=request('/api/market/v1/search?q=large');await entered.promise;
+  const second=request('/api/market/v1/search?q=large');await Promise.resolve();gate.resolve();
+  const responses=await Promise.all([first,second]);
+  for(const response of responses){assert.equal(await response.text(),body);assert.equal(response.headers.get('x-market-coalesced'),null);}
+  await drain();assert.equal(calls.length,2);
+ },{match:()=>null,upstream:async()=>{entered.resolve();await gate.promise;return new Response(body,{headers:liveHeaders(Date.now())});}});
+});
+
+test('rejected owner fetch releases the pending entry and waiters retry independently',async()=>{
+ const gate=deferred(),entered=deferred();let attempts=0;
+ await withRuntime(async({request,calls,drain})=>{
+  const first=request('/api/market/v1/search?q=retry');await entered.promise;
+  const second=request('/api/market/v1/search?q=retry');await Promise.resolve();gate.resolve();
+  const [failed,recovered]=await Promise.all([first,second]);
+  assert.equal(failed.status,502);assert.equal(recovered.status,200);
+  await failed.text();await recovered.text();await drain();assert.equal(calls.length,2);
+  await (await request('/api/market/v1/search?q=retry')).text();assert.equal(calls.length,3);
+ },{match:()=>null,upstream:async()=>{if(++attempts===1){entered.resolve();await gate.promise;throw new Error('fixture abort');}
+  return new Response('{}',{headers:liveHeaders(Date.now())});}});
+});
+
 test('cache hit supports ETag without renewing the browser freshness budget',async()=>{
  await withRuntime(async({request,calls,drain})=>{
   const first=await request('/api/market/v1/search-index');await drain();

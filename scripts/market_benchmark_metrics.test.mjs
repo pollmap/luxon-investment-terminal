@@ -7,6 +7,7 @@ test('origin and edge hits do not count historical app processing as current', (
     assert.equal(applicationTiming({'x-market-cache': state, 'server-timing': 'app;dur=680.12'}), null);
   }
   assert.equal(applicationTiming({'x-market-edge': 'HIT', 'x-market-cache': 'MISS', 'server-timing': 'app;dur=680.12'}), null);
+  assert.equal(applicationTiming({'x-market-coalesced': '1', 'x-market-cache': 'MISS', 'server-timing': 'app;dur=680.12'}), null);
   assert.equal(applicationTiming({'x-market-cache': 'EXPIRED', 'server-timing': 'app;dur=0.00'}), 0);
   assert.equal(applicationTiming({'x-market-cache': 'MISS', 'server-timing': 'app;dur=23.42'}), 23.42);
   assert.equal(applicationTiming({}), null);
@@ -43,6 +44,7 @@ test('cached upstream measurements remain raw evidence but are not current work'
   for(const cache of [
     {'x-market-cache':'HIT'}, {'x-market-cache':'STALE'}, {'x-market-cache':'UPDATING'},
     {'x-market-cache':'REVALIDATED'}, {'x-market-edge':'HIT','x-market-cache':'EXPIRED'},
+    {'x-market-coalesced':'1','x-market-edge':'MISS','x-market-cache':'EXPIRED'},
   ]){
     const result=responseDiagnostics({...cache,'server-timing':'app;dur=500.00, revision_db;dur=30.00',
       'x-market-work':'rows_built=2763','x-market-validated-at':'10000','age':'2'},12000,12001);
