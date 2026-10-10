@@ -16,9 +16,9 @@
 
 ## 현재 상태
 
-2026년 10월 10일 09:13 KST 공개 API·수집기·기존 주소와 Cloudflare 정적 화면은 **v114**입니다. [최신 변경·실제 검증 기록](docs/releases/20261010-v114/ACCEPTANCE.md)에서 구현, 실제 자료, 화면, 공개 반영을 구분합니다. 디스크 부족·중단 시 불완전한 원본 파일이 정상 이름으로 남는 경로를 수정하고, 두 공개 주소 18개 검사와 실제 Linux 파일 저장 검사를 통과했습니다. 원본 무손실 압축과 검증된 중복 백업 정리로 VPS에서 약 3.12GB를 회수했습니다. 삼성전자 OCF TTM 연결 등 [직전 기업 분석 개선](docs/releases/20261010-v113/ACCEPTANCE.md)은 유지합니다.
+2026년 10월 10일 14:07 KST 공개 API·수집기·기존 주소와 Cloudflare 정적 화면은 **v119**입니다. [최신 변경·실제 검증 기록](docs/releases/20261010-read-consistency-v119/ACCEPTANCE.md)에서 구현, 실제 자료, 화면, 공개 반영을 구분합니다. 차트 중복 조회, 수집 현황의 동시 갱신, 오래된 자료가 최신 상태로 표시되는 문제와 종목·차트 주소 복원을 수정했습니다. 관련 로컬 검사 221개, 실제 격리 PostgreSQL 충돌·rollback 검사와 공개 18개 검사를 통과했습니다. 실제 JYP 일봉·투자자 자료의 최신 거래일은 10월 8일로 갱신됐습니다.
 
-09:12:58 KST 수집 작업 기록에서 대상 2,765종목 중 원천 마지막 페이지까지 확인한 일봉은 602종목, 투자자 수급은 344종목입니다. 모든 자료가 완성된 종목 수가 아닙니다. 배포 후 VPS 여유는 약 16.40GB이며 사용률 약 89.40%로 과거 수집 재개 기준인 80% 미만에 아직 못 미칩니다. 최신 갱신과 과거 수집 제한은 별개입니다. 운영 저장 구조 전환, 전체 과거 자료·TTM/분할·배당 근거·실제 장중 수신·공개 성능 목표·실사용 평가 및 CodeQL 경고 검토가 남아 있습니다. [최근 공개 성능 측정](docs/releases/20261010-v110/WEB_SECURITY_UPDATE.md)을 함께 봅니다.
+14:07:17 KST VPS 여유는 약 16.22GB, 사용률 89.517%로 과거 수집의 `capacity_limited`가 유지됩니다. 최신 자료 갱신과 전체 과거 확보는 별개입니다. 독립 백업 복원이 전체 17,014,175행 중 12,819,200행에서 중단되어 운영 테이블 전환·원본 삭제를 수행하지 않았습니다. 전체 과거 자료·TTM/분할·배당 근거·장중 실제 수신·공개 성능 목표·실사용 및 보안 경고 검토가 남아 있습니다. [최근 공개 100동시 측정](docs/releases/20261010-backfill-status-v118/ACCEPTANCE.md)에서는 오류 없이 응답했지만 검색 300ms·상세 500ms 목표를 충족하지 못했습니다. 이를 전체 완료나 전 종목 데이터 완성으로 표시하지 않습니다.
 
 ## 구조
 
@@ -60,7 +60,7 @@ pnpm build
 - [API와 옵션 계약](docs/toss-api-contract.md)
 - [출처 공유 저장](docs/SOURCE_TRACE_STORAGE.md) · [거래 자료 저장](docs/TRADING_PROJECTION_STORAGE.md)
 - [외부 백업·복구](docs/PC_OFFSITE_BACKUP.md)
-- [최신 공개 검증](docs/releases/20261010-v114/ACCEPTANCE.md) · [전체 저장 대조](docs/releases/20261010-v113/STORAGE_VALIDATION.md)
+- [최신 공개 검증](docs/releases/20261010-read-consistency-v119/ACCEPTANCE.md) · [전체 저장 대조](docs/releases/20261010-v113/STORAGE_VALIDATION.md)
 - [현재 앱 CI와 로컬 검사](docs/CI.md)
 - [이전 터미널 README](docs/history/LEGACY_TERMINAL_README.md)
 
