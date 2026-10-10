@@ -2,6 +2,7 @@
 import {useEffect, useId, useMemo, useRef, useState} from "react";
 import type {ComparisonLine} from "./financial-chart";
 import {format, request} from "./types";
+import {writeMarketHistory} from "./market-history";
 import dynamic from "next/dynamic";
 const FinancialChart=dynamic(()=>import("./financial-chart"),{loading:()=> <div className="mk-financial-canvas" style={{height:360}} aria-busy="true"/>});
 const ReportedEps=dynamic(()=>import("./reported-eps"),{loading:()=> <p role="status">공시 실적을 여는 중…</p>});
@@ -53,7 +54,7 @@ export default function ValuationChart({code}:{code:string}){
     try{localStorage.setItem(`market:valuation:${code}`,JSON.stringify(next));}catch{}
     const url=new URL(location.href);
     for(const [key,value] of Object.entries(next)){if(value!=="")url.searchParams.set(`v_${key}`,String(value));else url.searchParams.delete(`v_${key}`);}
-    history.replaceState(history.state,"",url);
+    writeMarketHistory("replace",url);
     window.dispatchEvent(new Event("market-route-change"));
   };
   useEffect(()=>{

@@ -2,6 +2,7 @@
 import {marketFetch} from "./public-transport";
 import {memo, useEffect, useId, useState} from "react";
 import Dialog from "./dialog";
+import {writeMarketHistory} from "./market-history";
 import {API, format, tone} from "./types";
 
 type View = "return" | "drawdown" | "monthly";
@@ -88,7 +89,7 @@ export default memo(function PriceContextPanel({code, name}: {code: string; name
     if (expanded) url.searchParams.set("insight", next.view); else url.searchParams.delete("insight");
     url.searchParams.set("insight_years", String(next.years));
     if (next.day) url.searchParams.set("insight_date", next.day); else url.searchParams.delete("insight_date");
-    history.replaceState(history.state, "", url);
+    writeMarketHistory("replace", url);
     window.dispatchEvent(new Event("market-route-change"));
   }
   function update(patch: Partial<Selection>) {

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, type ReactNode } from "react";
 import { X } from "lucide-react";
+import {writeMarketHistory} from "./market-history";
 let dialogSequence = 0;
 const dialogStack: string[] = [];
 let pendingCloseNavigation=0;
@@ -39,10 +40,10 @@ export default function Dialog({
     const push = () => {
       if (disposed) return;
       dialogStack.push(marker);
-      history.pushState(
-        { ...history.state, __marketDialog: marker },
-        "",
+      writeMarketHistory(
+        "push",
         location.href,
+        { __marketDialog: marker },
       );
       pushed = true;
     };

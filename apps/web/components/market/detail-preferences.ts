@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import {resolveLineInterval, type LineInterval} from "./intraday-line";
+import {writeMarketHistory} from "./market-history";
 
 export type DetailSelection = { tab: string; mode: string; range: number; kind: string; bar: string; period: string; analysis: string; activity: string; lineInterval:LineInterval };
 const defaults: DetailSelection = {tab:"요약",mode:"intraday",range:252,kind:"line",bar:"day",period:"day",analysis:"valuation",activity:"flows",lineInterval:"1min"};
@@ -30,7 +31,7 @@ export function useDetailSelection(code: string, preview: boolean) {
       const query = new URLSearchParams(location.search);
       if (query.get("code") === code) {
         Object.entries(next).forEach(([key, item]) => query.set(key, String(item)));
-        history.replaceState(history.state, "", `${location.pathname}?${query}`);
+        writeMarketHistory("replace", `${location.pathname}?${query}`);
         window.dispatchEvent(new Event("market-route-change"));
       }
     }

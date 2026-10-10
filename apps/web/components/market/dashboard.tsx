@@ -30,6 +30,7 @@ import {
   Menu,
 } from "lucide-react";
 import Dialog, {consumeDialogCloseNavigation} from "./dialog";
+import {detailRouteKeys, writeMarketHistory} from "./market-history";
 import StockTable from "./stock-table";
 import HeaderSearch from "./header-search";
 import {useStockSearch} from "./use-stock-search";
@@ -176,7 +177,7 @@ export default function Dashboard() {
     setReady(true);
     setOffline(!navigator.onLine);
     const pop = () => {
-      if(consumeDialogCloseNavigation()){history.replaceState(history.state,'',location.pathname+routeSearch.current);return;}
+      if(consumeDialogCloseNavigation()){writeMarketHistory("replace",location.pathname+routeSearch.current);return;}
       if (routeSearch.current === location.search) return;
       const n = readRoute();
       setPage(n.page);
@@ -230,16 +231,16 @@ export default function Dashboard() {
     if (page !== "market") p.set("page", page);
     if (code) p.set("code", code);
     if (code && new URLSearchParams(location.search).get("code") === code)
-      for (const key of ["tab", "mode", "range", "kind", "bar", "period", "lineInterval", "analysis", "activity", "insight", "insight_years", "insight_date", "v_metric", "v_basis", "v_years", "v_multiple", "v_mode", "v_frequency", "v_interval", "v_from", "v_to"])
+      for (const key of detailRouteKeys)
         if (new URLSearchParams(location.search).has(key)) p.set(key, new URLSearchParams(location.search).get(key)!);
     if (JSON.stringify(query) !== JSON.stringify(defaultQuery))
       p.set("filters", JSON.stringify(query));
     if (page === "compare" && selected.length)
       p.set("compare", selected.join(","));
-    history.replaceState(
-      {...history.state,marketSelection:selected,marketOffset:offset},
-      "",
+    writeMarketHistory(
+      "replace",
       location.pathname + (p.size ? "?" + p.toString() : ""),
+      {marketSelection:selected,marketOffset:offset},
     );
     routeSearch.current = location.search;
   }, [page, code, query, selected, ready,offset]);
@@ -394,12 +395,16 @@ export default function Dashboard() {
   };
   const returnFromComparison=()=>{const saved=comparisonReturn.current;setPage(saved.page);setOffset(saved.offset);requestAnimationFrame(()=>window.scrollTo(0,saved.scroll));};
   const open = (c: string) => {
-    // Clear a dialog history marker before navigating from its results.
-    if (history.state?.__marketDialog)
-      history.replaceState({}, "", location.href);
     scrollRef.current = window.scrollY;
     focusCode.current = c;
-    history.pushState({}, "", location.pathname + location.search);
+    const next = new URL(location.href);
+    if (next.searchParams.get("code") !== c)
+      detailRouteKeys.forEach(key => next.searchParams.delete(key));
+    next.searchParams.set("code", c);
+    // A search/preview dialog already owns an entry. Reuse it so Back returns
+    // directly to the list, and never enqueue the old URL in the Next router.
+    writeMarketHistory(history.state?.__marketDialog ? "replace" : "push", next, {__marketDialog:undefined});
+    routeSearch.current = location.search;
     setCode(c);
     setModal(null);
     setPreview(null);
