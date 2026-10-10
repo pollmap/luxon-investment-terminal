@@ -257,7 +257,7 @@ def security_analysis_metrics(code: str, request: Request):
             price = aligned_prices(store.metadata(f'bars:{code}:통합:raw',{}), evidence, code)
         return {'code':code, **metric_availability(facts, price, code,
             input_readiness=official.get('metric_input_readiness', []))}
-    return analysis_response(code, request, ('metric-availability-v3',), build,
+    return analysis_response(code, request, ('metric-availability-v4',), build,
                              ['official:'+code,'detail:'+code,'prices:'+code,f'bars:{code}:통합:day',f'bars:{code}:통합:raw','share-basis:'+code,'dart-corporations'])
 
 
@@ -282,7 +282,7 @@ def security_valuation(code: str, request: Request, metric: str = "EPS", basis: 
                                   start=start, end=end, mode=mode, frequency=frequency, interval=interval, venue=selected_venue,session_closes=sessions)
         result["ttm"] = official.get('ttm',{}).get(result['basis'], {'rows':[],'status':'period_evidence_required'})
         return result
-    return analysis_response(code, request, ("valuation-v2", metric, basis, years, multiple, start, end, mode, frequency, interval, venue), build,
+    return analysis_response(code, request, ("valuation-v3", metric, basis, years, multiple, start, end, mode, frequency, interval, venue), build,
                              ["prices:"+code, f"bars:{code}:{venue}:day", f"bars:{code}:KRX:day", f"bars:{code}:통합:day", f"bars:{code}:통합:raw", "detail:"+code, "official:"+code, 'share-basis:'+code, 'dart-corporations'])
 
 

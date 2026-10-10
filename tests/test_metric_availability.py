@@ -73,9 +73,12 @@ def test_actual_annual_and_ttm_ranges_are_separate_from_unverified_observations(
             published_at="2025-05-01",
         ),
     ]
-    m = next(
-        m for m in metric_availability(rows, prices(), "005930")["metrics"] if m["code"] == "OCF"
-    )
+    # Both publications have an observed following session. A price ending in
+    # March cannot certify the TTM first disclosed in May.
+    observed = prices(rows=[{"date": "2025-03-03", "close": 100},
+                            {"date": "2025-05-02", "close": 101}])
+    m = next(m for m in metric_availability(rows, observed, "005930")["metrics"]
+             if m["code"] == "OCF")
     assert m["start"] == "2023-12-31" and m["comparison_start"] == "2024-12-31"
     assert m["comparison_periods"] == 2 and m["comparison_frequencies"] == ["annual", "ttm"]
 

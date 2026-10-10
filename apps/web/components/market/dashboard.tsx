@@ -39,7 +39,7 @@ import MobileList from "./mobile-list";
 import MarketPulse from "./market-pulse";
 import MarketData from "./market-data";
 import MarketExplorer from "./market-explorer";
-const MarketJournal = dynamic(() => import("./market-journal"));
+const MarketJournal = dynamic(() => import("./market-journal"), {loading: () => null});
 import CompanyLogo from "./company-logo";
 import PortablePreferences, {ExportStocks} from "./portable-preferences";
 const StockDetail = dynamic(() => import("./detail"), {

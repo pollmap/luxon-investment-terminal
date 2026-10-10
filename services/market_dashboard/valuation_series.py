@@ -2,17 +2,17 @@
 
 import hashlib
 import json
-from bisect import bisect_right
+from bisect import bisect_left, bisect_right
 from calendar import monthrange
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 
 from .analysis import numeric
+from .analysis_metrics import metric_definition
 from .bars import normalized_prices
 from .financial_dates import publication_date
-from .analysis_metrics import metric_definition
 
-VERSION = "valuation-series-v4"
+VERSION = "valuation-series-v5"
 
 
 def display_periods(rows):
@@ -65,6 +65,64 @@ def comparison_fact_eligible(f, metric, code, price, venue):
                 and price.get('per_share_basis')
                 and f.get('per_share_basis') == price['per_share_basis']
                 and price.get('venue') == venue and venue in ('KRX','NXT','통합'))
+
+
+def effective_date(f, days, mode, session_closes=None):
+    """The same observed session rule serves frequency choice and plotted facts."""
+    period_end = _end(f)
+    if mode == "latest":
+        return period_end
+    published, date_only = publication_date(f)
+    if not published:
+        return None
+    day = published[:10]
+    close = (session_closes or {}).get(day)
+    before_close = bool(not date_only and close and published < close)
+    pos = bisect_left(days, day) if before_close else bisect_right(days, day)
+    return max(period_end, days[pos]) if pos < len(days) else None
+
+
+def comparison_date_status(f, price, days, *, mode="as_known", start=None, end=None,
+                           session_closes=None):
+    """True/False for observed sessions; None means metadata cannot prove overlap.
+
+    Metadata can disprove overlap but never attest an observed trading session.
+    Zero and negative metrics remain usable facts; this gate does not value them.
+    """
+    period_end = _end(f)
+    lower = [period_end]
+    upper = [(date.fromisoformat(period_end) + timedelta(days=550)).isoformat()]
+    for raw, limits in ((start, lower), (end, upper),
+                        (price.get('per_share_basis_start'), lower),
+                        (price.get('per_share_basis_end'), upper)):
+        if raw:
+            limits.append(raw)
+    if days is None:
+        # Bounds are not a calendar. Keep possible intervals unverified without
+        # loading the lifetime price series into the metric-menu response.
+        for key, limits in (("first_time", lower), ("last_time", upper)):
+            try:
+                limits.append(date.fromisoformat(price[key][:10]).isoformat())
+            except (KeyError, TypeError, ValueError):
+                pass
+        if mode == "as_known":
+            published, date_only = publication_date(f)
+            if not published:
+                return False
+            day = date.fromisoformat(published[:10])
+            close = (session_closes or {}).get(day.isoformat())
+            # With no session calendar, a timed same-day publication remains
+            # unknown; a date-only filing can only affect a later trading day.
+            if date_only or (close and published >= close):
+                day += timedelta(days=1)
+            lower.append(day.isoformat())
+        return False if max(lower) > min(upper) else None
+    effective = effective_date(f, days, mode, session_closes)
+    if effective is None:
+        return False
+    lower.append(effective)
+    pos = bisect_left(days, max(lower))
+    return pos < len(days) and days[pos] <= min(upper)
 
 
 def valuation_series(
@@ -137,19 +195,23 @@ def valuation_series(
         # total, or an ordinary-share EPS, is never copied onto a preferred share.
         return comparison_fact_eligible(f, metric, code, price_snapshot, venue)
 
+    days = [p["date"] for p in prices]
     available_candidates = [f for f in candidates if not end or _end(f) <= end]
     latest_period = max((_end(f) for f in available_candidates
                          if f.get('frequency') in ('annual','ttm') and eligible(f)
-                         and (mode=='latest' or (publication_date(f)[0] and (not end or publication_date(f)[0][:10] <= end)))), default=None)
+                         and comparison_date_status(f, price_snapshot, days, mode=mode,
+                             start=start, end=end, session_closes=session_closes)), default=None)
     if frequency == "auto":
         frequency = (
             "ttm"
             if definition['supports_ttm']
-            and any(f.get("frequency") == "ttm" and _end(f) == latest_period and eligible(f) for f in available_candidates)
+            and any(f.get("frequency") == "ttm" and _end(f) == latest_period and eligible(f)
+                    and comparison_date_status(f, price_snapshot, days, mode=mode,
+                        start=start, end=end, session_closes=session_closes)
+                    for f in available_candidates)
             else "annual"
         )
     candidates = [f for f in candidates if f.get("frequency") == frequency]
-    days = [p["date"] for p in prices]
     usable, excluded = [], set()
     annual_table = []
     for f in candidates:
@@ -162,7 +224,7 @@ def valuation_series(
             reason = "share_class_unverified"
         elif not eligible(f):
             reason = "adjustment_or_venue_unverified"
-        published, date_only = publication_date(f)
+        published, _ = publication_date(f)
         if mode == "as_known" and not published:
             reason = reason or "publication_unverified"
         annual_table.append(
@@ -180,21 +242,9 @@ def valuation_series(
         if reason:
             excluded.add(reason)
             continue
-        effective = period_end
-        if mode == "as_known":
-            # Daily closing comparisons. Time-qualified publications received
-            # before the KRX close can affect that close; date-only/after-close
-            # publications apply on the next *observed* trading day.
-            day = published[:10]
-            close = (session_closes or {}).get(day)
-            # Unknown historic session hours use the next observed trading day.
-            before_close = bool(not date_only and close and published < close)
-            pos = bisect_right(days, day) if not before_close else bisect_right(days, day) - 1
-            if before_close and (pos < 0 or days[pos] != day):
-                pos += 1
-            if pos >= len(days):
-                continue
-            effective = max(period_end, days[pos])
+        effective = effective_date(f, days, mode, session_closes)
+        if effective is None:
+            continue
         usable.append(
             {
                 **f,

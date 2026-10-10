@@ -23,6 +23,7 @@ async function fixture(page:Page,{indexCacheHeaders=true,indexFailure=false}:{in
     }
     else if(path==='/search')data={rows:[{code:stock.code,name:stock.name,market:stock.market}]};
     else if(path==='/screener')data={rows:[stock],total:1};
+    else if(path==='/news')data={status:'ready',rows:[{title:'시험용 시장 소식',url:'https://example.invalid/fixture-market-news',publisher:'비운영 시험자료',published_at:'2026-10-08T09:00:00+09:00'}]};
     else if(path==='/overview')data={indices:['KOSPI','KOSDAQ','KPI200'].map(code=>({code,price:100,change:1,market_status:'CLOSE'})),breadth:{up:1,down:0,flat:0},total:1,value:1000,sectors:[],filings:{rows:[],status:'ready'}};
     else if(path==='/securities/005930')data={security:stock,detail:{financials:[],flows:[]},prices:{rows:[]},filings:{rows:[]},official:{company:{},statements:[]}};
     else if(path==='/securities/005930/quote')data=stock;
@@ -36,6 +37,48 @@ async function fixture(page:Page,{indexCacheHeaders=true,indexFailure=false}:{in
   });
   return {calls,subscriptions,count:(path:string)=>calls.filter(value=>value===path).length};
 }
+
+test('market list commits while the news JavaScript chunk is pending',async({page},testInfo)=>{
+  const state=await fixture(page);
+  let releaseNews=()=>{};
+  const gate=new Promise<void>(resolve=>{releaseNews=resolve;});
+  const heldChunks:string[]=[];
+  const heldDeliveries:Promise<void>[]=[];
+  const observations:Record<string,unknown>[]=[];
+  // Identify this compiled component by its stable DOM class, not a changing
+  // build chunk ID. Other JavaScript is delivered unchanged. API data is fixture-only.
+  await page.route('**/_next/static/chunks/**',async route=>{
+    if(!new URL(route.request().url()).pathname.endsWith('.js'))return route.continue();
+    const response=await route.fetch(),body=await response.body();
+    if(body.includes(Buffer.from('mk-market-journal'))){
+      heldChunks.push(new URL(route.request().url()).pathname);
+      const delivery=gate.then(()=>route.fulfill({response,body}));
+      heldDeliveries.push(delivery);
+      return delivery;
+    }
+    await route.fulfill({response,body});
+  });
+  try{
+    await page.goto('/stocks',{waitUntil:'domcontentloaded'});
+    await expect.poll(()=>heldChunks.length,{timeout:20000}).toBeGreaterThan(0);
+    await expect.poll(()=>state.count('/screener'),{timeout:5000}).toBeGreaterThan(0);
+    await expect(page.locator('.mk-stock-link').first()).toContainText('삼성전자');
+    expect(state.count('/news?limit=6')).toBe(0);
+    observations.push({stage:'news_chunk_pending',screener:state.count('/screener'),news:state.count('/news?limit=6'),visible_rows:await page.locator('.mk-stock-link:visible').count()});
+    releaseNews();
+    const news=page.getByRole('region',{name:'시장 소식',exact:true});
+    await expect(news.getByRole('link',{name:/시험용 시장 소식/})).toBeVisible();
+    expect(state.count('/news?limit=6')).toBeGreaterThan(0);
+    await expect(page.locator('.mk-stock-link').first()).toContainText('삼성전자');
+    observations.push({stage:'news_chunk_released',screener:state.count('/screener'),news:state.count('/news?limit=6')});
+  }finally{
+    observations.push({stage:'before_cleanup',screener:state.count('/screener'),news:state.count('/news?limit=6')});
+    await testInfo.attach('news-chunk-observation',{body:JSON.stringify({fixture_non_production:true,heldChunks,observations},null,2),contentType:'application/json'});
+    releaseNews();
+    await Promise.all(heldDeliveries);
+    await page.unroute('**/_next/static/chunks/**');
+  }
+});
 
 test('index day responses are shared, closed detail and hidden pages stop polling',async({page})=>{
   await page.clock.install();const state=await fixture(page);

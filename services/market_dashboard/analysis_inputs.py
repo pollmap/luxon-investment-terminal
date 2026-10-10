@@ -66,10 +66,14 @@ def analysis_prices(store, code, venue, years, start=None, end=None):
 def metric_availability(facts, price, security_code=None, *, input_readiness=()):
     from .analysis import numeric
     from .analysis_metrics import definitions
+    from .bars import normalized_prices
     from .financial_dates import publication_date
-    from .valuation_series import comparison_fact_eligible
+    from .valuation_series import comparison_date_status, comparison_fact_eligible
 
     result = definitions()
+    price_rows = price.get("rows") or []
+    days = ([r["date"] for r in normalized_prices(price_rows)]
+            if price_rows or not price.get("row_count") else None)
     for definition in result["metrics"]:
         code = definition["code"]
         rows = [
@@ -80,7 +84,7 @@ def metric_availability(facts, price, security_code=None, *, input_readiness=())
             and f.get("source_trace")
         ]
         dates = [f["period_end"] for f in rows if f.get("period_end")]
-        verified = [
+        structural = [
             f
             for f in rows
             if numeric(f.get("value")) is not None
@@ -88,6 +92,9 @@ def metric_availability(facts, price, security_code=None, *, input_readiness=())
             and comparison_fact_eligible(f, code, security_code, price, price.get("venue"))
             and publication_date(f)[0]
         ]
+        temporal = [(f, comparison_date_status(f, price, days)) for f in structural]
+        verified = [f for f, eligible in temporal if eligible is not False]
+        dates_verified = bool(verified) and all(eligible is not None for _, eligible in temporal)
         price_available = bool(price.get("row_count") or price.get("rows"))
         if not price_available:
             verified = []
@@ -106,6 +113,8 @@ def metric_availability(facts, price, security_code=None, *, input_readiness=())
         )
         status = (
             "ready"
+            if verified and dates_verified
+            else "dates_unverified"
             if verified
             else "inputs_not_collected"
             if not rows
@@ -113,6 +122,8 @@ def metric_availability(facts, price, security_code=None, *, input_readiness=())
             if not price_available
             else "split_basis_required"
             if not price.get("per_share_basis")
+            else "comparison_dates_unavailable"
+            if structural
             else "comparison_evidence_required"
         )
         if not rows and partial:
@@ -123,10 +134,13 @@ def metric_availability(facts, price, security_code=None, *, input_readiness=())
             "split_basis_required": "주당 기준 확인 중",
             "comparison_evidence_required": "기간·통화·종목 기준 확인 중",
             "partial_period_inputs": "연간·최근 12개월 자료가 부족해요",
+            "dates_unverified": "비교 날짜는 차트에서 확인해요",
+            "comparison_dates_unavailable": "공개 시점과 주식 기준이 겹치는 가격이 없어요",
         }
         definition.update(
             available=bool(rows),
             comparison_available=bool(verified),
+            comparison_dates_verified=dates_verified,
             start=min(dates) if dates else None,
             end=max(dates) if dates else None,
             frequencies=sorted({f.get("frequency", "annual") for f in rows}),

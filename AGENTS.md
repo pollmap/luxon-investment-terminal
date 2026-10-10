@@ -1,13 +1,19 @@
-# LUXON Agent Rules
+# 주식담 Agent Rules
 
 ## Mission
 
-Build LUXON Investment Terminal as a product-grade, source-traced personal
-investment research workspace. The initial operating target is a private,
-single-user Korean-equity beta with prepared US-provider boundaries. The product may use
-FAST Graph-style analytical grammar as a
-workflow reference, but it uses its own code, UI, brand, data model, and
-calculation engine.
+Maintain 주식담, a public Korean-stock information service with no login.
+Support KOSPI/KOSDAQ common and preferred shares on PC and mobile. Toss is the
+only brokerage connection; DART/XBRL, KIND, company IR and verified public
+sources complement its market data. Preserve existing links, watchlists,
+settings, original evidence and restatements.
+
+Exclude KONEX, ETF/ETN/listed trusts, foreign shares, orders/accounts,
+community, proprietary investment scores and dividend reinvestment.
+The repository name and legacy terminal code do not expand this scope.
+Use the selected brand-3 design and existing common components. FAST Graphs
+and other products are workflow references, not sources of generated numbers.
+The user's latest request takes precedence over historical project documents.
 
 ## Non-Negotiables
 
@@ -63,22 +69,28 @@ Recommended audit fields:
 - Reference research is limited to manual observation of public documentation
   and public pages. Do not automate authenticated commercial surfaces, bypass
   access controls, scrape protected DOM/content, or commit third-party captures.
-- Use LUXON design tokens and existing components. Do not hardcode one-off
+- Use the current market app design tokens and existing components. Do not hardcode one-off
   colors, spacing, radius, or typography when a token/component exists.
 - Prefer narrow, verified increments over broad rewrites.
 - Run tests after every implementation slice.
 - Update `DECISIONS.md` when architecture or data contracts change.
-- Local Windows + Docker Compose operation is the beta default. Vercel, Render,
-  and Neon remain optional protected cloud profiles and are not beta gates.
-- Live ingestion runs outside Vercel request paths through CLI or GitHub Actions.
+- Current delivery uses VPS API/DB/collectors and Cloudflare static/edge
+  delivery. Preserve both existing public addresses and other VPS services.
+  Verify current runtime and rollback references before deployment or cleanup.
+  No global Docker pruning, raw-data deletion or paid infrastructure change.
+- Live ingestion runs in shared collectors, outside browser requests.
 - Block or label outputs when source evidence is missing instead of filling gaps
   with synthetic values.
-- Current production bootstrap priority is KR top-market-cap coverage first.
-  AAPL/US fixture paths remain regression coverage unless explicitly promoted
-  with source-backed data.
+- Prioritize visible stocks and current data without abandoning the scoped
+  whole-market history. Record implementation, actual data, browser validation
+  and public deployment separately. Subscription approval is not live-tick proof.
+- AAPL/US and legacy terminal fixtures are regression-only, not product scope.
+- Before reporting data cleanup or recovery complete, verify archive integrity,
+  independent restoration and the current data delta. A dated backup does not
+  authorize deleting or replacing newer source tables.
 
 ## Research Boundary
 
-LUXON is research infrastructure, not an automated trading or investment advice
-system. Forecasting, scorecards, and investor-lens commentary explain
-assumptions and risks; they do not issue trade instructions.
+주식담 presents observed facts and deterministic comparisons. User assumptions,
+company forecasts and reported actuals remain distinct. Do not add trading,
+account operations or investment scores to complete an unrelated task.
