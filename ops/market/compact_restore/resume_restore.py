@@ -22,6 +22,7 @@ from pathlib import Path
 from . import checkpoint as cp
 from . import local_restore as local
 from . import restore_supervisor as supervisor
+from .replay_batch import ReplayBatchSink
 
 
 def cluster_bytes(data, check, maximum):
@@ -170,12 +171,13 @@ def failure_code(error):
     return "cancelled" if isinstance(error, KeyboardInterrupt) else "restore_operation_failed"
 
 
-class ResumeSink(cp.PgBatchSink):
+class ResumeSink(ReplayBatchSink):
     """Capture fixed failure reasons before the frozen coordinator handles them."""
 
     def __init__(self, db, manifest, budget, report):
         super().__init__(ExistingConnection(db), manifest, budget)
         self.report = report
+        self.report.update(self.replay_stats())
 
     def _record(self, error, phase, state=None):
         value = {"code": failure_code(error), "phase": phase}
@@ -196,7 +198,9 @@ class ResumeSink(cp.PgBatchSink):
 
     def consume(self, event, before, after, *, replay):
         try:
-            return super().consume(event, before, after, replay=replay)
+            result = super().consume(event, before, after, replay=replay)
+            self.report.update(self.replay_stats())
+            return result
         except BaseException as error:
             self._record(error, "prefix_replay" if replay else "append_batch", before)
             raise
