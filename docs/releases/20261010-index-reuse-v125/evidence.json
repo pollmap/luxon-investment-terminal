@@ -1,0 +1,331 @@
+{
+  "release": "20261010-index-reuse-v125",
+  "source_commit": "2bb4328a131da8b70254f16f214dd5694fc69af7",
+  "assembled_at": "2026-10-10T07:52:57.236549+00:00",
+  "backend_archive_sha256": "8dd6d52479bf6696938ed1a5b2565445d917e5d38f1a517b7990efa16925c979",
+  "backend_image": "sha256:ede57b3039aec7331832692720ac49bbd2f70ee631617482078775f44cb95e2e",
+  "cloudflare_version": "9f32086c-eae7-4e47-afe8-c292ed7db6a0",
+  "static": {
+    "status": "promoted",
+    "release": "20261010-index-reuse-v125",
+    "files": 73,
+    "bytes": 24338975,
+    "nginx_backup": "/srv/services/korea-stocks/backups/nginx/hannun-20261010T074954319863Z-static-20261010-index-reuse-v125.conf",
+    "web": "stopped",
+    "static_root": "/srv/services/korea-stocks/releases/20261010-index-reuse-v125/static-web",
+    "previous_static": "/srv/services/korea-stocks/releases/20261010-index-reuse-v125/static-web.previous-20261010T074954319863Z",
+    "marker": "/srv/services/korea-stocks/releases/20261010-index-reuse-v125/static-web-deployment.json",
+    "public_root": "/var/www/korea-stocks/releases/20261010-index-reuse-v125-20261010T074954319863Z",
+    "previous_public": "/var/www/korea-stocks/releases/20261010-analysis-window-v124-20261010T071738407598Z",
+    "archive_sha256": "455f6c5c9dae2548b50b9bc53352b458dace2005b8d9abbf6c85a55a413f555c",
+    "nginx_before_sha256": "5f0b84a690b2635422ecca8d427657cba490dcb946d0ac60d9337014965c10ab",
+    "nginx_after_sha256": "5f0b84a690b2635422ecca8d427657cba490dcb946d0ac60d9337014965c10ab"
+  },
+  "public": {
+    "at": "2026-10-10T07:50:41.895212+00:00",
+    "release": "20261010-index-reuse-v125",
+    "verification_commit": "2bb4328a131da8b70254f16f214dd5694fc69af7",
+    "manifest_sha256": "e413135197a630a1f55fd8e1fac0fa5e2a6def7f7273eef8a69b38365542512a",
+    "checks": [
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/build-manifest.json",
+        "status": 200,
+        "exact_bytes": true
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/stocks",
+        "status": 200,
+        "sha256": "57805acc14824ab8b39014cb8f9159f60a5c730fc339173f5ef1d6e07c194a96"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/_next/static/css/56d4c3297aff6eef.css",
+        "status": 200,
+        "sha256": "bfa719c1a38d040e116184ef6b4b2033a0f49b220fc68c7ad0e7ab724e90f802"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/_next/static/chunks/109-915977e5dfcc6a12.js",
+        "status": 200,
+        "sha256": "8455ccb5400bc77e06c67df9d89f28c06cf9b5644840cd946c76c9885cd4b755"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/stocks/fonts/PretendardVariable.woff2",
+        "status": 200,
+        "sha256": "9599f12fd42fc0bce1cd50b47a0c022e108d7aa64dd0d1bb0ed44f3282d900b4"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/health",
+        "status": 200,
+        "bytes": 614
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/search?q=005930",
+        "status": 200,
+        "bytes": 3715
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/search-index",
+        "status": 200,
+        "bytes": 547230
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/securities/005930?view=summary",
+        "status": 200,
+        "bytes": 1868
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/securities/094800?view=summary",
+        "status": 200,
+        "bytes": 1102
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/build-manifest.json",
+        "status": 200,
+        "exact_bytes": true
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/stocks",
+        "status": 200,
+        "sha256": "57805acc14824ab8b39014cb8f9159f60a5c730fc339173f5ef1d6e07c194a96"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/_next/static/css/56d4c3297aff6eef.css",
+        "status": 200,
+        "sha256": "bfa719c1a38d040e116184ef6b4b2033a0f49b220fc68c7ad0e7ab724e90f802"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/_next/static/chunks/109-915977e5dfcc6a12.js",
+        "status": 200,
+        "sha256": "8455ccb5400bc77e06c67df9d89f28c06cf9b5644840cd946c76c9885cd4b755"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/stocks/fonts/PretendardVariable.woff2",
+        "status": 200,
+        "sha256": "9599f12fd42fc0bce1cd50b47a0c022e108d7aa64dd0d1bb0ed44f3282d900b4"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/health",
+        "status": 200,
+        "bytes": 614
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/search?q=005930",
+        "status": 200,
+        "bytes": 3715
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/search-index",
+        "status": 200,
+        "bytes": 547230
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/securities/005930?view=summary",
+        "status": 200,
+        "bytes": 1868
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/securities/094800?view=summary",
+        "status": 200,
+        "bytes": 1102
+      }
+    ],
+    "load_test": false,
+    "fresh_stream_test": false,
+    "identity_indexes": [
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "rows": 2765,
+        "cache_control": "public, max-age=300"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "rows": 2765,
+        "cache_control": "public, max-age=0, must-revalidate"
+      }
+    ],
+    "passed": true
+  },
+  "runtime": {
+    "at": "2026-10-10T07:50:46.762575+00:00",
+    "baseline_at": "2026-10-10T07:18:14.505500+00:00",
+    "disk": {
+      "total": 154894188544,
+      "used": 139367825408,
+      "free": 15509585920
+    },
+    "changed_containers": [
+      "/korea-stocks-market-api-1",
+      "/korea-stocks-market-worker-1"
+    ],
+    "other_containers_mounts_and_schedules_preserved": true
+  },
+  "tests": {
+    "search_cache_related": 90,
+    "final_new_search_cache": 11,
+    "counts_overlap": true,
+    "coverage_audit": 13,
+    "transport_and_preconnect": 22,
+    "static_browser": 4,
+    "typescript": "passed",
+    "eslint_layout": "passed",
+    "build_integrity": "passed",
+    "production_preconnect": "one anonymous existing public origin"
+  },
+  "github_source_ci_success": [
+    38035530254,
+    38035526966
+  ],
+  "dated_restore": {
+    "archive_receipt_sha256": "775f29002e4fe2c3088e87834585df87eab4d0b644ad151bf0532932cb34901e",
+    "archive_sha256": "6c1861479624e5dfac87bdeb767579a818933ac87836b754490fe27cfcdf1c4c",
+    "budget_failure": {
+      "code": "drive_growth_exhausted",
+      "drive_growth_bytes": 4292493312,
+      "elapsed_seconds": 6771.218,
+      "free_bytes": 20361015296,
+      "incoming_bytes": 3906652,
+      "initial_cluster_bytes": 7882223585,
+      "initial_free_bytes": 24653508608,
+      "last_cluster_bytes": 9838562047,
+      "max_growth_bytes": 4294967296,
+      "max_total_cluster_bytes": 12884901888,
+      "reserved_bytes": 0
+    },
+    "cluster_stopped": true,
+    "current_fence_valid": false,
+    "data_equal": false,
+    "database": "market_compact_restore_candidate",
+    "elapsed_seconds": 6773.39,
+    "error_code": "prefix_restore_incomplete",
+    "executed": true,
+    "failure_diagnostic": {
+      "code": "validation_refused",
+      "phase": "append_batch",
+      "sequence": 38228,
+      "series_rows": 15282400,
+      "trace_rows": 8071
+    },
+    "final_guard_error_code": "final_evidence_or_budget_failed",
+    "fixture_non_production": false,
+    "fixture_restore_verified": false,
+    "initial_cluster_bytes": 7882223585,
+    "input_paths_modified": false,
+    "last_observed_cluster_bytes": 9838562047,
+    "max_growth_bytes": 4294967296,
+    "max_seconds": 7200,
+    "max_total_cluster_bytes": 12884901888,
+    "phase": "prefix_restore",
+    "pipe": {
+      "closed": true,
+      "exit_code": 1,
+      "exit_waited": false,
+      "queue_peak_chunks": 4,
+      "restore_verified": false,
+      "state": "consumer_stopped_early",
+      "stderr_bytes": 0,
+      "stdout_bytes": 20939407907,
+      "stdout_eof_consumed": false,
+      "threads_stopped": true
+    },
+    "port": 54433,
+    "prefix": {
+      "archive_sha256": "6c1861479624e5dfac87bdeb767579a818933ac87836b754490fe27cfcdf1c4c",
+      "checkpoint_last_acknowledged": {
+        "prefix_sha256": "a8501bfed983fc2ee2c365a72666f6af1db9b6d8c39d21ff4d8caf4659dd33fb",
+        "sequence": 38228,
+        "series_complete": false,
+        "series_rows": 15282400,
+        "trace_complete": true,
+        "trace_rows": 8071
+      },
+      "checkpoint_reload_required": true,
+      "error_type": "Refused",
+      "restore_verified": false,
+      "state": "interrupted",
+      "stream_complete": false
+    },
+    "previous_evidence_sha256": {
+      "RESULT.json": "b5d906f9552119a4862c2e80d77a529e50b2f254390a003badc571f091764b86",
+      "manifest.json": "0b10db7755472379e07f2f55b9b2741cba5a486277f8bc0f3948d86016f8de47",
+      "ownership.json": "2897d613ba34f9c786aaa468e50872fbf4a6eac9d177b89d67844d1b3e567b5e"
+    },
+    "processes": [
+      {
+        "exit_code": 0,
+        "tool": "postgres"
+      },
+      {
+        "exit_code": 0,
+        "tool": "pg_restore"
+      },
+      {
+        "exit_code": 3,
+        "tool": "pg_ctl"
+      },
+      {
+        "exit_code": 0,
+        "tool": "pg_ctl"
+      },
+      {
+        "exit_code": 0,
+        "tool": "pg_restore"
+      },
+      {
+        "exit_code": 0,
+        "tool": "pg_ctl"
+      },
+      {
+        "exit_code": 0,
+        "tool": "pg_ctl"
+      },
+      {
+        "exit_code": 3,
+        "tool": "pg_ctl"
+      }
+    ],
+    "production_contacted": false,
+    "production_proof": false,
+    "proof_scope": "dated_archive_independent_restore_only",
+    "replay_method": "exact-pk-batch-v1",
+    "replay_validated_series_batches": 32048,
+    "replay_validated_series_rows": 12819200,
+    "restore_verified": false,
+    "source_report_sha256": "f8d7fa1ce899326c3162d0849ac60436d985b5f61655862708b3966bb8eb421b",
+    "state": "interrupted",
+    "stream_error_code": "prefix_restore_interrupted"
+  },
+  "dated_restore_result_sha256": "f178acaeadcf1dd7476fe7d7ecef1fedbedc33aa2cb61fb6c9b2f98db1e652ac",
+  "archive_inputs_hashes_rechecked_after_stop": {
+    "market-targets.dump": "6c1861479624e5dfac87bdeb767579a818933ac87836b754490fe27cfcdf1c4c",
+    "source-report.json": "f8d7fa1ce899326c3162d0849ac60436d985b5f61655862708b3966bb8eb421b",
+    "archive-receipt.json": "775f29002e4fe2c3088e87834585df87eab4d0b644ad151bf0532932cb34901e"
+  },
+  "completion": {
+    "deployed": true,
+    "whole_market_history": false,
+    "dated_full_restore": false,
+    "production_storage_migration": false,
+    "fresh_live_stream": false,
+    "performance_targets": false,
+    "actual_device_and_father_usability": false
+  }
+}
