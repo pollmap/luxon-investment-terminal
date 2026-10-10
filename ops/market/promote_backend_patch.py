@@ -253,6 +253,7 @@ def safe_extract(archive_path, release, frontend=False):
             allowed = (path.parts[:2] == ('services', 'market_dashboard') and len(path.parts) > 2
                 or name in {'ops/market/audit_toss_coverage.py', 'ops/market/promote_backend_patch.py',
                             'ops/market/monitor.py', 'ops/market/backup.py',
+                            'ops/market/retire_duplicate_backup.py',
                             'ops/market/retain_releases.py',
                             'ops/market/enable_financial_traces.py', *RUNTIME_OPERATIONS}
                 or name in RUNTIME_SCRIPTS

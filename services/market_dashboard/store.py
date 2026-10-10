@@ -153,7 +153,7 @@ class Store:
     def raw(self, source, url, content):
         digest = hashlib.sha256(content).hexdigest()
         directory = _raw_source_directory(self.root, source)
-        from .raw_archive import COMPRESSED_SOURCES, save_compressed
+        from .raw_archive import COMPRESSED_SOURCES, atomic_create, save_compressed
         if source in COMPRESSED_SOURCES:
             save_compressed(directory, digest, content, url, now())
             return digest
@@ -186,31 +186,27 @@ class Store:
                 return digest
         # The digest always identifies the exact original bytes, including ZIP/XBRL/PDF.
         binary = directory / f"{digest}.bin"
-        try:
-            with binary.open("xb") as file:
-                file.write(content)
-        except FileExistsError:
-            pass
+        atomic_create(binary, content)
+        if path.exists():
+            return digest
         try:
             payload = content.decode("utf-8") if not content.startswith((b"PK", b"%PDF")) else None
         except UnicodeDecodeError:
             payload = None
-        try:
-            with path.open("x", encoding="utf-8") as file:
-                json.dump(
-                    {
-                        "url": url,
-                        "received_at": now(),
-                        "sha256": digest,
-                        "payload": payload,
-                        "binary_file": binary.name,
-                        "bytes": len(content),
-                    },
-                    file,
-                    ensure_ascii=False,
-                )
-        except FileExistsError:
-            pass
+        # Never create the final metadata name before serialization/write/fsync
+        # succeeds: disk-full or interruption must leave no partial envelope.
+        metadata_bytes = json.dumps(
+            {
+                "url": url,
+                "received_at": now(),
+                "sha256": digest,
+                "payload": payload,
+                "binary_file": binary.name,
+                "bytes": len(content),
+            },
+            ensure_ascii=False,
+        ).encode("utf-8")
+        atomic_create(path, metadata_bytes)
         return digest
 
     def _next_revision(self, proposed):

@@ -40,6 +40,7 @@ def package(destination, frontend=False):
         'ops/market/promote_backend_patch.py',
         'ops/market/monitor.py',
         'ops/market/backup.py',
+        'ops/market/retire_duplicate_backup.py',
         'ops/market/retain_releases.py',
         'ops/market/compact_raw_archives.py',
         'ops/market/enable_financial_traces.py',

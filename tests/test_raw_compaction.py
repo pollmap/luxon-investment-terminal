@@ -1,3 +1,4 @@
+import errno
 import gzip
 import hashlib
 import json
@@ -301,3 +302,76 @@ def test_default_gzip_corruption_exception_contract_is_unchanged(tmp_path):
     (tmp_path / (digest + ".bin.gz")).write_bytes(b"not gzip")
     with pytest.raises(gzip.BadGzipFile):
         read_original(tmp_path, digest)
+
+
+@pytest.mark.parametrize("failed_sync", [1, 2, 3], ids=["original", "legacy", "metadata"])
+def test_compaction_directory_sync_failure_keeps_original_before_removal(
+    tmp_path, monkeypatch, failed_sync,
+):
+    directory, digest, content, envelope, original_metadata = legacy_dart(tmp_path)
+    binary = directory / (digest + ".bin")
+    calls = 0
+
+    def failure(path):
+        nonlocal calls
+        assert path == directory
+        calls += 1
+        if calls == failed_sync:
+            raise OSError(errno.EIO, "fixture directory sync failure")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(raw_archive, "_sync_directory", failure)
+        with pytest.raises(OSError) as error:
+            compact_one(envelope, opt_in_sources={"dart"})
+        assert error.value.errno == errno.EIO
+    assert binary.read_bytes() == content
+    assert read_original_verified(directory, digest) == content
+    compact_one(envelope, opt_in_sources={"dart"})
+    assert not binary.exists()
+    assert read_original_verified(directory, digest) == content
+    preserved = directory / (digest + ".json.legacy.gz")
+    assert gzip.decompress(preserved.read_bytes()) == original_metadata
+
+
+def test_compaction_syncs_publications_before_unlink_and_unlink_afterward(tmp_path, monkeypatch):
+    directory, digest, content, envelope, _ = legacy_dart(tmp_path)
+    binary = directory / (digest + ".bin")
+    events = []
+    original_unlink = raw_archive.Path.unlink
+
+    def sync(path):
+        assert path == directory
+        events.append("directory_fsync")
+
+    def unlink(path, *args, **kwargs):
+        if path == binary:
+            events.append("original_unlink")
+        return original_unlink(path, *args, **kwargs)
+
+    monkeypatch.setattr(raw_archive, "_sync_directory", sync)
+    monkeypatch.setattr(raw_archive.Path, "unlink", unlink)
+    compact_one(envelope, opt_in_sources={"dart"})
+    assert events == ["directory_fsync"] * 3 + ["original_unlink", "directory_fsync"]
+    assert read_original_verified(directory, digest) == content
+
+
+def test_post_unlink_sync_failure_keeps_verified_replacement(tmp_path, monkeypatch):
+    directory, digest, content, envelope, original_metadata = legacy_dart(tmp_path)
+    calls = 0
+
+    def failure(path):
+        nonlocal calls
+        calls += 1
+        if calls == 4:
+            raise OSError(errno.EIO, "fixture unlink directory sync failure")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(raw_archive, "_sync_directory", failure)
+        with pytest.raises(OSError):
+            compact_one(envelope, opt_in_sources={"dart"})
+    assert calls == 4
+    assert not (directory / (digest + ".bin")).exists()
+    assert read_original_verified(directory, digest) == content
+    preserved = directory / (digest + ".json.legacy.gz")
+    assert gzip.decompress(preserved.read_bytes()) == original_metadata
+    assert compact_one(envelope, opt_in_sources={"dart"}) == 0

@@ -85,6 +85,17 @@ def _validate_copies(directory, digest, content):
                 raise ValueError("Duplicated originals differ")
 
 
+def _sync_directory(directory):
+    """Persist publication/removal on POSIX; Windows has no directory fsync here."""
+    if os.name == "nt":
+        return
+    descriptor = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
 def atomic_bytes(path, content):
     pending = None
     try:
@@ -96,6 +107,33 @@ def atomic_bytes(path, content):
             stream.flush()
             os.fsync(stream.fileno())
         pending.replace(path)
+        _sync_directory(path.parent)
+    finally:
+        if pending is not None:
+            pending.unlink(missing_ok=True)
+
+
+def atomic_create(path, content):
+    """Publish complete, durable bytes without replacing an existing original."""
+    if path.exists():
+        return False
+    pending = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            dir=path.parent, prefix=".archive-", delete=False
+        ) as stream:
+            pending = Path(stream.name)
+            stream.write(content)
+            stream.flush()
+            os.fsync(stream.fileno())
+        try:
+            # Same-directory link publication is atomic and create-only on both
+            # NTFS and Linux. Unlike replace(), a concurrent first receipt wins.
+            os.link(pending, path)
+        except FileExistsError:
+            return False
+        _sync_directory(path.parent)
+        return True
     finally:
         if pending is not None:
             pending.unlink(missing_ok=True)
@@ -238,5 +276,6 @@ def compact_one(envelope, *, opt_in_sources=()):
     # Verify the committed envelope and every surviving duplicate before removal.
     read_original_verified(directory, digest)
     binary.unlink(missing_ok=True)
+    _sync_directory(directory)
     after = sum(p.stat().st_size for p in (envelope, compressed, preserved) if p.exists())
     return before - after
