@@ -14,11 +14,11 @@ from zoneinfo import ZoneInfo
 
 from sqlalchemy import text
 
+from .dart_retry import provider_retry_for
 from .eps_calculation import EPS_ACCOUNTS, calculate_ttm_eps, quarters_at
 from .share_basis import valid_evidence
 from .share_basis_review_store import review_index_key
 from .store import now
-from .dart_retry import provider_retry_for
 
 VERSION = "first-share-basis-evidence-v1"
 REPLAY_VERSION = "eps-input-archive-replay-v1"
@@ -31,16 +31,68 @@ def _hash(value):
 
 
 def bootstrap_target(store, reviewed, cursor):
-    """One persistent round-robin slot; already reviewed issuers remain separate."""
+    """Reserve one slot in five for active issuers and pending bound EPS notes."""
+    from .share_basis_bootstrap_notes import BINDINGS
+    from .share_basis_bootstrap_notes import VERSION as notes_version
+
     companies = store.get("dart-corporations", {}).get("codes", {})
+    listed = set(store.listed_codes())
     candidates = sorted(
-        code for code in store.listed_codes() if code not in reviewed and companies.get(code)
+        code for code in listed if code not in reviewed and companies.get(code)
+    )
+    instant = datetime.fromisoformat(now())
+
+    def waiting(value):
+        if not value:
+            return False
+        try:
+            return datetime.fromisoformat(value) > instant
+        except (ValueError, TypeError):
+            return True  # An unreadable retry deadline is not permission to retry.
+
+    pending, inspected = set(), set()
+    for binding in BINDINGS:
+        code = binding["code"]
+        if (
+            code not in listed or code not in reviewed or code in inspected
+            or companies.get(code) != binding["company_id"]
+        ):
+            continue
+        state = store.get("bootstrap-eps-note:" + binding["filing_id"], {})
+        if state.get("status") == "ready" and state.get("version") == notes_version:
+            continue
+        # collect_bootstrap_note returns after the first pending binding. Do not
+        # select a later due note while the earlier one is blocked.
+        inspected.add(code)
+        if waiting(state.get("retry_after")):
+            continue
+        filings = store.get("filing-index:" + code, {}).get("rows", [])
+        if not any(
+            row.get("receipt") == binding["filing_id"]
+            and str(row.get("date", "")).replace("-", "")
+            == binding["published_at"].replace("-", "")
+            for row in filings
+        ):
+            continue
+        directory = store.root / "raw/dart-bootstrap-eps"
+        blocked = False
+        for url_key, hash_key in (("url", "sha256"), ("period_url", "period_sha256")):
+            # An envelope only permits a local replay attempt; the collector
+            # still verifies raw bytes, hashes, identity, periods and class.
+            if not (directory / (binding[hash_key] + ".json")).is_file():
+                if waiting(provider_retry_for(store, binding[url_key]).get("next_at")):
+                    blocked = True
+                    break
+        if not blocked:
+            pending.add(code)
+
+    priority = sorted(
+        pending | (set(candidates) & (set(store.active()) | {b["code"] for b in BINDINGS}))
     )
     if not candidates:
-        return None
-    from .share_basis_bootstrap_notes import BINDINGS
-
-    priority = sorted(set(candidates) & (set(store.active()) | {b["code"] for b in BINDINGS}))
+        # The worker advances its persisted cursor only when a target is
+        # returned, so a reviewed-only queue must work at non-priority slots.
+        return priority[cursor % len(priority)] if priority else None
     if priority and cursor % 5 == 0:
         return priority[(cursor // 5) % len(priority)]
     return candidates[(cursor - (cursor // 5 + 1) if priority else cursor) % len(candidates)]
@@ -340,7 +392,10 @@ async def service_xbrl_intent(source):
 
     store = source.store
     provider_wait = (
-        not source.dart or provider_retry_for(store, "https://opendart.fss.or.kr/api/fnlttXbrl.xml").get("next_at", "") > now()
+        not source.dart
+        or provider_retry_for(store, "https://opendart.fss.or.kr/api/fnlttXbrl.xml").get(
+            "next_at", ""
+        ) > now()
     )
     companies = store.get("dart-corporations", {}).get("codes", {})
     listed = set(store.listed_codes())

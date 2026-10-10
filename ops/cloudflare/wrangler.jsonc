@@ -22,6 +22,6 @@
   },
   "vars": {
     "ORIGIN": "https://stocks.62-171-141-206.sslip.io",
-    "RELEASE": "20261010-storage-resume-v126"
+    "RELEASE": "20261010-ttm-queue-v127"
   }
 }
