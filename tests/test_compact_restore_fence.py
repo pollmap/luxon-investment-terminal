@@ -88,6 +88,25 @@ def test_bundle_is_stdin_and_never_large_argv(monkeypatch):
     assert calls[0][0][:4] == ['docker', 'exec', '-i', '2'*64]
 
 
+def test_inner_error_context_omits_sql_and_preserves_fixed_contract_reason():
+    import ast
+
+    tree = ast.parse(m.INNER)
+    function = next(node for node in tree.body if isinstance(node, ast.FunctionDef)
+                    and node.name == 'failure_details')
+    scope = {}
+    exec(compile(ast.Module(body=[function], type_ignores=[]), '<pure-failure>', 'exec'), scope)
+    describe = scope['failure_details']
+    sql_error = type('QueryCanceled', (Exception,), {'sqlstate': '57014'})('secret SQL values')
+    assert describe(sql_error) == {'state': 'inner_failed', 'error_type': 'QueryCanceled',
+                                   'sqlstate': '57014'}
+    from ops.market.compact_restore.copy_stream import Refused
+
+    reason = 'Invalid decoded trace row'
+    assert describe(Refused(reason))['contract_reason'] == reason
+    assert 'contract_reason' not in describe(ValueError('secret payload'))
+
+
 def test_bad_bundle_or_path_refused():
     cfg = config()
     assert m.validate_bundle(cfg) is cfg

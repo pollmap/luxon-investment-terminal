@@ -160,6 +160,16 @@ handle=None
 def check():
     if time.monotonic()>=deadline:raise RuntimeError('Inner absolute deadline')
 def say(value):print(json.dumps(value),flush=True)
+def failure_details(error):
+    # SQL exceptions can include statements/values. Keep their class and SQLSTATE
+    # only; our own Refused messages are fixed contract strings, never payloads.
+    value={'state':'inner_failed','error_type':type(error).__name__}
+    code=getattr(error,'sqlstate',None)
+    if isinstance(code,str) and len(code)==5 and code.isalnum():value['sqlstate']=code
+    if (type(error).__name__=='Refused'
+            and type(error).__module__.startswith('ops.market.compact_restore.')):
+        value['contract_reason']=str(error)[:200]
+    return value
 say({'state':'inner_started','identity':identity})
 try:
     handle=engine.raw_connection();db=handle.driver_connection;db.autocommit=True
@@ -179,6 +189,9 @@ try:
             else:raise RuntimeError('Unknown command')
     handle.close();handle=None;engine.dispose()
     say({'state':'snapshot_released','identity':identity})
+except Exception as error:
+    say(failure_details(error))
+    raise
 finally:
     if handle is not None:handle.close()
     engine.dispose();done.set()
@@ -367,6 +380,8 @@ class Fence:
             self.phase('snapshot_starting', inner_identity=identity)
             ready = next_json(outputs, min(deadline, self.clock()+90))
             if ready.get('state') != 'snapshot_ready':
+                if ready.get('state') == 'inner_failed':
+                    self.phase('inner_failed', inner_failure=ready)
                 raise Refused('snapshot_not_ready')
             self.phase('snapshot_ready')
             emit(ready)
@@ -402,6 +417,8 @@ class Fence:
                     if result.get('state') != (
                         'source_verified' if action == 'verify' else 'snapshot_released'
                     ):
+                        if result.get('state') == 'inner_failed':
+                            self.phase('inner_failed', inner_failure=result)
                         raise Refused('inner_reply_mismatch')
                     if action == 'release':
                         if not self.end_inner():

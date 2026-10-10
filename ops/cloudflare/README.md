@@ -3,7 +3,9 @@
 `apps/web/out`을 Cloudflare Static Assets와 기존 VPS에 같은 바이트로 배포합니다.
 토스·DART 수집, DB, API와 WebSocket은 VPS에서 실행합니다. Next.js standalone 빌드는 복구용으로 유지합니다.
 
-v98부터 Cloudflare 화면의 공개 조회·CSV·WebSocket은 기존 `stocks.62-171-141-206.sslip.io`로 직접 연결합니다. 추가 WAN 경유와 Worker 동적 요청을 줄이기 위한 선택입니다. `public-transport.ts`와 서버 `public_transport.py`가 정확한 두 공개 Origin만 사용하며 인증정보를 보내지 않습니다. Worker의 API 경로는 기존 링크 호환용입니다. 정적 자산 캐시와 API 캐시는 다른 경로이므로 같은 성능 개선이라고 합산하지 않습니다.
+Cloudflare 화면의 시세·공개 조회·CSV·WebSocket은 기존 `stocks.62-171-141-206.sslip.io`로 직접 연결합니다. 종목 식별 정보만 담는 `/api/market/v1/search-index`는 같은 Cloudflare Origin의 캐시를 먼저 읽습니다. 3초 안에 유효한 응답을 받지 못하면 VPS로 한 번 복구하며 전체 제한은 8초입니다. 다른 조회 경로는 바꾸지 않습니다. `public-transport.ts`와 서버 `public_transport.py`가 정확한 두 공개 Origin만 사용하며 인증정보를 보내지 않습니다. 정적 자산 캐시와 API 캐시는 별도로 측정합니다.
+
+검색 색인은 HTTP 200·JSON 형식·종목 목록 검증을 모두 통과해야 사용합니다. Date/Age를 반영해 최대 5분의 남은 기간만 메모리에 보존하며 캐시 응답을 받았다고 유효 기간을 다시 늘리지 않습니다. 날짜 정보를 확인할 수 없는 VPS 복구 응답은 화면에 사용할 수 있지만 새 메모리 유효 기간을 부여하지 않습니다. 사용자 취소 시에는 재시도하지 않습니다. 4회 사전 조회의 CF 반복 응답은 271.93ms였으나, 이는 검색 p95나 전체 화면 개선 결과가 아닙니다.
 
 v105의 `public-read-v3-origin` 계약은 Origin별 캐시 키로 `Vary: Origin` 응답을 분리합니다. Origin 없는 요청과 문자열 `null`은 다른 키입니다. 응답의 CORS 헤더와 Vary는 보존하고, 다른 Vary·private·인증정보·쿠키는 캐시하지 않습니다. 실제 Worker 캐시 적중을 확인했지만 1초를 넘겨 가격 응답을 재사용하지 않습니다. 이 Worker 변경만으로 직접 VPS 조회를 사용하는 UI 전체가 빨라졌다고 보고하지 않습니다.
 
