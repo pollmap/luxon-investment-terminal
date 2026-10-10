@@ -170,5 +170,53 @@
     "No claim of full data coverage",
     "Frontend-only hotfix; API and worker image unchanged"
   ],
-  "local_compression_report_sha256": "2586708369de8131f3817171ebc241105678cf10e06d2a52711e0844d4dc62e6"
+  "local_compression_report_sha256": "2586708369de8131f3817171ebc241105678cf10e06d2a52711e0844d4dc62e6",
+  "github_ci_after_fixture_fix": {
+    "commit": "bbbc26e4e3952f94eb48355cf58fd42b6d0faf2a",
+    "runs": [
+      {
+        "conclusion": "success",
+        "databaseId": 38016620764,
+        "headSha": "bbbc26e4e3952f94eb48355cf58fd42b6d0faf2a",
+        "name": "Current market app",
+        "status": "completed",
+        "url": "https://github.com/pollmap/luxon-investment-terminal/actions/runs/38016620764"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 38016619463,
+        "headSha": "bbbc26e4e3952f94eb48355cf58fd42b6d0faf2a",
+        "name": "PR #5",
+        "status": "completed",
+        "url": "https://github.com/pollmap/luxon-investment-terminal/actions/runs/38016619463"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 38016617785,
+        "headSha": "bbbc26e4e3952f94eb48355cf58fd42b6d0faf2a",
+        "name": "Current market app",
+        "status": "completed",
+        "url": "https://github.com/pollmap/luxon-investment-terminal/actions/runs/38016617785"
+      }
+    ]
+  },
+  "market_data_state_followup": {
+    "recorded_at": "2026-10-10T02:51:13.018738+00:00",
+    "public_deployed": false,
+    "reason": "Keep the continuous backup/deploy fence until storage work ends.",
+    "files_sha256": {
+      "apps/web/components/market/market-data.tsx": "1b8dd9963640d69eae81b7d2ec79fd5ca2a2f1c5505ef9e0652cc6157e4ddfd8",
+      "apps/web/components/market/market-data-state.ts": "57350552c4111a7ac6cee9f33e3ee4fd68e2870ddc19f0a80296c6207776fe7d",
+      "apps/web/tests/market/market-data-state.node.test.mjs": "f1da622f130886f13b6f835cb788a774fc51c241cddde4dc2e4948aac24033a3"
+    },
+    "checks": {
+      "state_and_visible_query_cases": 12,
+      "typecheck": "passed",
+      "changed_file_eslint": "passed",
+      "static_build": "passed"
+    },
+    "static_manifest_sha256": "da917df7034e59be70ff14abc9ea2bc4f9aafa205f67d1ca8aff7090d7b85477",
+    "static_files": 73,
+    "static_bytes": 24335820
+  }
 }

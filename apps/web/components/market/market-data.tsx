@@ -4,9 +4,8 @@ import {format, tone} from "./types";
 import {useVisibleQuery} from "./use-visible-query";
 import {LinePlot, type Series} from "./market-pulse";
 import {ContextDateControls,CalendarTable,ListingTable,type MarketContext} from "./market-reference";
+import {captureRankingOrder,rankingView,marketDataFailed,type Ranking,type RankingOrder} from "./market-data-state";
 
-type Row={code:string;name:string;rank:number;price:number|null;change:number|null;value:number|null;volume:number|null};
-type Ranking={rows:Row[];status:string;as_of?:string;scope?:string;change_basis?:string};
 const ranks=[['MARKET_TRADING_AMOUNT','시장 거래대금'],['MARKET_TRADING_VOLUME','시장 거래량'],['TOP_GAINERS','상승률'],['TOP_LOSERS','하락률'],['TOSS_SECURITIES_TRADING_AMOUNT','토스 고객 거래대금'],['TOSS_SECURITIES_TRADING_VOLUME','토스 고객 거래량']];
 const durations=[['realtime','실시간'],['1d','하루'],['1w','1주'],['1mo','1개월'],['3mo','3개월'],['6mo','6개월'],['1y','1년']];
 const groups=[['individual','개인'],['foreigner','외국인'],['institution','기관'],['otherCorporation','기타법인']] as const;
@@ -21,23 +20,21 @@ function useMarketData<T>(path:string,initial:T){
 function MarketRankings({onSelect}:{onSelect:(code:string)=>void}){
   const [kind,setKind]=useState(ranks[0][0]),[duration,setDuration]=useState('1d'),[exclude,setExclude]=useState(false);
   const {data,error:failed,retry}=useMarketData<Ranking>(`/rankings?type=${kind}&duration=${duration}&exclude_caution=${exclude}`,{rows:[],status:'pending'});
-  const [frozen,setFrozen]=useState<{key:string;data:Ranking}|null>(null);
+  const [frozen,setFrozen]=useState<RankingOrder|null>(null);
   const key=`${kind}:${duration}:${exclude}`;
-  const error=failed||data.status==='error';
-  // New prices may arrive; preserve the displayed ranking until the reader refreshes.
-  const latest=new Map(data.rows.map(row=>[row.code,row]));
-  const view=frozen?.key===key?{...frozen.data,rows:frozen.data.rows.map(row=>({...row,...latest.get(row.code),rank:row.rank}))}:data;
+  const error=marketDataFailed(data.status,failed);
+  const view=rankingView(data,key,frozen);
   const [visible,setVisible]=useState(20);
-  useEffect(()=>{if(data.rows.length)setFrozen(previous=>previous?.key===key?previous:{key,data});},[data,key]);
+  useEffect(()=>{setFrozen(previous=>captureRankingOrder(previous,key,data));},[data,key]);
   return <section aria-label="기간별 순위">
     <div className="mk-toolbar"><label>순위 <select value={kind} onChange={e=>{setKind(e.target.value);if(e.target.value.startsWith('TOP_')&&duration==='realtime')setDuration('1d');}}>{ranks.map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
       <label>기간 <select value={duration} onChange={e=>setDuration(e.target.value)}>{durations.map(([value,label])=><option key={value} value={value} disabled={value==='realtime'&&kind.startsWith('TOP_')}>{label}</option>)}</select></label>
       <label><input type="checkbox" checked={exclude} onChange={e=>setExclude(e.target.checked)}/> 투자주의 종목 제외</label>
-      <button className="mk-button" onClick={()=>{setFrozen(null);retry();}}>최신 순위 반영</button>
+      <button className="mk-button" onClick={()=>{setFrozen(captureRankingOrder(null,key,data));retry();}}>최신 순위 반영</button>
     </div>
-    {error&&<p role="status">순위를 새로 불러오지 못했어요. <button onClick={retry}>다시 시도</button></p>}{!view.rows.length?<p role="status">{view.status==='pending'?'선택한 순위를 가져오는 중이에요.':'표시할 종목이 없어요.'}</p>:<>
-      <p className="mk-caption">{view.scope} · 등락률은 {view.change_basis} 대비{view.as_of?` · ${view.as_of.slice(0,10)}`:''}</p>
-      <div className="mk-table-scroll" style={{maxHeight:560}}><table className="mk-data-table"><thead><tr><th>순위</th><th>종목</th><th>현재가</th><th>등락률</th><th>거래대금</th><th>거래량</th></tr></thead><tbody>{view.rows.slice(0,visible).map(row=><tr key={row.code}><td>{row.rank}</td><th><button onClick={()=>onSelect(row.code)}>{row.name}</button></th><td>{format(row.price,'price')}</td><td className={tone(row.change)}>{format(row.change,'change')}</td><td>{format(row.value,'value')}</td><td>{format(row.volume,'volume')}</td></tr>)}</tbody></table></div>{view.rows.length>visible&&<button className="mk-button" onClick={()=>setVisible(v=>v+20)}>20개 더 보기</button>}</>}
+    {error&&<p role="status">{view.rows.length?'순위를 갱신하지 못했어요. 마지막 자료예요.':'순위를 불러오지 못했어요.'} <button onClick={retry}>다시 시도</button></p>}{!view.rows.length?(!error&&<p role="status">{view.status==='pending'?'선택한 순위를 가져오는 중이에요.':'표시할 종목이 없어요.'}</p>):<>
+      <p className="mk-caption">{view.scope} · 등락률은 {view.change_basis} 대비{view.as_of&&<> · <time dateTime={view.as_of}>{view.as_of.slice(0,16).replace('T',' ')}</time></>}</p>
+      <div className="mk-table-scroll" style={{maxHeight:560}}><table className="mk-data-table"><thead><tr><th>순위</th><th>종목</th><th>현재가</th><th>등락률</th><th>거래대금</th><th>거래량</th></tr></thead><tbody>{view.rows.slice(0,visible).map(row=><tr key={row.code}><td>{row.rank}</td><th><button onClick={()=>onSelect(row.code)}>{row.name}</button>{row.unranked&&<span className="mk-caption"> · 순위에서 제외</span>}</th><td>{format(row.price,'price')}</td><td className={tone(row.change)}>{format(row.change,'change')}</td><td>{format(row.value,'value')}</td><td>{format(row.volume,'volume')}</td></tr>)}</tbody></table></div>{view.rows.length>visible&&<button className="mk-button" onClick={()=>setVisible(v=>v+20)}>20개 더 보기</button>}</>}
   </section>;
 }
 
@@ -46,8 +43,10 @@ function MarketInvestors(){
   const [visible,setVisible]=useState(30),[breakdown,setBreakdown]=useState(false);
   const columns=breakdown?institutionGroups:groups;
   const {data,error,retry}=useMarketData<{rows:Investor[];status:string;total_rows?:number}>(`/indices/${code}/investors?interval=${interval}&limit=${visible}`,{rows:[],status:'pending'});
+  const failed=marketDataFailed(data.status,error);
   return <section><div className="mk-toolbar"><label>시장 <select value={code} onChange={e=>setCode(e.target.value)}><option value="KOSPI">코스피</option><option value="KOSDAQ">코스닥</option></select></label><label>집계 <select value={interval} onChange={e=>setIntervalValue(e.target.value)}>{[['1d','일별'],['1w','주별'],['1mo','월별'],['1y','연별']].map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label><div className="mk-segment">{([['net','순매수'],['buy','매수'],['sell','매도']] as const).map(([v,l])=><button key={v} aria-pressed={value===v} onClick={()=>setValue(v)}>{l}</button>)}</div><label className="mk-check"><input type="checkbox" checked={breakdown} onChange={e=>setBreakdown(e.target.checked)}/>기관 세부</label><span className="mk-caption">KRX · 억원</span></div>
-    {error?<p role="status">불러오지 못했어요. <button onClick={retry}>다시 시도</button></p>:<div className="mk-table-scroll" style={{maxHeight:560}}><table className="mk-data-table"><thead><tr><th>기준일</th>{columns.map(([g,l])=><th key={g}>{l}</th>)}</tr></thead><tbody>{[...data.rows].reverse().slice(0,visible).map(row=><tr key={row.date}><th>{row.date}</th>{columns.map(([g])=>{const n=(breakdown?row.institutions?.[g]:row[g as typeof groups[number][0]])?.[value];return <td key={g} className={value==='net'?tone(n):''}>{n==null?'—':(n/1e8).toLocaleString('ko-KR',{maximumFractionDigits:1})}</td>;})}</tr>)}</tbody></table>{!data.rows.length&&<p role="status">{data.status==='error'?'불러오지 못했어요. 잠시 후 다시 시도해 주세요.':data.status==='no_data'?'조회된 시장 수급이 없어요.':'시장 수급을 가져오는 중이에요.'}</p>}{(data.total_rows??data.rows.length)>visible&&<button className="mk-button" onClick={()=>setVisible(n=>n+30)}>이전 30개 더 보기</button>}</div>}
+    {failed&&<p role="status">{data.rows.length?'시장 수급을 갱신하지 못했어요. 마지막 자료예요.':'시장 수급을 불러오지 못했어요.'} <button onClick={retry}>다시 시도</button></p>}
+    <div className="mk-table-scroll" style={{maxHeight:560}}><table className="mk-data-table"><thead><tr><th>기준일</th>{columns.map(([g,l])=><th key={g}>{l}</th>)}</tr></thead><tbody>{[...data.rows].reverse().slice(0,visible).map(row=><tr key={row.date}><th>{row.date}</th>{columns.map(([g])=>{const n=(breakdown?row.institutions?.[g]:row[g as typeof groups[number][0]])?.[value];return <td key={g} className={value==='net'?tone(n):''}>{n==null?'—':(n/1e8).toLocaleString('ko-KR',{maximumFractionDigits:1})}</td>;})}</tr>)}</tbody></table>{!data.rows.length&&!failed&&<p role="status">{data.status==='pending'?'시장 수급을 가져오는 중이에요.':'조회된 시장 수급이 없어요.'}</p>}{(data.total_rows??data.rows.length)>visible&&<button className="mk-button" onClick={()=>setVisible(n=>n+30)}>이전 30개 더 보기</button>}</div>
   </section>;
 }
 
