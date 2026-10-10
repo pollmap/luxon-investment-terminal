@@ -5,6 +5,7 @@ import {useVisibleQuery} from "./use-visible-query";
 import {LinePlot, type Series} from "./market-pulse";
 import {ContextDateControls,CalendarTable,ListingTable,type MarketContext} from "./market-reference";
 import {captureRankingOrder,rankingView,marketDataFailed,type Ranking,type RankingOrder} from "./market-data-state";
+import {formatCalendarTime} from "./market-calendar";
 
 const ranks=[['MARKET_TRADING_AMOUNT','시장 거래대금'],['MARKET_TRADING_VOLUME','시장 거래량'],['TOP_GAINERS','상승률'],['TOP_LOSERS','하락률'],['TOSS_SECURITIES_TRADING_AMOUNT','토스 고객 거래대금'],['TOSS_SECURITIES_TRADING_VOLUME','토스 고객 거래량']];
 const durations=[['realtime','실시간'],['1d','하루'],['1w','1주'],['1mo','1개월'],['3mo','3개월'],['6mo','6개월'],['1y','1년']];
@@ -33,7 +34,7 @@ function MarketRankings({onSelect}:{onSelect:(code:string)=>void}){
       <button className="mk-button" onClick={()=>{setFrozen(captureRankingOrder(null,key,data));retry();}}>최신 순위 반영</button>
     </div>
     {error&&<p role="status">{view.rows.length?'순위를 갱신하지 못했어요. 마지막 자료예요.':'순위를 불러오지 못했어요.'} <button onClick={retry}>다시 시도</button></p>}{!view.rows.length?(!error&&<p role="status">{view.status==='pending'?'선택한 순위를 가져오는 중이에요.':'표시할 종목이 없어요.'}</p>):<>
-      <p className="mk-caption">{view.scope} · 등락률은 {view.change_basis} 대비{view.as_of&&<> · <time dateTime={view.as_of}>{view.as_of.slice(0,16).replace('T',' ')}</time></>}</p>
+      <p className="mk-caption">{view.scope} · 등락률은 {view.change_basis} 대비{view.as_of&&<> · <time dateTime={view.as_of}>{formatCalendarTime(view.as_of,'')??view.as_of.slice(0,10)}</time></>}</p>
       <div className="mk-table-scroll" style={{maxHeight:560}}><table className="mk-data-table"><thead><tr><th>순위</th><th>종목</th><th>현재가</th><th>등락률</th><th>거래대금</th><th>거래량</th></tr></thead><tbody>{view.rows.slice(0,visible).map(row=><tr key={row.code}><td>{row.rank}</td><th><button onClick={()=>onSelect(row.code)}>{row.name}</button>{row.unranked&&<span className="mk-caption"> · 순위에서 제외</span>}</th><td>{format(row.price,'price')}</td><td className={tone(row.change)}>{format(row.change,'change')}</td><td>{format(row.value,'value')}</td><td>{format(row.volume,'volume')}</td></tr>)}</tbody></table></div>{view.rows.length>visible&&<button className="mk-button" onClick={()=>setVisible(v=>v+20)}>20개 더 보기</button>}</>}
   </section>;
 }

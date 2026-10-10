@@ -27,7 +27,7 @@ function harness(component,data){
   const components=load('market-data.tsx',{
     react,'./market-data-state':state,'./types':{format:value=>String(value??'—'),tone:()=>''},
     './use-visible-query':{useVisibleQuery:p=>{path=p;return {...result,retry:()=>{retries++;}};}},
-    './market-pulse':{},'./market-reference':{},
+    './market-pulse':{},'./market-reference':{},'./market-calendar':load('market-calendar.ts'),
   },'\nexports.MarketRankings=MarketRankings;exports.MarketInvestors=MarketInvestors;');
   const h={tree:null,update(data,error=false){result={data,error};},render(){
     for(let i=0;i<5;i++){dirty=false;slot=0;h.tree=components[component]({onSelect:()=>{}});for(const fn of pending.splice(0))fn();if(!dirty)return renderToStaticMarkup(h.tree);}
@@ -60,6 +60,14 @@ test('stale ranking stays readable and retry never reorders the rows',()=>{
   h.update({...initial(),status:'stale',rows:[row('000660',1),row('005930',2)]});
   const html=h.render();assert.match(html,/갱신하지 못했어요. 마지막 자료예요/);assert.deepEqual(rows(h),['005930','000660']);
   button(h,'다시 시도').props.onClick();h.render();assert.equal(h.retries,1);assert.deepEqual(rows(h),['005930','000660']);
+});
+
+test('ranked timestamp is displayed in Korea time even across a UTC date boundary',()=>{
+  const h=harness('MarketRankings',{...initial(),as_of:'2026-10-07T23:01:00Z'});
+  const html=h.render();assert.match(html,/>2026-10-08 08:01<\/time>/);
+  assert.match(html,/dateTime="2026-10-07T23:01:00Z"/);
+  h.update({...initial(),as_of:'2026-10-08T09:01:00'});
+  assert.match(h.render(),/>2026-10-08<\/time>/);
 });
 
 test('network failure preserves existing rows with explicit recovery',()=>{

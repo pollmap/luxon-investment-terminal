@@ -201,22 +201,47 @@
     ]
   },
   "market_data_state_followup": {
-    "recorded_at": "2026-10-10T02:51:13.018738+00:00",
+    "recorded_at": "2026-10-10T03:02:38.800357+00:00",
     "public_deployed": false,
     "reason": "Keep the continuous backup/deploy fence until storage work ends.",
     "files_sha256": {
-      "apps/web/components/market/market-data.tsx": "1b8dd9963640d69eae81b7d2ec79fd5ca2a2f1c5505ef9e0652cc6157e4ddfd8",
+      "apps/web/components/market/market-data.tsx": "4706f21e212198d1db795ee45e478ce14c61f36ed4b00bf989730cb72a774474",
       "apps/web/components/market/market-data-state.ts": "57350552c4111a7ac6cee9f33e3ee4fd68e2870ddc19f0a80296c6207776fe7d",
-      "apps/web/tests/market/market-data-state.node.test.mjs": "f1da622f130886f13b6f835cb788a774fc51c241cddde4dc2e4948aac24033a3"
+      "apps/web/tests/market/market-data-state.node.test.mjs": "0622c11017d91967f6a8ad62c6a89b4571684a836719528f97d3f3d00fad6ba4"
     },
     "checks": {
-      "state_and_visible_query_cases": 12,
+      "state_and_visible_query_cases": 13,
       "typecheck": "passed",
       "changed_file_eslint": "passed",
       "static_build": "passed"
     },
-    "static_manifest_sha256": "da917df7034e59be70ff14abc9ea2bc4f9aafa205f67d1ca8aff7090d7b85477",
+    "static_manifest_sha256": "9f8c31c1878de08bf5928df7ad5c3a0d4216f92e5a8c269b220f0a6b508ada16",
     "static_files": 73,
-    "static_bytes": 24335820
+    "static_bytes": 24335818,
+    "timestamp_display": "Reuse Korea-time conversion; do not invent a timezone for offset-free data."
+  },
+  "incoming_upload_cleanup": {
+    "at": "2026-10-10T02:55:03.150171+00:00",
+    "applied": true,
+    "free_before": 16525549568,
+    "free_after": 16777842688,
+    "eligible_allocated": 252293120,
+    "database_or_release_changes": false,
+    "archives": 11
+  },
+  "github_ci_ranking_fix": {
+    "commit": "31c11b0ccd203939b6f074818abcdc60916bc261",
+    "runs": [
+      {
+        "id": 38018496900,
+        "conclusion": "success",
+        "url": "https://github.com/pollmap/luxon-investment-terminal/actions/runs/38018496900"
+      },
+      {
+        "id": 38018493202,
+        "conclusion": "success",
+        "url": "https://github.com/pollmap/luxon-investment-terminal/actions/runs/38018493202"
+      }
+    ]
   }
 }
