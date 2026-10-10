@@ -388,11 +388,16 @@ def security_price_context(code: str, request: Request, years: int = 1,
                                     years=years, start=start, end=end), ["prices:" + code,f"bars:{code}:통합:day"])
 
 
-def rows_with_details(*, check_revision=False):
+def rows_with_details(*, check_revision=False, known_revisions=None):
     from .enriched_view import read as read_enriched
     store = get_store()
     with timings.timed_lock(_rows_lock, 'rows_lock'):
         cached = _rows_cache.get(id(store))
+        # Search already observed these heads for its response-cache check. Reuse
+        # only the exact cached generation; a missing/different generation still
+        # rechecks the DB. Do not extend the timed cache from an older observation.
+        if cached and known_revisions is not None and cached[2] == known_revisions:
+            return cached[1]
         if cached and not check_revision and time.monotonic() - cached[0] < 1:
             return cached[1]
         keys = ("universe", "enriched", "quotes")
@@ -895,15 +900,15 @@ async def search(request: Request, q: str = "", limit: int = 12):
         (store, cache_key),
         lambda: _search_responses.response(
             store, cache_key, source_keys,
-            lambda: search_payload(normalized_q, bounded_limit),
+            lambda: search_payload(normalized_q, bounded_limit, known_revisions=heads),
             initial_revision=heads,
         ),
     )
     return encoded_response(content, request)
 
 
-def search_payload(query, limit):
-    rows, _ = rows_with_details(check_revision=True)
+def search_payload(query, limit, *, known_revisions=None):
+    rows, _ = rows_with_details(check_revision=True, known_revisions=known_revisions)
     result = apply_query(rows, Query(q=query, limit=limit))
     compact_rows = []
     for row in result["rows"]:

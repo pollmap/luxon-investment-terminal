@@ -158,9 +158,9 @@ def test_search_reuses_results_and_invalidates_immediately(detail_client, monkey
     calls = []
     original = market.search_payload
 
-    def counted(query, limit):
+    def counted(query, limit, **kwargs):
         calls.append(query)
-        return original(query, limit)
+        return original(query, limit, **kwargs)
 
     monkeypatch.setattr(market, "search_payload", counted)
     url = market.BASE + "/search?q=ㅅㅅ"
