@@ -14,6 +14,7 @@ from zoneinfo import ZoneInfo
 
 import httpx
 
+from .collection import record_trading_collection, trading_collection_receipt
 from .providers import trace
 from .store import now
 from .time_series import put_series
@@ -631,16 +632,27 @@ class TossCollector:
 
     async def _trading_endpoint(self, code, endpoint, resume, *, pages=1):
         state = None
+        failure = None
         try:
             for index in range(max(1, min(16, int(pages)))):
                 state = await self._trading_page(code, endpoint, resume or index > 0)
                 if not state.get('next_until') or state.get('backfill_complete'):
                     break
+        except Exception as exc:
+            failure = exc
+            raise
         finally:
             # Project once per burst, including validated pages preceding a
             # later failure. Each page already commits its rows and cursor.
-            if state is not None:
-                self._project_trading(code, endpoint, state)
+            try:
+                if state is not None:
+                    self._project_trading(code, endpoint, state)
+            except Exception as exc:
+                failure = exc
+                raise
+            finally:
+                if failure is not None:
+                    record_trading_collection(self.store, code, endpoint, failure=failure)
 
     async def _trading_page(self, code, endpoint, resume):
         key = f'toss:{endpoint}:{code}'
@@ -710,8 +722,17 @@ class TossCollector:
             )
             reusable = bool(revisions)
         if reusable:
+            receipt = marker.get('collection_receipt')
+            if receipt is None:
+                # One-time repair of older markers, using their verified output.
+                # New markers carry this small receipt and never re-read history.
+                payload = self.store.metadata(keys[0], {})
+                receipt = trading_collection_receipt(endpoint, payload)
             self.store.put(marker_key, {**marker, 'outputs': revisions,
+                'collection_receipt': receipt,
                 'skipped': marker.get('skipped', 0) + 1, 'checked_at': now()})
+            record_trading_collection(self.store, code, endpoint, receipt,
+                                      source={**source, 'status': state['status']})
             return
         started = time.perf_counter()
         written = self._write_trading_projection(code, endpoint, state)
@@ -722,11 +743,16 @@ class TossCollector:
         # Record only a fully successful projection. Partial write failures must
         # retry even when the next provider response contains identical values.
         elapsed = round((time.perf_counter() - started) * 1000, 3)
+        receipt = trading_collection_receipt(endpoint, written.get(keys[0], {})) if keys else {}
         self.store.put(marker_key, {'input': signature,
             'outputs': revisions, 'output_field_hashes': expected, 'checked_at': now(),
+            'collection_receipt': receipt,
             'rebuilt': marker.get('rebuilt', 0) + 1,
             'skipped': marker.get('skipped', 0), 'last_build_ms': elapsed,
             'total_build_ms': round(marker.get('total_build_ms', 0) + elapsed, 3)})
+        if revisions:
+            record_trading_collection(self.store, code, endpoint, receipt,
+                                      source={**source, 'status': state['status']})
 
     def _projection_output_revisions(self, fields, expected, trusted_revisions=None):
         keys = tuple(fields)

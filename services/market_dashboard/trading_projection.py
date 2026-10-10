@@ -467,6 +467,7 @@ def compact_projection(store, code, endpoint, state):
     Return True when handled/deferred; False only for unsupported endpoints.
     Parent enables the flag only after every reader/rollback target supports it.
     """
+    from .collection import record_trading_collection, trading_collection_receipt
     from .store import now
     from .toss import projection_field_hash
     if endpoint == 'program-trades':
@@ -487,10 +488,14 @@ def compact_projection(store, code, endpoint, state):
         # Do not convert unverified legacy or clear retained last-good values.
         store.put(audit_key, {'status': 'source_unavailable', 'input': signature,
                              'checked_at': now()})
+        record_trading_collection(store, code, endpoint,
+                                  failure=TradingProjectionUnavailable())
         return True
     output_revisions = {key: before.get(key) for key in owned}
     if (attempt.get('status') == 'legacy_preserved' and attempt.get('input') == signature
             and attempt.get('output_revisions') == output_revisions):
+        record_trading_collection(store, code, endpoint,
+                                  failure=TradingProjectionUnavailable())
         return True
     snapshots = {key: store.metadata(key, {}) for key in owned}
     for key, fields in owned.items():
@@ -506,9 +511,15 @@ def compact_projection(store, code, endpoint, state):
     if valid and marker.get('input') == signature and (
             current_hashes == marker.get('output_field_hashes')):
         if store.revisions(keys) == before:
+            receipt = marker.get('collection_receipt')
+            if receipt is None:
+                receipt = trading_collection_receipt(endpoint, snapshots[next(iter(owned))])
             store.put(marker_key, {**marker, 'skipped': marker.get('skipped', 0) + 1,
+                                  'collection_receipt': receipt,
                                   'checked_at': now(),
                                   'outputs': {key: before[key] for key in owned}})
+            record_trading_collection(store, code, endpoint, receipt,
+                                      source={**source, 'status': state['status']})
         return True
     verification = attempt.get('verification')
     if not valid:
@@ -530,6 +541,8 @@ def compact_projection(store, code, endpoint, state):
                                          'reason': 'owned_fields_not_equivalent',
                                          'input': signature, 'output_revisions': output_revisions,
                                          'checked_at': now()})
+                    record_trading_collection(store, code, endpoint,
+                                              failure=TradingProjectionUnavailable())
                 return True
             verified_hashes[key] = projection_field_hash(existing, present) if present else None
         verification = {'method': ('previous-toss-projection-retained-v1' if prior_verified
@@ -538,6 +551,7 @@ def compact_projection(store, code, endpoint, state):
                         'legacy_field_hashes': verified_hashes,
                         'prior_projection': marker.get('input') if prior_verified else None}
     summary = _summary(store, code, endpoint, {**source, 'status': state['status']})
+    receipt = trading_collection_receipt(endpoint, summary if valid else full)
     outputs = {}
     for key, fields in owned.items():
         updates = {'flows': summary['rows']} if key.startswith('detail:') else summary
@@ -571,6 +585,7 @@ def compact_projection(store, code, endpoint, state):
                 store.snapshots.c.key.in_(tuple(owned)))
             revisions = dict(db.execute(revision_query).all())
             marker = {'input': signature, 'compact': True, 'outputs': revisions,
+                      'collection_receipt': receipt,
                       'output_field_hashes': {key: projection_field_hash(outputs[key], fields)
                                               for key, fields in owned.items()},
                       'rebuilt': marker.get('rebuilt', 0) + 1, 'skipped': marker.get('skipped', 0),
@@ -581,6 +596,9 @@ def compact_projection(store, code, endpoint, state):
                                  'verification': verification,
                                  'checked_at': now()}, _connection=db)
             changed.append(audit_key)
+            record_trading_collection(store, code, endpoint, receipt,
+                                      source={**source, 'status': state['status']}, _connection=db)
+            changed.append('collection:' + code)
     except _CompactionChanged:
         return True
     for key in changed:

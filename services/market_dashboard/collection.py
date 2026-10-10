@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import json
 import math
 import os
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
+
+from sqlalchemy import select
 
 from .store import now
 
@@ -23,6 +26,127 @@ SOURCES = {
     "stock_loan": "신용대주",
 }
 PENDING = {key: {"status": "pending", "source": None} for key in SOURCES}
+
+TRADING_SECTIONS = {
+    "investor-trading": {"flows": (None, ("individual", "foreign", "institution"))},
+    "short-selling": {"short_trades": ("trades", ("volume", "value"))},
+    "credit-trades": {"credit": ("credit", ("balance",)),
+                      "stock_loan": ("stock_loan", ("balance",))},
+    "securities-lending": {"lending": ("lending", ("balance",))},
+}
+
+
+def trading_collection_receipt(endpoint, normalized):
+    """Small receipt from checked normalized values, never from source row counts.
+
+    A compact summary can prove only its inspected dates, not the full history.
+    Zero is a real value; absent/non-finite values cannot certify a section.
+    """
+    result = {}
+    for name, (field, required) in TRADING_SECTIONS.get(endpoint, {}).items():
+        section = normalized.get(field, {}) if field else normalized
+        rows = section.get("rows", [])
+        dates, complete = [], False
+        for row in rows:
+            try:
+                day = date.fromisoformat(row.get("date", "")).isoformat()
+            except (TypeError, ValueError):
+                continue
+            inspected = required + (("new", "repaid", "ratio")
+                                    if name in {"credit", "stock_loan", "lending"} else ())
+            valid = [isinstance(row.get(key), (int, float))
+                     and not isinstance(row[key], bool) and math.isfinite(row[key])
+                     for key in inspected]
+            if any(valid):
+                dates.append(day)
+                complete = complete or all(valid[:len(required)])
+        status = section.get("status")
+        if dates:
+            status = "ready" if complete else "partial"
+        elif rows:
+            status = "error"
+        else:
+            status = "no_data" if status in {"ready", "no_data"} else "error"
+        result[name] = {"status": status, "validated_rows": len(dates),
+                        "period_scope": "checked_normalized_rows"}
+        if dates:
+            result[name].update(as_of=max(dates), period={"start": min(dates), "end": max(dates)})
+        elif rows:
+            result[name]["reason"] = "normalized_values_missing"
+    return result
+
+
+def record_trading_collection(store, code, endpoint, receipt=None, *, source=None,
+                              failure=None, _connection=None):
+    """Merge one projection receipt atomically; retained data is never zero-filled.
+
+    Compact callers use their existing transaction. Legacy callers record after
+    output validation; the marker receipt lets the next unchanged page repair a
+    failed status write without reading the history again.
+    """
+    if endpoint not in TRADING_SECTIONS:
+        return
+    if _connection is None:
+        with store.lock, store.engine.begin() as db:
+            record_trading_collection(store, code, endpoint, receipt, source=source,
+                                      failure=failure, _connection=db)
+        store.notify_changed("collection:" + code)
+        return
+    key = "collection:" + code
+    query = select(store.snapshots.c.payload).where(store.snapshots.c.key == key)
+    if store.engine.dialect.name == "postgresql":
+        query = query.with_for_update()
+    raw = _connection.execute(query).scalar_one_or_none()
+    current = json.loads(raw) if raw else {}
+    sources = {**PENDING, **current.get("sources", {})}
+    source = source or {}
+    stamp = now()
+    for name in TRADING_SECTIONS[endpoint]:
+        previous = sources.get(name, {})
+        retained = previous.get("validated_rows", 0) > 0 or (
+            previous.get("status") in {"ready", "partial", "stale"}
+            and bool(previous.get("as_of")))
+        value = (receipt or {}).get(name)
+        if failure is None and value is None:
+            continue
+        entry = {**previous}
+        if failure is not None:
+            # Preserve dates/last-good receipt, even when the failing request
+            # happened before any successful page in this burst.
+            entry.update(status="stale" if retained else "error",
+                         failed_at=stamp, last_error_at=stamp, error=type(failure).__name__,
+                         source=previous.get("source") or "toss", endpoint=endpoint)
+        else:
+            observed = source.get("status")
+            valid = value.get("validated_rows", 0) > 0
+            entry.update(value, source="toss", endpoint=endpoint)
+            if observed not in {"ready", "no_data"}:
+                entry["status"] = "stale" if valid else (
+                    "rate_limited" if observed == "rate_limited" else "error")
+            # A successful empty section cannot discard an older last-good
+            # collection receipt while the original observations are retained.
+            if not valid and retained:
+                entry = {**previous, "status": "stale", "endpoint": endpoint}
+            entry["backfill_complete"] = (
+                source.get("backfill_complete") is True and not source.get("next_until"))
+            entry["history_status"] = "complete" if entry["backfill_complete"] else "incomplete"
+            entry["history_scope"] = "provider_endpoint_pages"
+            entry["source_revision"] = source.get("series_revision")
+            received = source.get("head_received_at") or source.get("received_at")
+            if valid and entry["status"] in {"ready", "partial"}:
+                if received:
+                    entry["received_at"] = received
+                    entry["last_success_at"] = received
+                entry.pop("error", None)
+                entry.pop("failed_at", None)
+                if "reason" not in value:
+                    entry.pop("reason", None)
+        entry["checked_at"] = stamp
+        sources[name] = entry
+    # Preserve the existing global attempt/success/error clocks. They belong to
+    # several independent collectors and are not this projection's receipt.
+    store.put(key, {**current, "code": code, "sources": sources, "updated_at": stamp},
+              _connection=_connection)
 
 
 def worker_snapshot(worker, *, checked_at=None, max_age_seconds=None):
