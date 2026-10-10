@@ -1,0 +1,29 @@
+{
+  "implementation": true,
+  "public_deployment": false,
+  "provider_recollection": false,
+  "tests": {
+    "kind": "isolated SQLite fixtures",
+    "passed": 97,
+    "receipt_sha256": "28842675632d7069eaaebd77d660ffbd0dd2c98b754c870e4be29534ac642f80"
+  },
+  "source_sha256": {
+    "services/market_dashboard/toss_backfill.py": "f712584a2377bce42290d8eb825beddedb5a965aa4933933acce61f701f914f0",
+    "tests/test_toss_backfill.py": "ebbe9363cb24d8e0446f120b77184127594fe93ed9ae8f045e001855578c7fe0"
+  },
+  "official_contract": {
+    "at": "2026-10-10T03:40:30.794562+00:00",
+    "official_url": "https://openapi.tossinvest.com/openapi-docs/latest/openapi.json",
+    "version": "1.2.24",
+    "document_sha256": "7e753c21dc4b938d8f9610ce3efd6542783018977cb030e39db5a006f5b59d40",
+    "public_get_count": 25,
+    "in_scope_count": 24,
+    "excluded": [
+      "/api/v1/sectors/{sectorId}/etfs"
+    ],
+    "missing_from_allowlist": [],
+    "extra_allowlist_paths": [],
+    "authenticated_calls": 0,
+    "actual_data_or_ui_proof": false
+  }
+}

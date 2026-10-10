@@ -12,6 +12,7 @@ from services.market_dashboard.toss_backfill import (
     burst_pages,
     classify_provider_catalogue_omissions,
     pause_seconds,
+    price_collection_status,
     recent_head,
     resume_history,
 )
@@ -696,3 +697,103 @@ async def test_relisted_code_resumes_preserved_job_cursor(tmp_path):
     assert restored['status'] == 'queued'
     assert restored['next_until'] == 'older-page' and restored['rows'] == 99
     assert restored['reactivated_at']
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(('kind', 'suffix', 'phase', 'adjusted'), [
+    ('history', 'day', 0, True),
+    ('raw-history', 'raw', 6, False),
+])
+async def test_empty_latest_price_page_keeps_job_stale_after_complete_history(
+    tmp_path, kind, suffix, phase, adjusted,
+):
+    store, collector, queue = setup(tmp_path)
+    key = f'bars:000660:통합:{suffix}'
+    job = f'toss-backfill:000660:{kind}'
+    await collector.history('000660', pages=2, adjusted=adjusted)
+    previous_rows = store.get(key)['rows']
+    snapshot = store.metadata(key)
+    assert snapshot['backfill_complete'] and snapshot['row_count'] == 2
+    store.put(key, {**snapshot, 'head_received_at': '2020-01-01T00:00:00+00:00'})
+    original_get = collector.client.get
+    empty_calls = []
+
+    async def empty_head(path, params):
+        empty_calls.append((path, params))
+        return {'candles': [], 'nextBefore': None}, {'source': 'fixture_non_production'}
+
+    collector.client.get = empty_head
+    store.put('toss-backfill-progress', {'cursor': 0, 'phase': phase, 'attempts': 1})
+    assert await queue.step() == 'stale'
+    state = store.get(job)
+    assert state['status'] == state['source_status'] == 'stale'
+    assert state['backfill_complete'] and state['next_before'] is None
+    assert state['rows'] == 2 and store.get(key)['rows'] == previous_rows
+
+    # A same-day visit must not promote the stored stale snapshot to ready.
+    # The normal head-refresh cadence is retained; this does not add retries.
+    old_job = {**state, 'status': 'ready', 'source_status': 'ready'}
+    store.put(job, old_job)
+    store.put('toss-backfill-progress', {'cursor': 0, 'phase': phase, 'attempts': 2})
+    assert await queue.step() == 'stale'
+    assert len(empty_calls) == 1
+    assert store.get(job)['source_status'] == 'stale'
+    assert store.get(f'backfill-status-review:000660:{kind}') == old_job
+    assert store.get(key)['rows'] == previous_rows
+
+    # A later validated head response can recover readiness normally.
+    collector.client.get = original_get
+    store.put(key, {**store.metadata(key), 'head_received_at': '2020-01-01T00:00:00+00:00'})
+    store.put('toss-backfill-progress', {'cursor': 0, 'phase': phase, 'attempts': 3})
+    assert await queue.step() == 'ready'
+    assert store.get(job)['source_status'] == 'ready'
+    assert store.get(key)['rows'] == previous_rows
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(('kind', 'suffix', 'phase', 'adjusted'), [
+    ('history', 'day', 0, True),
+    ('raw-history', 'raw', 6, False),
+])
+async def test_empty_final_old_price_page_finishes_the_job_without_erasing_rows(
+    tmp_path, kind, suffix, phase, adjusted,
+):
+    store, collector, queue = setup(tmp_path)
+    key = f'bars:000660:통합:{suffix}'
+    await collector.history('000660', adjusted=adjusted)
+    previous_rows = store.get(key)['rows']
+    observed = []
+
+    async def empty_last_page(path, params):
+        observed.append(params)
+        return {'candles': [], 'nextBefore': None}, {'source': 'fixture_non_production'}
+
+    collector.client.get = empty_last_page
+    store.put('toss-backfill-progress', {'cursor': 0, 'phase': phase, 'attempts': 1})
+    assert await queue.step() == 'ready'
+    assert observed[0]['before'] == 'older-page'
+    state = store.get(f'toss-backfill:000660:{kind}')
+    assert state['status'] == state['source_status'] == 'ready'
+    assert state['backfill_complete'] and state['next_before'] is None
+    assert state['rows'] == 1 and store.get(key)['rows'] == previous_rows
+
+
+@pytest.mark.parametrize('source_status', ['stale', 'partial', 'error'])
+@pytest.mark.parametrize('complete', [False, True])
+def test_explicit_price_source_failure_is_not_promoted_by_rows_or_old_cursor(
+    source_status, complete,
+):
+    snapshot = {'status': source_status, 'row_count': 500,
+                'backfill_complete': complete, 'next_before': None if complete else 'older-page'}
+    assert price_collection_status(snapshot) == source_status
+
+
+@pytest.mark.parametrize(('snapshot', 'expected'), [
+    ({'status': 'no_data', 'backfill_complete': True}, 'no_data'),
+    ({'status': 'no_data', 'backfill_complete': False, 'next_before': 'older'}, 'collecting'),
+    ({'status': 'ready', 'row_count': 5, 'backfill_complete': True,
+      'next_before': 'older'}, 'collecting'),
+    ({'row_count': 5, 'backfill_complete': True}, 'ready'),
+])
+def test_price_completion_retains_cursor_and_legacy_snapshot_contract(snapshot, expected):
+    assert price_collection_status(snapshot) == expected

@@ -98,6 +98,18 @@ def trading_collection_status(snapshot):
     return 'ready' if snapshot.get('row_count') or snapshot.get('rows') else 'no_data'
 
 
+def price_collection_status(snapshot):
+    """A completed old cursor cannot make a failed latest refresh ready."""
+    # Legacy price snapshots may omit status. Preserve their existing
+    # cursor/count interpretation, but never override an explicit failure.
+    source = snapshot.get('status', 'ready')
+    if source not in ('ready', 'no_data'):
+        return source
+    if not snapshot.get('backfill_complete') or snapshot.get('next_before'):
+        return 'collecting'
+    return 'ready' if snapshot.get('row_count') or snapshot.get('rows') else 'no_data'
+
+
 async def repair_trading_job_statuses(store):
     """Correct old queue interpretations without editing data or cursors."""
     jobs = await asyncio.to_thread(store.list_prefix, 'toss-backfill:')
@@ -351,8 +363,9 @@ class TossBackfill:
                     rows = result.get('rows', [])
                     covered = result.get('backfill_complete') and not result.get('next_before')
                     count=result.get('row_count',len(rows))
-                    status = 'ready' if covered and count else 'no_data' if covered else 'collecting'
+                    status = price_collection_status(result)
                     self.store.put(key, {'status': status, 'rows': count,
+                        'source_status': result.get('status', 'ready'),
                         'first_date':result.get('first_time',rows[0]['date'] if rows else '')[:10] or None,
                         'last_date':result.get('last_time',rows[-1]['date'] if rows else '')[:10] or None,
                         'next_before': result.get('next_before'), 'updated_at': clock,
@@ -360,12 +373,13 @@ class TossBackfill:
                         'failures': 0, 'visits': int(state.get('visits', 0)) + 1, 'target_start': target})
                 else:
                     count = snapshot.get('row_count', len(rows))
-                    status = 'ready' if count else 'no_data'
+                    status = price_collection_status(snapshot)
                     if state.get('status') != status or state.get('rows') != count or not state.get('backfill_complete'):
                         # Another view's collection may have completed this series.
                         # Record evidence without issuing an unnecessary provider call.
                         self.store.put('backfill-status-review:'+code+':'+kind,state)
                         self.store.put(key, {'status':status, 'rows':count,
+                            'source_status':snapshot.get('status', 'ready'),
                             'first_date':str(snapshot.get('first_time') or '')[:10] or None,
                             'last_date':str(snapshot.get('last_time') or '')[:10] or None,
                             'backfill_complete':True, 'next_before':None, 'updated_at':clock,
