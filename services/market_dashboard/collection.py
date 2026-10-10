@@ -36,6 +36,61 @@ TRADING_SECTIONS = {
 }
 
 
+def _locked_collection(store, code, db):
+    """Reserve an absent row, then read under the same cross-process write lock.
+
+    SQLite's INSERT starts the write transaction even when the row exists.
+    PostgreSQL's reservation covers first-writer races; FOR UPDATE serializes
+    merges of an existing row. Never merge through Redis or Store.get caches.
+    """
+    if store.engine.dialect.name == "sqlite":
+        from sqlalchemy.dialects.sqlite import insert
+    elif store.engine.dialect.name == "postgresql":
+        from sqlalchemy.dialects.postgresql import insert
+    else:
+        raise ValueError("Collection receipts require SQLite or PostgreSQL")
+    key = "collection:" + code
+    db.execute(insert(store.snapshots).values(key=key, payload="{}", updated_at=now())
+               .on_conflict_do_nothing(index_elements=[store.snapshots.c.key]))
+    query = select(store.snapshots.c.payload).where(store.snapshots.c.key == key)
+    if store.engine.dialect.name == "postgresql":
+        query = query.with_for_update()
+    return json.loads(db.execute(query).scalar_one())
+
+
+def _received_at(value):
+    try:
+        stamp = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        return stamp if stamp.tzinfo is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _generic_source_update(name, previous, value):
+    """Generic enrichment cannot certify or relabel a checked trading receipt."""
+    endpoint = previous.get("endpoint")
+    validated = previous.get("validated_rows")
+    if (previous.get("source") == "toss"
+            and name in TRADING_SECTIONS.get(endpoint, {})
+            and previous.get("period_scope") == "checked_normalized_rows"
+            and isinstance(validated, int) and not isinstance(validated, bool)
+            and validated > 0):
+        return None
+    before = _received_at(previous.get("received_at"))
+    incoming = _received_at(value.get("received_at"))
+    if before is not None and incoming is not None and incoming < before:
+        return None
+    different_source = (previous.get("source") and value.get("source")
+                        and previous["source"] != value["source"])
+    # A provider switch must not inherit another provider's dates or proof.
+    entry = dict(value) if different_source else {**previous, **value}
+    if not different_source:
+        for field in ("as_of", "received_at"):
+            if entry.get(field) is None and previous.get(field) is not None:
+                entry[field] = previous[field]
+    return entry
+
+
 def trading_collection_receipt(endpoint, normalized):
     """Small receipt from checked normalized values, never from source row counts.
 
@@ -93,11 +148,7 @@ def record_trading_collection(store, code, endpoint, receipt=None, *, source=Non
         store.notify_changed("collection:" + code)
         return
     key = "collection:" + code
-    query = select(store.snapshots.c.payload).where(store.snapshots.c.key == key)
-    if store.engine.dialect.name == "postgresql":
-        query = query.with_for_update()
-    raw = _connection.execute(query).scalar_one_or_none()
-    current = json.loads(raw) if raw else {}
+    current = _locked_collection(store, code, _connection)
     sources = {**PENDING, **current.get("sources", {})}
     source = source or {}
     stamp = now()
@@ -208,37 +259,48 @@ def worker_snapshot(worker, *, checked_at=None, max_age_seconds=None):
     return result
 
 
-def update_collection(store, code, updates=None, *, attempted=False, error=None):
+def update_collection(store, code, updates=None, *, attempted=False, error=None,
+                      _connection=None):
     """Merge durable source results without erasing last-good timestamps on failure."""
-    current = store.get("collection:" + code, {})
+    if _connection is None:
+        with store.lock, store.engine.begin() as db:
+            result = update_collection(store, code, updates, attempted=attempted,
+                                       error=error, _connection=db)
+        store.notify_changed("collection:" + code)
+        return result
+    current = _locked_collection(store, code, _connection)
     sources = {**PENDING, **current.get("sources", {})}
     stamp = now()
+    accepted = {}
     if updates:
         for key, value in updates.items():
             previous = sources.get(key, {"status": "pending"})
-            entry = {**previous, **value}
+            entry = _generic_source_update(key, previous, value)
+            if entry is None:
+                continue
             if entry.get("status") in ("error", "rate_limited"):
                 entry["failed_at"] = stamp
             else:
                 entry.pop("failed_at", None)
             sources[key] = entry
+            accepted[key] = value
     result = {
         **current,
         "code": code,
         "sources": sources,
         "attempts": int(current.get("attempts", 0)) + int(attempted),
         "last_attempt_at": stamp if attempted else current.get("last_attempt_at"),
-        "last_success_at": stamp if updates and any(
+        "last_success_at": stamp if accepted and any(
             value.get("status") in ("ready", "partial", "no_data", "unavailable")
-            for value in updates.values()
+            for value in accepted.values()
         ) else current.get("last_success_at"),
         "updated_at": stamp,
     }
     if error:
         result["last_error"] = error
-    elif updates:
+    elif accepted:
         result.pop("last_error", None)
-    store.put("collection:" + code, result)
+    store.put("collection:" + code, result, _connection=_connection)
     return result
 
 

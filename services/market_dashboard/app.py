@@ -325,7 +325,14 @@ def security_bars(code: str, request: Request, interval: str = "day", start: str
                 date.fromisoformat(bound)
         if start and end and start > end:
             raise ValueError("Invalid date range")
-        data = store.get(f"bars:{code}:{venue}:{'5min' if interval == '5min' else 'raw' if adjustment == 'raw' else 'day'}", {})
+        period = '5min' if interval == '5min' else 'raw' if adjustment == 'raw' else 'day'
+        key = f"bars:{code}:{venue}:{period}"
+        use_openalgo = venue == "통합" and (
+            adjustment == "source" or (interval == "5min" and adjustment == "raw")
+        )
+        # The sidecar reads these same stored bars. Materialize them here only
+        # when its response is unavailable, keeping the original fallback path.
+        data = store.metadata(key, {}) if use_openalgo else store.get(key, {})
         if not data.get("rows") and interval != "5min" and venue == "KRX" and adjustment != "split":
             data = store.get(f"krx-bars:{code}:KRX:raw", {}) or data
         if not data and interval != "5min" and venue == "KRX" and adjustment == "source":
@@ -333,16 +340,28 @@ def security_bars(code: str, request: Request, interval: str = "day", start: str
         if adjustment != "source" and data.get("adjustment") != adjustment:
             data = {}
         transport = "stored"
-        if venue == "통합" and (adjustment == "source" or (interval == "5min" and adjustment == "raw")):
+        if use_openalgo:
             try:
                 remote = history_via_openalgo(code, interval, None, None)
                 if remote is not None:
-                    if not remote and data.get("rows"):
-                        raise ValueError("OpenAlgo returned empty for stored history")
+                    if not remote:
+                        if data.get("_series_ref"):
+                            count = data.get("row_count")
+                            stored_rows = count > 0 if type(count) is int and count >= 0 else bool(
+                                store.time_series.rows(data["_series_ref"], limit=1)
+                            )
+                        else:
+                            stored_rows = bool(data.get("rows"))
+                        if stored_rows:
+                            raise ValueError("OpenAlgo returned empty for stored history")
                     data = {**data, "rows":remote}
                     transport = "openalgo"
             except (httpx.HTTPError, ValueError, KeyError):
                 transport = "stored_fallback"
+            if transport != "openalgo":
+                data = store.get(key, {})
+                if adjustment != "source" and data.get("adjustment") != adjustment:
+                    data = {}
         if interval == "5min":
             rows = [r for r in data.get("rows", []) if (not start or r["date"] >= start) and (not end or r["date"] <= end)]
             return {**data, "rows": rows, "interval": interval, "venue": venue, "transport":transport, "status": data.get("status", "not_collected")}
