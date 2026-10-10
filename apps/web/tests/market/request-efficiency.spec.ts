@@ -1,7 +1,7 @@
 import {test,expect,type Page} from '@playwright/test';
 
 // Non-production fixtures verify requests and navigation, not financial coverage.
-async function fixture(page:Page){
+async function fixture(page:Page,{indexCacheHeaders=true}:{indexCacheHeaders?:boolean}={}){
   // The CI namespace has loopback only. Its OS network state can be offline even
   // though every endpoint below is fulfilled locally; model that fixture state.
   await page.addInitScript(()=>Object.defineProperty(navigator,'onLine',{configurable:true,get:()=>true}));
@@ -23,7 +23,12 @@ async function fixture(page:Page){
     else if(path==='/securities/005930')data={security:stock,detail:{financials:[],flows:[]},prices:{rows:[]},filings:{rows:[]},official:{company:{},statements:[]}};
     else if(path==='/securities/005930/quote')data=stock;
     else if(path.endsWith('/chart'))data={status:'ready',return_pct:1,points:[{time:'20261008090000',value:100},{time:'20261008150000',value:101}]};
-    await route.fulfill({json:data});
+    // Playwright fulfill does not add the upstream Date/Age headers. Use the
+    // page clock so simulated time and the cache freshness contract agree.
+    const headers=path==='/search-index'&&indexCacheHeaders?{
+      Date:await page.evaluate(()=>new Date().toUTCString()),Age:'0','Cache-Control':'public, max-age=300',
+    }:undefined;
+    await route.fulfill({json:data,headers});
   });
   return {calls,subscriptions,count:(path:string)=>calls.filter(value=>value===path).length};
 }
@@ -80,6 +85,18 @@ test('header and keyboard search reuse the identity index without live search ca
   await page.getByRole('dialog').getByRole('textbox',{name:'종목명 또는 코드'}).fill('005930');
   await expect(page.getByRole('dialog').locator('.mk-search-result')).toContainText('삼성전자');
   expect(state.count('/search-index')).toBe(1);expect(state.calls.some(path=>path.startsWith('/search?'))).toBe(false);
+});
+
+test('identity index without an upstream date remains usable but is not memory cached',async({page})=>{
+  const state=await fixture(page,{indexCacheHeaders:false});await page.goto('/stocks');
+  await page.getByRole('combobox',{name:'종목명 또는 코드 검색'}).fill('삼성전자');
+  await expect(page.getByRole('listbox',{name:'검색 결과'}).getByRole('option')).toContainText('삼성전자');
+  expect(state.count('/search-index')).toBe(1);
+  await page.keyboard.press('Escape');await page.keyboard.press('Control+k');
+  await page.getByRole('dialog').getByRole('textbox',{name:'종목명 또는 코드'}).fill('005930');
+  await expect(page.getByRole('dialog').locator('.mk-search-result')).toContainText('삼성전자');
+  expect(state.count('/search-index')).toBe(2);
+  expect(state.calls.some(path=>path.startsWith('/search?'))).toBe(false);
 });
 
 test('failed metric or basis changes never reuse another selection as verified analysis',async({page})=>{
