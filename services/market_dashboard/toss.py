@@ -649,10 +649,14 @@ class TossCollector:
         if resume and previous.get('next_until'):
             params['until'] = previous['next_until']
         data, evidence = await self.client.get(f'/api/v1/stocks/{code}/{endpoint}', params)
+        # Only an explicit records array can prove an empty final page. A
+        # malformed response must not erase the durable continuation cursor.
+        if not isinstance(data, dict) or not isinstance(data.get('records'), list):
+            raise ValueError('Trading records must be an array')
         evidence = {**evidence,'scope':'통합' if endpoint=='investor-trading' else 'KRX' if endpoint=='program-trades' else '국내','unit':'주'}
         if data.get('symbol') and data['symbol'] != code:
             raise ValueError('Trading security mismatch')
-        observed = data.get('records', [])
+        observed = data['records']
         cursor = data.get('nextUntil')
         if params.get('until') and cursor == params['until']:
             raise ValueError('Trading history cursor did not advance')

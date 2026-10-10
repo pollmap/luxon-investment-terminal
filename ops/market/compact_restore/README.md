@@ -1,6 +1,6 @@
 # 시계열·공유 출처 압축 복원 구성요소
 
-검증한 실험 코드를 유지보수 가능한 패키지로 옮겼습니다. **운영 실행을 조율하는 도구는 아직 없습니다.** 이 패키지만으로 운영 백업의 독립 복원, 테이블 전환, 공간 회수가 완료되지는 않습니다.
+검증한 실험 코드를 유지보수 가능한 패키지로 옮겼습니다. 원본 스냅샷 검증과 **새 로컬 DB로의 명시적 복원 실행**을 지원합니다. 운영 수집기 정지·백업·테이블 전환을 함께 조율하는 도구는 아직 검토 중이며, 이 패키지의 복원 성공만으로 운영 전환과 공간 회수가 완료되지는 않습니다.
 
 저장소 루트에서 다음 명령은 준비 상태만 출력합니다. DB 연결·프로세스 실행·파일 쓰기를 하지 않으며 `--run`·`--apply` 옵션은 받지 않습니다.
 
@@ -15,6 +15,8 @@
 | `checkpoint.py` | 같은 트랜잭션 안에서 작은 배치와 체크포인트를 기록합니다. 재개 시 보존된 앞부분의 모든 행을 대조합니다. |
 | `restore_supervisor.py` | 고정 `pg_restore --file=-` 명령의 바이너리 출력을 제한된 큐로 전달하고 실제 종료코드를 확인합니다. 시간·출력 상한과 취소 시 자신이 시작한 자식만 종료합니다. |
 | `ordered_verify.py` | 읽기 전용 스냅샷에서 C 정렬 기준으로 전체 키·논리 JSON·기존 공유 출처·인덱스를 독립 대조합니다. |
+| `source_snapshot.py` | 두 원본 표의 구조·주인·PK·의존성을 확인하고 실제로 내보낸 PostgreSQL 스냅샷에서 모든 값과 원래 출처 목록을 기록합니다. 호출자가 연결과 외부 쓰기 중단을 관리합니다. |
+| `local_restore.py` | 해시로 연결된 아카이브·수신 기록·원본 검증 결과를 새 로컬 PG17에 복원하고 전체 대조 후 해당 클러스터를 종료합니다. 명시적 `--run` 없이는 연결하지 않습니다. |
 
 `VerifiedArchive`는 호출자가 전체 파일을 해시 검증한 결과와 전후 stat을 받습니다. stat 일치는 전체 해시 검증을 대신하지 않습니다. `restore_prefix`도 아카이브 전체 해시를 전후 확인합니다. TOC는 정확히 `market_source_traces`와 `market_time_series`의 TABLE DATA 두 항목을 그 순서로 선택해야 합니다. 덤프의 SQL은 실행하지 않습니다.
 
@@ -22,7 +24,31 @@
 
 기본 보호값은 배치 400행·16MiB 이하, 복원 볼륨의 계획 증가량 외 6GiB 여유입니다. `PgBatchSink`는 지정한 새 로컬 후보 DB·포트·data directory만 받아 연결 identity를 검사합니다. DB의 잠긴 호출·COMMIT과 전체 검증의 중단은 호출자가 별도로 보장해야 합니다. 프로세스 감독만으로 DB 트랜잭션의 hard deadline까지 보장하지는 않습니다.
 
-앞으로 필요한 운영 실행 도구는 현재의 쓰기 차단과 최신 백업 증거, 실제 대상 identity, 고정 TOC 생성, 전체 원본 검증, 취소·자원 상한, 독립 복원 결과를 함께 묶어야 합니다. 인증·DSN·수신 시각·해시를 꾸며 넣거나 수동 성공 receipt로 이 조건을 대신하지 않습니다. 공유 출처 교체·삭제, 운영 전환·원본 삭제는 이 패키지의 범위 밖입니다.
+### 독립 로컬 복원
+
+기본 조회는 오프라인입니다.
+
+```powershell
+.venv/Scripts/python.exe -m ops.market.compact_restore.local_restore
+```
+
+실행에는 같은 원본 스냅샷에서 만들어진 아카이브와 증거 파일의 **절대 경로**, 확인한 공간 예산이 모두 필요합니다.
+
+```text
+python -m ops.market.compact_restore.local_restore --run
+  --archive <absolute-custom-archive-path>
+  --archive-receipt <absolute-bound-receiver-json-path>
+  --source-report <absolute-exported-snapshot-report-path>
+  --max-growth-bytes <verified-byte-budget> --max-seconds <1-to-21600>
+```
+
+고정 대상은 `127.0.0.1:54433`, 새 `work/target-restore/<uuid>/cluster-data`, `market_compact_restore_candidate` DB입니다. 실행기는 기존 클러스터를 재사용하거나 삭제하지 않습니다. 데이터 디렉터리·포트·프로세스 소유 기록이 다르면 중단합니다. 비밀번호는 실행마다 생성하며 저장소에 올리지 않습니다. PG17 실행 파일은 `work/tools/postgresql-restore/pgsql/bin`에 있어야 합니다.
+
+수신 기록의 `source_report_sha256`는 원본 검증 JSON 파일 전체 SHA와 일치해야 합니다. 검증 도구가 만든 실제 값을 사용하며 성공 필드를 수동으로 채우지 않습니다. 두 표의 모든 원래 출처와 C 정렬 논리값, 아카이브 불변, 독립 복원본의 PK 및 종료를 함께 확인합니다. fixture 입력은 복원이 성공해도 `production_proof=false`입니다.
+
+시간·계획 증가량·6GiB 최소 여유를 검사하며 DB 호출은 감시 스레드가 취소합니다. 복원 자식과 자신이 만든 PG만 종료합니다. OS 파일 동기화 자체를 강제 중단하는 보장은 없습니다. 실패한 아카이브·부분 복원·진단은 보존하며 자동으로 성공하거나 운영 원본으로 복구하지 않습니다. 현재 실행기는 새 복원만 지원합니다. 중단 후 재개 원리는 하위 모듈에 있지만 이 CLI에서 이전 클러스터를 이어 쓰지는 않습니다.
+
+앞으로 필요한 운영 실행 도구는 현재의 쓰기 차단과 최신 백업 증거, 실제 대상 identity, 독립 복원 결과를 함께 묶어야 합니다. 공유 출처 교체·삭제, 운영 전환·원본 삭제는 이 패키지의 범위 밖입니다.
 
 순수 회귀검사:
 
