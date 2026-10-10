@@ -4,6 +4,9 @@ import http2 from 'node:http2';
 import fs from 'node:fs/promises';
 import {EventEmitter} from 'node:events';
 import {gzipSync} from 'node:zlib';
+import os from 'node:os';
+import path from 'node:path';
+import {spawnSync} from 'node:child_process';
 
 let networkCalls=0,fileCalls=0;
 const connect=http2.connect,mkdir=fs.mkdir;
@@ -12,7 +15,8 @@ fs.mkdir=()=>{fileCalls++;throw new Error('Import must not create benchmark evid
 let classifiers;
 try {classifiers=await import('./benchmark_market_http2.mjs');}
 finally {http2.connect=connect;fs.mkdir=mkdir;}
-const {classifyCache,measurementContract,summarizeEndpoint,summarizeRows,readHttp2Batch}=classifiers;
+const {classifyCache,measurementContract,summarizeEndpoint,summarizeRows,readHttp2Batch,
+ parseArguments,openHttp2Connections,closeHttp2Connections}=classifiers;
 const sample=(ms,edge='ORIGIN',origin_cache='MISS',extra={})=>({
  fixture_non_production:true,ms,ttfb_ms:ms-2,body_ms:2,wire_bytes:100,
  status:200,valid:true,app_ms:null,edge,origin_cache,...extra,
@@ -177,4 +181,110 @@ test('historical Server-Timing remains excluded after deferred body validation',
  assert.deepEqual(rows.map(row=>row.app_ms),[null,20]);
  assert.deepEqual(rows.map(row=>row.timing_is_current),[false,true]);
  assert.equal(rows[0].raw_headers['server-timing'],'app;dur=1000');
+});
+
+test('independent connections require explicit CLI choice without changing the default',()=>{
+ assert.deepEqual(parseArguments([]),{output:'work/http2-benchmark.json',connections:1});
+ assert.deepEqual(parseArguments(['result.json','--connections','100']),{output:'result.json',connections:100});
+ assert.deepEqual(parseArguments(['--connections','1','result.json']),{output:'result.json',connections:1});
+ for(const args of [['--connections'],['--connections','99'],['--connections','100','--connections','1'],
+  ['https://fixture.invalid'],['--other'],['one.json','two.json']])assert.throws(()=>parseArguments(args));
+});
+
+test('all independent receive ends precede decoding across session boundaries',async()=>{
+ const pool=Array.from({length:100},(_,i)=>({session:fixtureSession(),connection_id:i+1,ready_ms:5}));
+ let clock=0,decoded=0;
+ const pending=readHttp2Batch(pool,pool.map((_,i)=>'/'+i),{now:()=>clock,decode(){decoded++;clock+=100;}});
+ for(let i=0;i<pool.length;i++){
+  clock=i+1;complete(pool[i].session.streams[0]);
+  assert.equal(decoded,0);assert.equal(pool[i].session.streams.length,1);
+ }
+ const rows=await pending;
+ assert.equal(decoded,100);assert.deepEqual(rows.map(r=>r.ms),Array.from({length:100},(_,i)=>i+1));
+ assert.deepEqual(rows.map(r=>r.connection_id),Array.from({length:100},(_,i)=>i+1));
+ assert(rows.every(r=>r.connection_ready_ms===5));
+ await assert.rejects(readHttp2Batch(pool,['/one']),/exactly one request/);
+});
+
+class SetupSession extends EventEmitter{
+ constructor(){super();this.alpnProtocol='h2';this.remoteSettings={maxConcurrentStreams:50};}
+ setLocalWindowSize(){}
+ destroy(){this.destroyed=true;this.emit('close');}
+ close(){this.closed=true;this.emit('close');}
+}
+test('setup errors, negotiation failure, timeout and forced closure remain finite',async()=>{
+ let attempts=0;
+ const pool=await openHttp2Connections('https://fixture.invalid',{connections:100,timeoutMs:20,
+  connect(){const index=attempts++;if(index===0)throw new Error('fixture');
+   const s=new SetupSession();if(index===1)return s;
+   queueMicrotask(()=>{if(index===2){s.emit('error',new Error('fixture'));return;}
+    if(index===3)s.alpnProtocol=false;
+    s.emit('connect');s.emit('remoteSettings');});return s;
+  }});
+ assert.equal(attempts,100);assert.equal(pool.filter(e=>!e.error).length,96);
+ assert.deepEqual(pool.slice(0,4).map(e=>e.error),['connection_setup_error','connection_timeout','connection_error','http2_not_negotiated']);
+ const errors=await readHttp2Batch(pool.slice(0,4),['/0','/1','/2','/3']);
+ assert(errors.every(row=>row.ms===null&&row.status===0&&!row.valid&&row.validation_ms===null));
+ assert.equal(summarizeRows(errors).errors,4);assert.equal(summarizeRows(errors).p95_ms,null);
+ pool[4].session.close=()=>{};
+ const cleanup=await closeHttp2Connections(pool,{timeoutMs:5});
+ assert.equal(cleanup.length,100);assert(cleanup.every(r=>r.closed));assert.equal(cleanup[4].forced,true);
+});
+
+test('native local TLS: exactly 100 reusable HTTP2 sessions with one concurrent request each',
+ {timeout:20000},async t=>{
+ const openssl=process.platform==='win32'?'C:/Program Files/Git/usr/bin/openssl.exe':'openssl';
+ const probe=spawnSync(openssl,['version'],{timeout:2000,stdio:'ignore'});
+ if(probe.error?.code==='ENOENT'){t.skip('Local OpenSSL unavailable; no installation or remote request');return;}
+ assert.equal(probe.status,0);
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'market-http2-fixture-'));
+ const key=path.join(directory,'fixture.key'),cert=path.join(directory,'fixture.crt');
+ let server,pool=[];const serverSessions=new Set(),allSessions=new Set();
+ try{
+  const generated=spawnSync(openssl,['req','-x509','-newkey','rsa:2048','-nodes','-keyout',key,
+   '-out',cert,'-days','1','-subj','/CN=localhost'],{timeout:5000,stdio:'ignore'});
+  assert.equal(generated.status,0);
+  server=http2.createSecureServer({key:await fs.readFile(key),cert:await fs.readFile(cert),allowHTTP1:false});
+  server.on('session',session=>{serverSessions.add(session);allSessions.add(session);
+   session.on('error',()=>{});session.once('close',()=>serverSessions.delete(session));});
+  let pending=[],seen=0,peak=0;
+  server.on('stream',(stream,headers)=>{
+   pending.push({stream,headers});seen++;peak=Math.max(peak,pending.length);
+   if(pending.length!==100)return;
+   const batch=pending;pending=[];
+   assert.equal(new Set(batch.map(({stream})=>stream.session)).size,100);
+   for(const {stream,headers:request} of batch){
+    assert.equal(request['accept-encoding'],'gzip');
+    stream.respond({':status':200,'content-type':'application/json','content-encoding':'gzip'});
+    stream.end(gzipSync(JSON.stringify({fixture_non_production:true,path:request[':path']})));
+   }
+  });
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  pool=await openHttp2Connections(`https://localhost:${server.address().port}`,{connections:100,
+   timeoutMs:5000,tlsOptions:{rejectUnauthorized:false,servername:'localhost',lookup:(_host,_options,done)=>done(null,[{address:'127.0.0.1',family:4}])}});
+  assert.equal(pool.length,100);assert(pool.every(e=>!e.error&&e.alpn==='h2'&&e.ready_ms>=e.connect_ms));
+  assert.equal(allSessions.size,100);
+  for(const endpoint of ['search','summary']){
+   const paths=Array.from({length:100},(_,i)=>endpoint==='search'?`/api/market/v1/search?q=fixture${i%10}`:
+    `/api/market/v1/securities/${String(i%10).padStart(6,'0')}?view=summary`);
+   const batches=[];
+   for(let phase=0;phase<5;phase++){
+    if(phase===4)await new Promise(resolve=>setTimeout(resolve,1600));
+    const rows=await readHttp2Batch(pool,paths,{timeoutMs:5000});
+    assert(rows.every(r=>r.valid&&r.status===200&&r.connection_id>=1&&r.connection_id<=100));
+    assert.equal(new Set(rows.map(r=>r.request_path)).size,10);batches.push(rows);
+   }
+   const result=summarizeEndpoint('loopback.fixture',endpoint,{first:batches[0],warm:batches.slice(1,4).flat(),expired:batches[4]});
+   assert.equal(result.first.requests,100);assert.equal(result.warm.requests,300);
+   assert.equal(result.after_1600ms.requests,100);assert.equal(result.warm.errors,0);
+  }
+  assert.equal(seen,1000);assert.equal(peak,100);assert.equal(allSessions.size,100);
+  const cleanup=await closeHttp2Connections(pool);assert(cleanup.every(r=>r.closed&&!r.forced));
+  await new Promise(resolve=>setTimeout(resolve,30));assert.equal(serverSessions.size,0);
+ }finally{
+  await closeHttp2Connections(pool,{timeoutMs:100});
+  for(const session of serverSessions)session.destroy();
+  if(server?.listening)await new Promise(resolve=>server.close(resolve));
+  await fs.unlink(key).catch(()=>{});await fs.unlink(cert).catch(()=>{});await fs.rmdir(directory);
+ }
 });
