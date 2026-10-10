@@ -16,9 +16,9 @@
 
 ## 현재 상태
 
-2026년 10월 10일 08:28 KST 공개 API·수집기·기존 주소와 Cloudflare 정적 화면은 **v113**입니다. [최신 변경·실제 검증 기록](docs/releases/20261010-v113/ACCEPTANCE.md)에서 구현, 실제 자료, 화면, 공개 반영을 구분합니다. 삼성전자 현금흐름 TTM을 2026년 6월까지 연결하고 동시 주식 수 검토의 덮어쓰기 및 장 일정 시간대 표시를 수정했습니다. 두 공개 주소 18개 검사와 대표 세 기업 OCF 값 6개 대조를 통과했습니다. 기능 CI와 별도로 CodeQL 경고 검토가 남아 있습니다.
+2026년 10월 10일 09:13 KST 공개 API·수집기·기존 주소와 Cloudflare 정적 화면은 **v114**입니다. [최신 변경·실제 검증 기록](docs/releases/20261010-v114/ACCEPTANCE.md)에서 구현, 실제 자료, 화면, 공개 반영을 구분합니다. 디스크 부족·중단 시 불완전한 원본 파일이 정상 이름으로 남는 경로를 수정하고, 두 공개 주소 18개 검사와 실제 Linux 파일 저장 검사를 통과했습니다. 원본 무손실 압축과 검증된 중복 백업 정리로 VPS에서 약 3.12GB를 회수했습니다. 삼성전자 OCF TTM 연결 등 [직전 기업 분석 개선](docs/releases/20261010-v113/ACCEPTANCE.md)은 유지합니다.
 
-10월 10일 06:50 KST 수집 작업 기록에서 대상 2,765종목 중 원천 마지막 페이지까지 확인한 일봉은 602종목, 투자자 수급은 344종목입니다. 모든 데이터가 완료된 종목 수가 아닙니다. 디스크 보호로 과거 수집은 중단 상태이고 최신 갱신은 별도 실행됩니다. 전체 과거 자료·TTM/분할·배당 근거·실제 장중 수신·공개 성능 목표·실사용 평가가 남아 있습니다. [저장 공간 후속 조치](docs/releases/20261010-v110/STORAGE_FOLLOWUP.md)와 [최근 공개 성능 측정](docs/releases/20261010-v110/WEB_SECURITY_UPDATE.md)을 함께 봅니다.
+09:12:58 KST 수집 작업 기록에서 대상 2,765종목 중 원천 마지막 페이지까지 확인한 일봉은 602종목, 투자자 수급은 344종목입니다. 모든 자료가 완성된 종목 수가 아닙니다. 배포 후 VPS 여유는 약 16.40GB이며 사용률 약 89.40%로 과거 수집 재개 기준인 80% 미만에 아직 못 미칩니다. 최신 갱신과 과거 수집 제한은 별개입니다. 운영 저장 구조 전환, 전체 과거 자료·TTM/분할·배당 근거·실제 장중 수신·공개 성능 목표·실사용 평가 및 CodeQL 경고 검토가 남아 있습니다. [최근 공개 성능 측정](docs/releases/20261010-v110/WEB_SECURITY_UPDATE.md)을 함께 봅니다.
 
 ## 구조
 
@@ -60,7 +60,7 @@ pnpm build
 - [API와 옵션 계약](docs/toss-api-contract.md)
 - [출처 공유 저장](docs/SOURCE_TRACE_STORAGE.md) · [거래 자료 저장](docs/TRADING_PROJECTION_STORAGE.md)
 - [외부 백업·복구](docs/PC_OFFSITE_BACKUP.md)
-- [최신 공개 검증](docs/releases/20261010-v113/ACCEPTANCE.md) · [전체 저장 대조](docs/releases/20261010-v113/STORAGE_VALIDATION.md)
+- [최신 공개 검증](docs/releases/20261010-v114/ACCEPTANCE.md) · [전체 저장 대조](docs/releases/20261010-v113/STORAGE_VALIDATION.md)
 - [현재 앱 CI와 로컬 검사](docs/CI.md)
 - [이전 터미널 README](docs/history/LEGACY_TERMINAL_README.md)
 

@@ -1,0 +1,424 @@
+{
+  "release": "20261010-archive-atomic-v114",
+  "application_commit": "5caccd058377aaff937b9cbad13953a47a8361c5",
+  "public": {
+    "at": "2026-10-10T00:12:17.788178+00:00",
+    "release": "20261010-archive-atomic-v114",
+    "verification_commit": "5caccd058377aaff937b9cbad13953a47a8361c5",
+    "manifest_sha256": "8125b6ebd9a4d42c70b4a6159dc5a1ccb05f920a47db71d6885b30d6eae044b6",
+    "checks": [
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/build-manifest.json",
+        "status": 200,
+        "exact_bytes": true
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/stocks",
+        "status": 200,
+        "sha256": "2ec8ee61c9ceee1e69b78754d07d580082358e4e97e1f9325858ba7c047c33d3"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/_next/static/css/56d4c3297aff6eef.css",
+        "status": 200,
+        "sha256": "bfa719c1a38d040e116184ef6b4b2033a0f49b220fc68c7ad0e7ab724e90f802"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/_next/static/chunks/109-1709464bfe5e04e8.js",
+        "status": 200,
+        "sha256": "a1daef3feae74028d37262bac41d33614d37414d5ababb5e7010e8c40f73ad3b"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/stocks/fonts/PretendardVariable.woff2",
+        "status": 200,
+        "sha256": "9599f12fd42fc0bce1cd50b47a0c022e108d7aa64dd0d1bb0ed44f3282d900b4"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/health",
+        "status": 200,
+        "bytes": 615
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/search?q=005930",
+        "status": 200,
+        "bytes": 3715
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/securities/005930?view=summary",
+        "status": 200,
+        "bytes": 1868
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/securities/094800?view=summary",
+        "status": 200,
+        "bytes": 1102
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/build-manifest.json",
+        "status": 200,
+        "exact_bytes": true
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/stocks",
+        "status": 200,
+        "sha256": "2ec8ee61c9ceee1e69b78754d07d580082358e4e97e1f9325858ba7c047c33d3"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/_next/static/css/56d4c3297aff6eef.css",
+        "status": 200,
+        "sha256": "bfa719c1a38d040e116184ef6b4b2033a0f49b220fc68c7ad0e7ab724e90f802"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/_next/static/chunks/109-1709464bfe5e04e8.js",
+        "status": 200,
+        "sha256": "a1daef3feae74028d37262bac41d33614d37414d5ababb5e7010e8c40f73ad3b"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/stocks/fonts/PretendardVariable.woff2",
+        "status": 200,
+        "sha256": "9599f12fd42fc0bce1cd50b47a0c022e108d7aa64dd0d1bb0ed44f3282d900b4"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/health",
+        "status": 200,
+        "bytes": 617
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/search?q=005930",
+        "status": 200,
+        "bytes": 3715
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/securities/005930?view=summary",
+        "status": 200,
+        "bytes": 1868
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/securities/094800?view=summary",
+        "status": 200,
+        "bytes": 1102
+      }
+    ],
+    "load_test": false,
+    "fresh_stream_test": false,
+    "passed": true
+  },
+  "backend": {
+    "status": "deployed",
+    "release": "20261010-archive-atomic-v114",
+    "archive_sha256": "62f417b606b136cda50b093238650b402b454ff359eefdc4d06f8862e1c39010",
+    "result": "sha256:e4d470c25a0e6a16f8e84708314308d0e0d6d6de8ccea8232b765d080cb95c17\n{\"release\": \"20261010-archive-atomic-v114\", \"status\": \"activated\", \"updated_services\": [\"market-api\", \"market-worker\"], \"postgres\": \"unchanged\", \"redis\": \"unchanged\", \"web\": \"unchanged\", \"openalgo\": \"unchanged\"}"
+  },
+  "static": {
+    "status": "promoted",
+    "release": "20261010-archive-atomic-v114",
+    "files": 73,
+    "bytes": 24333773,
+    "nginx_backup": "/srv/services/korea-stocks/backups/nginx/hannun-20261010T001115532707Z-static-20261010-archive-atomic-v114.conf",
+    "web": "stopped",
+    "static_root": "/srv/services/korea-stocks/releases/20261010-archive-atomic-v114/static-web",
+    "previous_static": "/srv/services/korea-stocks/releases/20261010-archive-atomic-v114/static-web.previous-20261010T001115532707Z",
+    "marker": "/srv/services/korea-stocks/releases/20261010-archive-atomic-v114/static-web-deployment.json",
+    "public_root": "/var/www/korea-stocks/releases/20261010-archive-atomic-v114-20261010T001115532707Z",
+    "previous_public": "/var/www/korea-stocks/releases/20261010-share-review-v113-20261009T232534172045Z",
+    "archive_sha256": "2f62826495305f982aa719fb46ee424eb2291d09e1960a042772e5d68eabe4f2",
+    "nginx_before_sha256": "5f0b84a690b2635422ecca8d427657cba490dcb946d0ac60d9337014965c10ab",
+    "nginx_after_sha256": "5f0b84a690b2635422ecca8d427657cba490dcb946d0ac60d9337014965c10ab"
+  },
+  "cloudflare_version": "d993680c-daa6-4eeb-9fe9-73d1cb766d93",
+  "linux_isolated_canary": {
+    "at": "2026-10-10T00:12:51.020608+00:00",
+    "fixture_non_production": true,
+    "passed": true,
+    "production_data_mutated": false,
+    "database_initialized": false,
+    "checks": [
+      "strict original read",
+      "duplicate receipt preserved",
+      "file fsync ENOSPC leaves no final file",
+      "retry succeeds",
+      "temporary files removed",
+      "POSIX directory fsync path executed"
+    ],
+    "physical_power_loss_test": false
+  },
+  "storage": {
+    "recorded_at": "2026-10-10T00:04:52.460025+00:00",
+    "app_release_before": "20261010-share-review-v113",
+    "vps": {
+      "verified_raw_archives": 16049,
+      "raw_allocated_reclaimed_bytes": 751058944,
+      "preserved_empty_metadata": 7,
+      "all_preserved_binaries_hash_verified": true,
+      "duplicate_backup_reclaimed_bytes": 2372808704,
+      "total_reclaimed_allocated_bytes": 3123867648,
+      "disk_after_raw": {
+        "total": 154894188544,
+        "used": 138208673792,
+        "free": 16668737536
+      },
+      "below_80_percent": false
+    },
+    "local": {
+      "files_compressed": 7,
+      "allocated_reclaimed_bytes": 4457263104,
+      "all_byte_hashes_equal": true
+    },
+    "production_database_replacement": false,
+    "backfill_resumed": false
+  },
+  "disk_after_deployment": {
+    "at": "2026-10-10T00:13:02.936669+00:00",
+    "total": 154894188544,
+    "used": 138472906752,
+    "free": 16404504576,
+    "below_80_percent": false,
+    "bytes_needed_to_below_80": 14557555917
+  },
+  "collection": {
+    "at": "2026-10-10T00:12:58.495476+00:00",
+    "universe": 2765,
+    "basis": "resumable_collection_job_metadata",
+    "kinds": {
+      "history": {
+        "securities": {
+          "last_page_received": 602,
+          "older_pages_pending": 2162,
+          "provider_catalogue_omission": 1,
+          "no_collection_job": 0
+        },
+        "reported_rows": 2231485,
+        "last_page_fraction": 0.21772151898734177,
+        "provider_catalogue_omission_fraction": 0.0003616636528028933,
+        "error_types": {},
+        "error_samples": []
+      },
+      "investor-trading": {
+        "securities": {
+          "older_pages_pending": 2420,
+          "last_page_received": 344,
+          "provider_catalogue_omission": 1,
+          "no_collection_job": 0
+        },
+        "reported_rows": 1238020,
+        "last_page_fraction": 0.1244122965641953,
+        "provider_catalogue_omission_fraction": 0.0003616636528028933,
+        "error_types": {},
+        "error_samples": []
+      },
+      "program-trades": {
+        "securities": {
+          "older_pages_pending": 2054,
+          "source_empty": 119,
+          "last_page_received": 591,
+          "provider_catalogue_omission": 1,
+          "no_collection_job": 0
+        },
+        "reported_rows": 1309492,
+        "last_page_fraction": 0.21374321880650995,
+        "provider_catalogue_omission_fraction": 0.0003616636528028933,
+        "error_types": {},
+        "error_samples": []
+      },
+      "short-selling": {
+        "securities": {
+          "last_page_received": 916,
+          "source_empty": 83,
+          "older_pages_pending": 1765,
+          "provider_catalogue_omission": 1,
+          "no_collection_job": 0
+        },
+        "reported_rows": 1280547,
+        "last_page_fraction": 0.3312839059674503,
+        "provider_catalogue_omission_fraction": 0.0003616636528028933,
+        "error_types": {},
+        "error_samples": []
+      },
+      "credit-trades": {
+        "securities": {
+          "last_page_received": 980,
+          "source_empty": 62,
+          "older_pages_pending": 1722,
+          "provider_catalogue_omission": 1,
+          "no_collection_job": 0
+        },
+        "reported_rows": 876150,
+        "last_page_fraction": 0.35443037974683544,
+        "provider_catalogue_omission_fraction": 0.0003616636528028933,
+        "error_types": {},
+        "error_samples": []
+      },
+      "securities-lending": {
+        "securities": {
+          "last_page_received": 695,
+          "older_pages_pending": 2006,
+          "source_empty": 63,
+          "provider_catalogue_omission": 1,
+          "no_collection_job": 0
+        },
+        "reported_rows": 1049079,
+        "last_page_fraction": 0.2513562386980108,
+        "provider_catalogue_omission_fraction": 0.0003616636528028933,
+        "error_types": {},
+        "error_samples": []
+      },
+      "raw-history": {
+        "securities": {
+          "last_page_received": 602,
+          "older_pages_pending": 2162,
+          "provider_catalogue_omission": 1,
+          "no_collection_job": 0
+        },
+        "reported_rows": 2255434,
+        "last_page_fraction": 0.21772151898734177,
+        "provider_catalogue_omission_fraction": 0.0003616636528028933,
+        "error_types": {},
+        "error_samples": []
+      }
+    },
+    "progress": {
+      "status": "capacity_limited",
+      "updated_at": "2026-10-10T00:12:54.621394+00:00"
+    },
+    "all_data_completed_securities": null
+  },
+  "duplicate_backup_retirement": {
+    "source": "market-20261009T153042Z.dump",
+    "successor": "market-20261009T192007Z.dump",
+    "source_identity": {
+      "device": 2049,
+      "inode": 3947994,
+      "bytes": 2372779444,
+      "mtime_ns": 1791560713485703680,
+      "allocated_bytes": 2372808704
+    },
+    "successor_identity": {
+      "device": 2049,
+      "inode": 4478918,
+      "bytes": 2383740224,
+      "mtime_ns": 1791574541724075334,
+      "allocated_bytes": 2383769600
+    },
+    "sha256": "58eb5398f8e7ea9c74a01eb272d7cd848c940a783d6302e7531cda9fab8435a9",
+    "successor_sha256": "071334140ad7c17ea2889dd6f0273026d454cf71b7f8b2280cd6c174e151542e",
+    "offsite_receipt_sha256": "a8ffdf8b4a5b09e3d0ee99c5163b36f67cc319e7549e46ce601c493ac3e04ee2",
+    "reclaimable_allocated_bytes": 2372808704,
+    "unique_recovery_points_removed": 0,
+    "applied": true,
+    "source_removed": true,
+    "successor_preserved": true,
+    "completed_at": "2026-10-09T23:42:24.288151+00:00",
+    "intent": "duplicate-retirement-20261009T234223925081Z.json"
+  },
+  "native_copy_mini_fixture": {
+    "fixture_non_production": true,
+    "production_contacted": false,
+    "existing_cluster_used": false,
+    "cases": [
+      {
+        "name": "custom_archive_native_roundtrip",
+        "passed": true,
+        "rows": 5,
+        "ordered_logical_sha256": "ea002caf1b216313810683d6852130227f31d6d2dbf138c4035f9b83140c93b8",
+        "original_trace_count": 2,
+        "financial_only_trace_preserved": true,
+        "native_header_compatibility": true
+      },
+      {
+        "name": "native_escapes_and_null_rejection",
+        "passed": true,
+        "native_failures": 3
+      },
+      {
+        "name": "duplicate_primary_key",
+        "passed": true,
+        "error_type": "UniqueViolation",
+        "targets_unchanged": true
+      },
+      {
+        "name": "truncated_stream",
+        "passed": true,
+        "error_type": "Refused",
+        "targets_unchanged": true
+      },
+      {
+        "name": "unsupported_header",
+        "passed": true,
+        "error_type": "Refused",
+        "targets_unchanged": true
+      },
+      {
+        "name": "pg_restore_nonzero_exit",
+        "passed": true
+      },
+      {
+        "name": "pg_dump_nonzero_exit",
+        "passed": true
+      }
+    ],
+    "passed": true,
+    "source_hashes": {
+      "copy_stream.py": "0bf9c6bc6100203931f7626ad29624f8943cf07abdabc414e5c9bcdefe92cff2",
+      "pg_copy_fixture.py": "3a49e8034e36b37b494ed79c217f8110d02d33b12410e51c3e835d724071d8c7"
+    },
+    "source_unchanged": true,
+    "archive_preserved": true,
+    "cluster_stopped": true,
+    "elapsed_seconds": 23.266
+  },
+  "checks": {
+    "raw_storage": {
+      "passed": 113,
+      "skipped": 2
+    },
+    "deployment_retention": {
+      "passed": 73
+    },
+    "actual_asgi_sqlite_target_writes": {
+      "passed": 87,
+      "production_postgres": false
+    },
+    "mini_pg_pure": {
+      "passed": 95
+    },
+    "github_current_market_app": {
+      "commit": "5caccd058377aaff937b9cbad13953a47a8361c5",
+      "runs": [
+        38007462723,
+        38007458900
+      ],
+      "conclusion": "success"
+    },
+    "web_build": "passed",
+    "static_integrity": "passed",
+    "global_lint_clean": false,
+    "known_packaging_ruff_findings": 31,
+    "new_packaging_ruff_findings": 0
+  },
+  "not_verified_this_release": [
+    "new_intraday_events",
+    "100_concurrent_public_performance",
+    "actual_android_ios",
+    "father_usability",
+    "production_series_replacement",
+    "full_historical_completion",
+    "codeql_all_findings"
+  ]
+}
