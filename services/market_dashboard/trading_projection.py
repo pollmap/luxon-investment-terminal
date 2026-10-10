@@ -3,10 +3,13 @@
 Legacy JSON remains readable. References are internal storage contracts, never
 new provider evidence, and never authorize removing an unmatched legacy value.
 """
+import hashlib
 import json
+import math
 from calendar import monthrange
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
+from urllib.parse import urlsplit
 
 from sqlalchemy import select, text
 
@@ -277,6 +280,12 @@ def _retained_rows(payload, field):
     return [row for row in rows if row.get('source_trace', {}).get('source') != 'toss']
 
 
+def _flow_has_value(row):
+    return any(isinstance(row.get(field), (int, float))
+               and not isinstance(row[field], bool) and math.isfinite(row[field])
+               for field in ('individual', 'foreign', 'institution'))
+
+
 def read_flows(store, code):
     keys = dependencies(code, 'flows')
     def build():
@@ -292,6 +301,17 @@ def read_flows(store, code):
                                   source, source.get('status', 'pending'))['rows']
             retained = _merge_rows(_retained_rows(normalized, 'rows'),
                                    _retained_rows(detail, 'flows'), reverse=True)
+            invalid_dates = {row['date'] for row in rows if not _flow_has_value(row)}
+            if invalid_dates:
+                # A source revision is not proof that its null values supersede
+                # a real observation. Keep the original identity, including the
+                # last valid Toss summary, only for these affected dates.
+                last_good = _merge_rows(normalized.get('rows', []), detail.get('flows', []))
+                last_good = [row for row in last_good
+                             if row['date'] in invalid_dates and _flow_has_value(row)]
+                retained = _merge_rows(last_good, retained, reverse=True)
+                retained_dates = {row['date'] for row in last_good}
+                rows = [row for row in rows if row['date'] not in retained_dates]
             return _merge_rows(rows, retained, reverse=True)
         return _merge_rows(normalized.get('rows', []), detail.get('flows', []), reverse=True)
     return _stable_read(store, keys, build)
@@ -378,6 +398,107 @@ def _has_other_source(payload, owned):
     return False
 
 
+def _isolated_flows_verified(full):
+    """A new primary source needs real values and Toss document identities.
+
+    This is not authority to relabel the preserved other-provider observations.
+    It permits only a separate Toss reference consumed by the existing reader.
+    """
+    from .collection import trading_collection_receipt
+    rows = full.get('rows', [])
+    for row in rows:
+        trace = row.get('source_trace', {})
+        digest = trace.get('source_document_id')
+        if (trace.get('source') != 'toss' or not isinstance(digest, str)
+                or len(digest) != 64 or any(c not in '0123456789abcdef' for c in digest)):
+            return False
+    checked = trading_collection_receipt('investor-trading', full)['flows']['validated_rows']
+    return bool(rows) and checked == len(rows)
+
+
+def _reobserved_flow_trace(code, old, new):
+    """Equal financial facts may have a later page's document identity.
+
+    The original observation is archived in the same commit; none of these
+    metadata differences are discarded or treated as a numeric correction.
+    """
+    volatile = {'source_document_id', 'accession_number', 'filing_id', 'ingested_at'}
+    if ({k: v for k, v in old.items() if k not in volatile}
+            != {k: v for k, v in new.items() if k not in volatile}):
+        return False
+    for trace in (old, new):
+        digest = trace.get('source_document_id')
+        if (trace.get('source') != 'toss' or not isinstance(digest, str) or len(digest) != 64
+                or any(c not in '0123456789abcdef' for c in digest)
+                or trace.get('filing_id') != digest or trace.get('accession_number') != digest):
+            return False
+        address = urlsplit(str(trace.get('source_url', '')))
+        if (address.scheme != 'https' or address.netloc != 'openapi.tossinvest.com'
+                or address.path != f'/api/v1/stocks/{code}/investor-trading'):
+            return False
+    try:
+        previous = datetime.fromisoformat(old['ingested_at'].replace('Z', '+00:00'))
+        received = datetime.fromisoformat(new['ingested_at'].replace('Z', '+00:00'))
+        return bool(previous.tzinfo and received.tzinfo and received > previous)
+    except (KeyError, TypeError, ValueError, AttributeError):
+        return False
+
+
+def _isolated_flows_retained(code, existing, full):
+    """An old Toss-only prefix needs no marker if every fact is still exact.
+
+    Return old observations requiring immutable evidence retention, or None
+    when any financial fact/date/meaning differs. Exact subsets return [].
+    """
+    rows = existing.get('rows')
+    if not isinstance(rows, list) or not rows:
+        return None
+    indexed = {row['date']: row for row in full['rows']}
+    seen = set()
+    retained = []
+    for row in rows:
+        day = row.get('date')
+        replacement = indexed.get(day)
+        if not day or day in seen or replacement is None:
+            return None
+        if row != replacement:
+            if ({k: v for k, v in row.items() if k != 'source_trace'}
+                    != {k: v for k, v in replacement.items() if k != 'source_trace'}
+                    or not _reobserved_flow_trace(code, row.get('source_trace', {}),
+                                                 replacement.get('source_trace', {}))):
+                return None
+            retained.append(row)
+        seen.add(day)
+    return retained if _retained_flow_budget(retained) else None
+
+
+def _retained_flow_budget(rows):
+    encoded = json.dumps(rows, ensure_ascii=False, sort_keys=True, allow_nan=False)
+    return len(rows) <= 200 and len(encoded.encode()) <= 256 * 1024
+
+
+def _retain_flow_observations(store, db, code, rows):
+    """Content-addressed, insert-only preservation of reobserved legacy facts."""
+    from .store import now
+    if store.engine.dialect.name == 'sqlite':
+        from sqlalchemy.dialects.sqlite import insert
+    else:
+        from sqlalchemy.dialects.postgresql import insert
+    payload = {'format': 'retained-toss-flow-observations-v1', 'code': code,
+               'source_key': f'toss:investor-trading:{code}',
+               'rows': sorted(rows, key=lambda row: row['date'])}
+    encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True,
+                         allow_nan=False, separators=(',', ':'))
+    key = f'toss-retained-flows:{code}:' + hashlib.sha256(encoded.encode()).hexdigest()
+    db.execute(insert(store.snapshots).values(key=key, payload=encoded, updated_at=now())
+               .on_conflict_do_nothing(index_elements=[store.snapshots.c.key]))
+    saved = db.execute(select(store.snapshots.c.payload)
+                       .where(store.snapshots.c.key == key)).scalar_one()
+    if json.loads(saved) != payload:
+        raise TradingProjectionUnavailable('Retained trading evidence identity mismatch')
+    return key
+
+
 def _previous_projection_can_advance(marker, snapshots, owned, full, source):
     """Prove a prior v2 Toss output is retained by the newer source revision.
 
@@ -461,6 +582,19 @@ def _reserve_absent(store, db, keys, before):
             raise _CompactionChanged()
 
 
+def _projection_unchanged_locked(store, db, keys, before):
+    if store.engine.dialect.name == 'sqlite':
+        # Start SQLite's write transaction before the revision read. A no-op
+        # update neither creates a missing source nor changes its revision.
+        db.execute(store.snapshots.update().where(store.snapshots.c.key == keys[0])
+                   .values(updated_at=store.snapshots.c.updated_at))
+    query = (select(store.snapshots.c.key, store.snapshots.c.updated_at)
+             .where(store.snapshots.c.key.in_(keys)).order_by(store.snapshots.c.key))
+    if store.engine.dialect.name == 'postgresql':
+        query = query.with_for_update()
+    return dict(db.execute(query).all()) == before
+
+
 def compact_projection(store, code, endpoint, state):
     """Opt-in writer: compact exact legacy projections, never unmatched data.
 
@@ -481,9 +615,24 @@ def compact_projection(store, code, endpoint, state):
     marker = store.metadata(marker_key, {})
     audit_key = f'toss-compaction:{endpoint}:{code}'
     attempt = store.metadata(audit_key, {})
+    snapshots = {key: store.metadata(key, {}) for key in owned}
+    preserved = {}
+    detail_key = f'detail:{code}'
+    if endpoint == 'investor-trading' and _has_other_source(snapshots[detail_key], ('flows',)):
+        # A generic company/Naver refresh is not a Toss mirror. Preserve it
+        # byte-for-byte while publishing the independent normalized reference.
+        # Never extend this exception to an unmatched Toss-normalized payload.
+        preserved[detail_key] = {
+            'fields': ['flows'], 'revision': before.get(detail_key),
+            'field_hash': projection_field_hash(snapshots[detail_key], ('flows',))}
+        owned = {key: fields for key, fields in owned.items() if key != detail_key}
     signature = {'version': 3, 'normalizer': FORMAT,
                  'revision': source.get('series_revision'), 'rows': source.get('row_count'),
                  'status': state.get('status')}
+    if preserved:
+        # Invalidate an old all-or-nothing rejection once; unchanged failures
+        # under this policy still avoid repeatedly decoding the full history.
+        signature['projection_policy'] = 'isolated-investor-source-v1'
     if not source.get('_series_ref') or not source.get('series_revision'):
         # Do not convert unverified legacy or clear retained last-good values.
         store.put(audit_key, {'status': 'source_unavailable', 'input': signature,
@@ -491,14 +640,15 @@ def compact_projection(store, code, endpoint, state):
         record_trading_collection(store, code, endpoint,
                                   failure=TradingProjectionUnavailable())
         return True
-    output_revisions = {key: before.get(key) for key in owned}
+    output_revisions = {key: before.get(key) for key in (*owned, *preserved)}
     if (attempt.get('status') == 'legacy_preserved' and attempt.get('input') == signature
             and attempt.get('output_revisions') == output_revisions):
         record_trading_collection(store, code, endpoint,
                                   failure=TradingProjectionUnavailable())
         return True
-    snapshots = {key: store.metadata(key, {}) for key in owned}
-    for key, fields in owned.items():
+    if preserved:
+        _check_references(store, code, tuple(snapshots), {source_key})
+    for key, fields in _owned(endpoint, code).items():
         for field in fields:
             reference = snapshots[key].get(REFERENCE, {}).get('fields', {}).get(field, {})
             if reference.get('source_key') == source_key and not _range_retained(source, reference):
@@ -510,31 +660,61 @@ def compact_projection(store, code, endpoint, state):
                       for key, fields in owned.items()}
     if valid and marker.get('input') == signature and (
             current_hashes == marker.get('output_field_hashes')):
-        if store.revisions(keys) == before:
+        with store.lock, store.engine.begin() as db:
+            if not _projection_unchanged_locked(store, db, keys, before):
+                return True
             receipt = marker.get('collection_receipt')
             if receipt is None:
                 receipt = trading_collection_receipt(endpoint, snapshots[next(iter(owned))])
             store.put(marker_key, {**marker, 'skipped': marker.get('skipped', 0) + 1,
                                   'collection_receipt': receipt,
+                                  'preserved_outputs': preserved,
                                   'checked_at': now(),
-                                  'outputs': {key: before[key] for key in owned}})
+                                  'outputs': {key: before[key] for key in owned}}, _connection=db)
             record_trading_collection(store, code, endpoint, receipt,
-                                      source={**source, 'status': state['status']})
+                                      source={**source, 'status': state['status']}, _connection=db)
+        store.notify_changed(marker_key)
+        store.notify_changed('collection:' + code)
         return True
     verification = attempt.get('verification')
+    retained_observations = []
     if not valid:
         rows = _rows(store, source_key, source)
         if len(rows) != source['row_count']:
             raise TradingProjectionUnavailable('Trading source row count mismatch')
         full = normalize_rows(endpoint, rows, source, state['status'])
+        if preserved and not _isolated_flows_verified(full):
+            if store.revisions(keys) == before:
+                store.put(audit_key, {'status': 'legacy_preserved',
+                                     'reason': 'isolated_source_unverified',
+                                     'input': signature, 'output_revisions': output_revisions,
+                                     'checked_at': now()})
+                record_trading_collection(store, code, endpoint,
+                                          failure=TradingProjectionUnavailable())
+            return True
         prior_verified = _previous_projection_can_advance(marker, snapshots, owned, full, source)
+        if preserved and prior_verified:
+            indexed = {row['date']: row for row in full['rows']}
+            retained_observations = [row for key in owned for row in snapshots[key].get('rows', [])
+                                     if row != indexed.get(row['date'])]
+            if not _retained_flow_budget(retained_observations):
+                # Even the existing v2 correction proof cannot bypass bounded
+                # immutable preservation in this source-isolation migration.
+                prior_verified, retained_observations = False, []
         verified_hashes = {}
+        retained_subset = False
         for key, fields in owned.items():
             expected = {'flows': full['rows']} if key.startswith('detail:') else full
             existing = snapshots[key]
             present = [field for field in fields if field in existing]
             if present and projection_field_hash(existing, present) != (
                     projection_field_hash(expected, present)) and not prior_verified:
+                retained = _isolated_flows_retained(code, existing, full) if preserved else None
+                if retained is not None:
+                    retained_subset = True
+                    retained_observations.extend(retained)
+                    verified_hashes[key] = projection_field_hash(existing, present)
+                    continue
                 # Exact row/value/evidence equality is required before shortening.
                 if store.revisions(keys) == before:
                     store.put(audit_key, {'status': 'legacy_preserved',
@@ -545,12 +725,32 @@ def compact_projection(store, code, endpoint, state):
                                               failure=TradingProjectionUnavailable())
                 return True
             verified_hashes[key] = projection_field_hash(existing, present) if present else None
-        verification = {'method': ('previous-toss-projection-retained-v1' if prior_verified
+        verification = {'method': ('retained-toss-values-and-evidence-v1' if retained_observations
+                                   else 'retained-toss-row-subset-v1' if retained_subset else
+                                   'previous-toss-projection-retained-v1' if prior_verified
                                    else 'full-owned-field-equality-v1'),
                         'input': signature, 'source_rows_compared': len(rows),
                         'legacy_field_hashes': verified_hashes,
                         'prior_projection': marker.get('input') if prior_verified else None}
+        if preserved:
+            verification['independent_source'] = 'toss-document-and-normalized-values-v1'
     summary = _summary(store, code, endpoint, {**source, 'status': state['status']})
+    if preserved and not _isolated_flows_verified(summary):
+        # Leave the last normal summary available to the reader after a bad new
+        # page. The live reference may already see that page, so null rows must
+        # not overwrite same-date retained observations in read_flows either.
+        with store.lock, store.engine.begin() as db:
+            if not _projection_unchanged_locked(store, db, keys, before):
+                return True
+            store.put(audit_key, {'status': 'legacy_preserved',
+                                 'reason': 'isolated_latest_values_unverified',
+                                 'input': signature, 'output_revisions': output_revisions,
+                                 'checked_at': now()}, _connection=db)
+            record_trading_collection(store, code, endpoint,
+                                      failure=TradingProjectionUnavailable(), _connection=db)
+        store.notify_changed(audit_key)
+        store.notify_changed('collection:' + code)
+        return True
     receipt = trading_collection_receipt(endpoint, summary if valid else full)
     outputs = {}
     for key, fields in owned.items():
@@ -571,13 +771,15 @@ def compact_projection(store, code, endpoint, state):
     # in one order before atomically shortening both mirrors and recording proof.
     try:
         with store.lock, store.engine.begin() as db:
-            query = (select(store.snapshots.c.key, store.snapshots.c.updated_at)
-                     .where(store.snapshots.c.key.in_(keys)).order_by(store.snapshots.c.key))
-            if store.engine.dialect.name == 'postgresql':
-                query = query.with_for_update()
-            if dict(db.execute(query).all()) != before:
+            if not _projection_unchanged_locked(store, db, keys, before):
                 return True
             _reserve_absent(store, db, owned, before)
+            retained_keys = list(marker.get('retained_observation_keys', []))
+            if retained_observations:
+                retained_key = _retain_flow_observations(store, db, code, retained_observations)
+                if retained_key not in retained_keys:
+                    retained_keys.append(retained_key)
+                changed.append(retained_key)
             for key, payload in outputs.items():
                 if store.put(key, payload, _connection=db):
                     changed.append(key)
@@ -586,6 +788,8 @@ def compact_projection(store, code, endpoint, state):
             revisions = dict(db.execute(revision_query).all())
             marker = {'input': signature, 'compact': True, 'outputs': revisions,
                       'collection_receipt': receipt,
+                      'preserved_outputs': preserved,
+                      'retained_observation_keys': retained_keys,
                       'output_field_hashes': {key: projection_field_hash(outputs[key], fields)
                                               for key, fields in owned.items()},
                       'rebuilt': marker.get('rebuilt', 0) + 1, 'skipped': marker.get('skipped', 0),
@@ -594,6 +798,8 @@ def compact_projection(store, code, endpoint, state):
             changed.append(marker_key)
             store.put(audit_key, {'status': 'compacted', 'input': signature,
                                  'verification': verification,
+                                 'preserved_outputs': preserved,
+                                 'retained_observation_keys': retained_keys,
                                  'checked_at': now()}, _connection=db)
             changed.append(audit_key)
             record_trading_collection(store, code, endpoint, receipt,
