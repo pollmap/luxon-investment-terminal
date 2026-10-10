@@ -16,9 +16,9 @@
 
 ## 현재 상태
 
-2026년 10월 10일 14:07 KST 공개 API·수집기·기존 주소와 Cloudflare 정적 화면은 **v119**입니다. [최신 변경·실제 검증 기록](docs/releases/20261010-read-consistency-v119/ACCEPTANCE.md)에서 구현, 실제 자료, 화면, 공개 반영을 구분합니다. 차트 중복 조회, 수집 현황의 동시 갱신, 오래된 자료가 최신 상태로 표시되는 문제와 종목·차트 주소 복원을 수정했습니다. 관련 로컬 검사 221개, 실제 격리 PostgreSQL 충돌·rollback 검사와 공개 18개 검사를 통과했습니다. 실제 JYP 일봉·투자자 자료의 최신 거래일은 10월 8일로 갱신됐습니다.
+2026년 10월 10일 14:38 KST 공개 API·수집기·기존 주소와 Cloudflare 정적 화면은 **v120**입니다. [최신 변경·실제 검증 기록](docs/releases/20261010-flow-projection-v120/ACCEPTANCE.md)에서 구현, 실제 자료, 화면, 공개 반영을 구분합니다. 수급 원천에 새 자료가 있어도 기존 혼합 상세 때문에 화면 연결이 막히던 오류를 고쳤습니다. 공개 JYP 투자자 수급은 100일에서 103일로 늘고 마지막 거래일이 10월 2일에서 8일로 갱신됐습니다. 삼성전자 1,847일 이력과 두 종목의 원본·기존 상세는 보존했습니다. 수급 관련 156개 검사, 공개 자산/API 18개 검사와 1440·390px의 검색→수급→목록 복귀를 통과했습니다.
 
-14:07:17 KST VPS 여유는 약 16.22GB, 사용률 89.517%로 과거 수집의 `capacity_limited`가 유지됩니다. 최신 자료 갱신과 전체 과거 확보는 별개입니다. 독립 백업 복원이 전체 17,014,175행 중 12,819,200행에서 중단되어 운영 테이블 전환·원본 삭제를 수행하지 않았습니다. 전체 과거 자료·TTM/분할·배당 근거·장중 실제 수신·공개 성능 목표·실사용 및 보안 경고 검토가 남아 있습니다. [최근 공개 100동시 측정](docs/releases/20261010-backfill-status-v118/ACCEPTANCE.md)에서는 오류 없이 응답했지만 검색 300ms·상세 500ms 목표를 충족하지 못했습니다. 이를 전체 완료나 전 종목 데이터 완성으로 표시하지 않습니다.
+14:35:58 KST VPS 여유는 약 15.95GB, 사용률 89.692%로 과거 수집의 `capacity_limited`가 유지됩니다. 최신 자료 갱신과 전체 과거 확보는 별개입니다. 중단된 17,014,175행 백업 복원은 재개 도구와 실제 격리 PostgreSQL 시험을 거쳐 기존 12,819,200행부터 다시 대조하고 있습니다. 전체 복원 성공·운영 테이블 전환·원본 삭제는 아직 수행하지 않았습니다. 전체 과거 자료·TTM/분할·배당 근거·장중 실제 수신·공개 성능 목표·실사용 및 보안 경고 검토가 남아 있습니다. [최근 공개 100동시 측정](docs/releases/20261010-backfill-status-v118/ACCEPTANCE.md)에서는 오류 없이 응답했지만 검색 300ms·상세 500ms 목표를 충족하지 못했습니다. 이를 전체 완료나 전 종목 데이터 완성으로 표시하지 않습니다.
 
 ## 구조
 
@@ -60,7 +60,7 @@ pnpm build
 - [API와 옵션 계약](docs/toss-api-contract.md)
 - [출처 공유 저장](docs/SOURCE_TRACE_STORAGE.md) · [거래 자료 저장](docs/TRADING_PROJECTION_STORAGE.md)
 - [외부 백업·복구](docs/PC_OFFSITE_BACKUP.md)
-- [최신 공개 검증](docs/releases/20261010-read-consistency-v119/ACCEPTANCE.md) · [전체 저장 대조](docs/releases/20261010-v113/STORAGE_VALIDATION.md)
+- [최신 공개 검증](docs/releases/20261010-flow-projection-v120/ACCEPTANCE.md) · [전체 저장 대조](docs/releases/20261010-v113/STORAGE_VALIDATION.md)
 - [현재 앱 CI와 로컬 검사](docs/CI.md)
 - [이전 터미널 README](docs/history/LEGACY_TERMINAL_README.md)
 

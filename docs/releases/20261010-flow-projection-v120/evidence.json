@@ -1,0 +1,682 @@
+{
+  "release": "20261010-flow-projection-v120",
+  "source_commit": "651380170478e38818eed2d8e180878c27d37777",
+  "restore_tool_commit": "788f599ec3819172bc0c3c28d52b58a976f7c323",
+  "cloudflare_version": "8ed2582a-b6de-4da8-9cf2-9ce3f0d4a74a",
+  "backend_archive_sha256": "dc309bd08e3868fd75abb14e800bc3b5d4c5ef606ea3d7ca16973d882547d4d1",
+  "backend_image": "sha256:20af5502b5724a8951f6f9c18f2dfd1afb39bd0ff5cd9561f131f9d5576fc9e5",
+  "static_deployment": {
+    "status": "promoted",
+    "release": "20261010-flow-projection-v120",
+    "files": 73,
+    "bytes": 24336138,
+    "nginx_backup": "/srv/services/korea-stocks/backups/nginx/hannun-20261010T053440215445Z-static-20261010-flow-projection-v120.conf",
+    "web": "stopped",
+    "static_root": "/srv/services/korea-stocks/releases/20261010-flow-projection-v120/static-web",
+    "previous_static": "/srv/services/korea-stocks/releases/20261010-flow-projection-v120/static-web.previous-20261010T053440215445Z",
+    "marker": "/srv/services/korea-stocks/releases/20261010-flow-projection-v120/static-web-deployment.json",
+    "public_root": "/var/www/korea-stocks/releases/20261010-flow-projection-v120-20261010T053440215445Z",
+    "previous_public": "/var/www/korea-stocks/releases/20261010-read-consistency-v119-20261010T050544531907Z",
+    "archive_sha256": "a8a8f7ca29e7bf626d4f1b280fd8def3b1df279992adf1799c947362a35507ac",
+    "nginx_before_sha256": "5f0b84a690b2635422ecca8d427657cba490dcb946d0ac60d9337014965c10ab",
+    "nginx_after_sha256": "5f0b84a690b2635422ecca8d427657cba490dcb946d0ac60d9337014965c10ab"
+  },
+  "public_checks": {
+    "at": "2026-10-10T05:35:40.334154+00:00",
+    "release": "20261010-flow-projection-v120",
+    "verification_commit": "788f599ec3819172bc0c3c28d52b58a976f7c323",
+    "manifest_sha256": "bde435b9370c70f59d2c47d73ff235980a1fbbbf44052d957104c84fa16706d7",
+    "checks": [
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/build-manifest.json",
+        "status": 200,
+        "exact_bytes": true
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/stocks",
+        "status": 200,
+        "sha256": "6ea17caa2f0f7764757a4de0308c7788a2bc52a6441bc747231ae9d646ac4fec"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/_next/static/css/56d4c3297aff6eef.css",
+        "status": 200,
+        "sha256": "bfa719c1a38d040e116184ef6b4b2033a0f49b220fc68c7ad0e7ab724e90f802"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/_next/static/chunks/109-501f3365c70aacdb.js",
+        "status": 200,
+        "sha256": "7f978c7c5cd83d6ec2a8132abf45cb6dc0ce896220e50ed24fd8d8d71a6aa664"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/stocks/fonts/PretendardVariable.woff2",
+        "status": 200,
+        "sha256": "9599f12fd42fc0bce1cd50b47a0c022e108d7aa64dd0d1bb0ed44f3282d900b4"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/health",
+        "status": 200,
+        "bytes": 617
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/search?q=005930",
+        "status": 200,
+        "bytes": 3715
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/securities/005930?view=summary",
+        "status": 200,
+        "bytes": 1868
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/securities/094800?view=summary",
+        "status": 200,
+        "bytes": 1102
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/build-manifest.json",
+        "status": 200,
+        "exact_bytes": true
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/stocks",
+        "status": 200,
+        "sha256": "6ea17caa2f0f7764757a4de0308c7788a2bc52a6441bc747231ae9d646ac4fec"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/_next/static/css/56d4c3297aff6eef.css",
+        "status": 200,
+        "sha256": "bfa719c1a38d040e116184ef6b4b2033a0f49b220fc68c7ad0e7ab724e90f802"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/_next/static/chunks/109-501f3365c70aacdb.js",
+        "status": 200,
+        "sha256": "7f978c7c5cd83d6ec2a8132abf45cb6dc0ce896220e50ed24fd8d8d71a6aa664"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/stocks/fonts/PretendardVariable.woff2",
+        "status": 200,
+        "sha256": "9599f12fd42fc0bce1cd50b47a0c022e108d7aa64dd0d1bb0ed44f3282d900b4"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/health",
+        "status": 200,
+        "bytes": 616
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/search?q=005930",
+        "status": 200,
+        "bytes": 3715
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/securities/005930?view=summary",
+        "status": 200,
+        "bytes": 1868
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/securities/094800?view=summary",
+        "status": 200,
+        "bytes": 1102
+      }
+    ],
+    "load_test": false,
+    "fresh_stream_test": false,
+    "passed": true
+  },
+  "public_browser": {
+    "started_at": "2026-10-10T05:37:20.177Z",
+    "release": "20261010-flow-projection-v120",
+    "scope": "public UI / ephemeral Chromium / actual API values / no provider or operator calls",
+    "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+    "steps": [
+      {
+        "width": 1440,
+        "status": "passed",
+        "actual_latest": {
+          "date": "2026-10-08",
+          "individual": -27405,
+          "foreigner": -89141,
+          "institution": 116500,
+          "otherCorporation": 371,
+          "financialInvestment": 96125,
+          "insurance": -407,
+          "trust": 31865,
+          "privateEquityFund": -11224,
+          "bank": 0,
+          "otherFinancialInstitution": 1,
+          "pensionFund": 140,
+          "holding": 12.97
+        },
+        "rendered_latest": "2026-10-08\t-27,405\t-89,141\t+116,500\t+371\t12.97%",
+        "source_rows": 103,
+        "available_end": "2026-10-08",
+        "overflow": {
+          "viewport": 1440,
+          "document": 1440,
+          "body": 1440
+        },
+        "return_url": "https://korea-stocks-edge.lch68-workers.workers.dev/stocks",
+        "returned_to_market": true
+      },
+      {
+        "width": 390,
+        "status": "passed",
+        "actual_latest": {
+          "date": "2026-10-08",
+          "individual": -27405,
+          "foreigner": -89141,
+          "institution": 116500,
+          "otherCorporation": 371,
+          "financialInvestment": 96125,
+          "insurance": -407,
+          "trust": 31865,
+          "privateEquityFund": -11224,
+          "bank": 0,
+          "otherFinancialInstitution": 1,
+          "pensionFund": 140,
+          "holding": 12.97
+        },
+        "rendered_latest": "2026-10-08\t-27,405\t-89,141\t+116,500\t+371\t12.97%",
+        "source_rows": 103,
+        "available_end": "2026-10-08",
+        "overflow": {
+          "viewport": 390,
+          "document": 390,
+          "body": 390
+        },
+        "return_url": "https://korea-stocks-edge.lch68-workers.workers.dev/stocks",
+        "returned_to_market": true
+      }
+    ],
+    "page_errors": [],
+    "http_failures": [],
+    "blocked": [],
+    "finished_at": "2026-10-10T05:37:48.810Z"
+  },
+  "projection": {
+    "at": "2026-10-10T05:33:51.194127+00:00",
+    "provider_calls": 0,
+    "securities": {
+      "035900": {
+        "before_hashes": {
+          "toss:investor-trading:035900": "d5d3b146dfd68dc9ebc3ca917e92c1f81318b635ea48f7fe3745b8f6ec2318af",
+          "detail:035900": "72196e16ca8151e72b59cdb25f4f6f67af8718c83280168ce863f8ebe6e08e40"
+        },
+        "after_hashes": {
+          "toss:investor-trading:035900": "d5d3b146dfd68dc9ebc3ca917e92c1f81318b635ea48f7fe3745b8f6ec2318af",
+          "detail:035900": "72196e16ca8151e72b59cdb25f4f6f67af8718c83280168ce863f8ebe6e08e40"
+        },
+        "raw_and_detail_unchanged": true,
+        "row_count": 103,
+        "latest": "2026-10-08",
+        "sources": [
+          "toss"
+        ],
+        "audit_status": "compacted",
+        "verification": {
+          "independent_source": "toss-document-and-normalized-values-v1",
+          "input": {
+            "normalizer": "toss-trading-reference-v1",
+            "projection_policy": "isolated-investor-source-v1",
+            "revision": "2026-10-10T05:07:58.164816+00:00",
+            "rows": 103,
+            "status": "ready",
+            "version": 3
+          },
+          "legacy_field_hashes": {
+            "toss-normalized:flows:035900": "2804252c87fb4ac51727bbc2b6ab519d4a9fd0fc8f98d9134e4e15b05238207c"
+          },
+          "method": "retained-toss-values-and-evidence-v1",
+          "prior_projection": null,
+          "source_rows_compared": 103
+        },
+        "retained_observations": 2,
+        "collection": {
+          "as_of": "2026-10-08",
+          "backfill_complete": false,
+          "checked_at": "2026-10-10T05:33:51.671264+00:00",
+          "endpoint": "investor-trading",
+          "history_scope": "provider_endpoint_pages",
+          "history_status": "incomplete",
+          "last_error_at": "2026-10-10T05:07:58.276809+00:00",
+          "last_success_at": "2026-10-10T05:07:58.119278+00:00",
+          "note": null,
+          "period": {
+            "end": "2026-10-08",
+            "start": "2026-05-08"
+          },
+          "period_scope": "checked_normalized_rows",
+          "received_at": "2026-10-10T05:07:58.119278+00:00",
+          "source": "toss",
+          "source_revision": "2026-10-10T05:07:58.164816+00:00",
+          "status": "ready",
+          "validated_rows": 103
+        }
+      },
+      "005930": {
+        "before_hashes": {
+          "toss:investor-trading:005930": "5d7e05bd439a8be33b629e935fae18538ecbd1b142d6b87949c643cec06828a7",
+          "detail:005930": "5a95188d11d43b09207c2af341778fbda7315d9b1881acd0d4f05d72da8db389"
+        },
+        "after_hashes": {
+          "toss:investor-trading:005930": "5d7e05bd439a8be33b629e935fae18538ecbd1b142d6b87949c643cec06828a7",
+          "detail:005930": "5a95188d11d43b09207c2af341778fbda7315d9b1881acd0d4f05d72da8db389"
+        },
+        "raw_and_detail_unchanged": true,
+        "row_count": 1847,
+        "latest": "2026-10-08",
+        "sources": [
+          "toss"
+        ],
+        "audit_status": "compacted",
+        "verification": {
+          "independent_source": "toss-document-and-normalized-values-v1",
+          "input": {
+            "normalizer": "toss-trading-reference-v1",
+            "projection_policy": "isolated-investor-source-v1",
+            "revision": "2026-10-10T05:22:07.203224+00:00",
+            "rows": 1847,
+            "status": "ready",
+            "version": 3
+          },
+          "legacy_field_hashes": {
+            "toss-normalized:flows:005930": "0b6bf705f73830eb8f88c40f45417f97645099034ed6e8402f6c073c8b0d4126"
+          },
+          "method": "retained-toss-values-and-evidence-v1",
+          "prior_projection": {
+            "revision": "2026-10-09T16:08:00.533096+00:00",
+            "rows": 1847,
+            "status": "ready",
+            "version": 2
+          },
+          "source_rows_compared": 1847
+        },
+        "retained_observations": 1,
+        "collection": {
+          "as_of": "2026-10-08",
+          "backfill_complete": true,
+          "checked_at": "2026-10-10T05:33:52.811090+00:00",
+          "endpoint": "investor-trading",
+          "history_scope": "provider_endpoint_pages",
+          "history_status": "complete",
+          "last_error_at": "2026-10-10T05:22:07.729464+00:00",
+          "last_success_at": "2026-10-10T05:22:07.140036+00:00",
+          "note": null,
+          "period": {
+            "end": "2026-10-08",
+            "start": "2019-04-01"
+          },
+          "period_scope": "checked_normalized_rows",
+          "received_at": "2026-10-10T05:22:07.140036+00:00",
+          "source": "toss",
+          "source_revision": "2026-10-10T05:22:07.203224+00:00",
+          "status": "ready",
+          "validated_rows": 1847
+        }
+      }
+    }
+  },
+  "public_projection_readback": {
+    "at": "2026-10-10T05:35:14.262753+00:00",
+    "checks": [
+      {
+        "code": "035900",
+        "ms": 2718,
+        "row_count": 103,
+        "latest": "2026-10-08",
+        "latest_values": {
+          "individual": -27405,
+          "foreign": -89141,
+          "institution": 116500
+        },
+        "source": "toss",
+        "receipt": {
+          "as_of": "2026-10-08",
+          "backfill_complete": false,
+          "checked_at": "2026-10-10T05:33:51.671264+00:00",
+          "endpoint": "investor-trading",
+          "history_scope": "provider_endpoint_pages",
+          "history_status": "incomplete",
+          "last_error_at": "2026-10-10T05:07:58.276809+00:00",
+          "last_success_at": "2026-10-10T05:07:58.119278+00:00",
+          "note": null,
+          "period": {
+            "end": "2026-10-08",
+            "start": "2026-05-08"
+          },
+          "period_scope": "checked_normalized_rows",
+          "received_at": "2026-10-10T05:07:58.119278+00:00",
+          "source": "toss",
+          "source_revision": "2026-10-10T05:07:58.164816+00:00",
+          "status": "ready",
+          "validated_rows": 103
+        }
+      },
+      {
+        "code": "005930",
+        "ms": 4578,
+        "row_count": 1847,
+        "latest": "2026-10-08",
+        "latest_values": {
+          "individual": 6694230,
+          "foreign": -1769974,
+          "institution": -5151955
+        },
+        "source": "toss",
+        "receipt": {
+          "as_of": "2026-10-08",
+          "backfill_complete": true,
+          "checked_at": "2026-10-10T05:33:52.811090+00:00",
+          "endpoint": "investor-trading",
+          "history_scope": "provider_endpoint_pages",
+          "history_status": "complete",
+          "last_error_at": "2026-10-10T05:22:07.729464+00:00",
+          "last_success_at": "2026-10-10T05:22:07.140036+00:00",
+          "note": null,
+          "period": {
+            "end": "2026-10-08",
+            "start": "2019-04-01"
+          },
+          "period_scope": "checked_normalized_rows",
+          "received_at": "2026-10-10T05:22:07.140036+00:00",
+          "source": "toss",
+          "source_revision": "2026-10-10T05:22:07.203224+00:00",
+          "status": "ready",
+          "validated_rows": 1847
+        }
+      }
+    ],
+    "passed": true
+  },
+  "provider_and_collection": {
+    "at": "2026-10-10T05:36:40.091881+00:00",
+    "rows": {
+      "provider-toss": {
+        "status": "ready",
+        "received_at": "2026-10-10T05:36:35.885177+00:00"
+      },
+      "provider-toss-stream": {
+        "status": "subscribed",
+        "received_at": "2026-10-10T05:35:49.508662+00:00",
+        "epoch": "b18ae575529046268d5238f3264dfa55"
+      },
+      "toss-backfill-progress": {
+        "status": "capacity_limited",
+        "cursor": 444,
+        "phase": 1,
+        "attempts": 56787
+      },
+      "collection:035900": {
+        "attempts": 18,
+        "sources": {
+          "credit": {
+            "status": "error",
+            "source": "toss"
+          },
+          "flows": {
+            "status": "ready",
+            "received_at": "2026-10-10T05:35:40.730040+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "incomplete",
+            "backfill_complete": false
+          },
+          "lending": {
+            "status": "error",
+            "source": "toss"
+          },
+          "short_trades": {
+            "status": "error",
+            "received_at": null,
+            "source": "toss",
+            "as_of": null
+          },
+          "stock_loan": {
+            "status": "error",
+            "source": "toss"
+          }
+        }
+      },
+      "collection:005930": {
+        "attempts": 796,
+        "sources": {
+          "credit": {
+            "status": "ready",
+            "received_at": "2026-10-10T05:22:11.622810+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "complete",
+            "backfill_complete": true
+          },
+          "flows": {
+            "status": "ready",
+            "received_at": "2026-10-10T05:22:07.140036+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2019-04-01"
+            },
+            "validated_rows": 1847,
+            "history_status": "complete",
+            "backfill_complete": true
+          },
+          "lending": {
+            "status": "ready",
+            "received_at": "2026-10-10T05:22:17.488348+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "complete",
+            "backfill_complete": true
+          },
+          "short_trades": {
+            "status": "ready",
+            "received_at": "2026-10-10T05:22:08.918190+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "complete",
+            "backfill_complete": true
+          },
+          "stock_loan": {
+            "status": "ready",
+            "received_at": "2026-10-10T05:22:11.622810+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "complete",
+            "backfill_complete": true
+          }
+        }
+      },
+      "collection:005935": {
+        "attempts": 336,
+        "sources": {
+          "credit": {
+            "status": "ready",
+            "received_at": "2026-10-10T05:19:44.985104+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "complete",
+            "backfill_complete": true
+          },
+          "flows": {
+            "status": "ready",
+            "received_at": "2026-10-09T17:24:49.157881+00:00",
+            "source": "네이버 증권 공개 투자자 집계",
+            "as_of": "2026-10-08"
+          },
+          "lending": {
+            "status": "ready",
+            "received_at": "2026-10-10T05:19:49.292650+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "complete",
+            "backfill_complete": true
+          },
+          "short_trades": {
+            "status": "ready",
+            "received_at": "2026-10-10T05:19:44.437518+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "complete",
+            "backfill_complete": true
+          },
+          "stock_loan": {
+            "status": "ready",
+            "received_at": "2026-10-10T05:19:44.985104+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "complete",
+            "backfill_complete": true
+          }
+        }
+      }
+    }
+  },
+  "runtime": {
+    "at": "2026-10-10T05:35:58.689733+00:00",
+    "disk": {
+      "total": 154894188544,
+      "used": 138927882240,
+      "free": 15949529088
+    },
+    "pc_disk": {
+      "total": 509722226688,
+      "used": 485123579904,
+      "free": 24598646784
+    },
+    "changed_containers": [
+      "/korea-stocks-market-api-1",
+      "/korea-stocks-market-worker-1"
+    ],
+    "other_container_identity_image_mounts_running_preserved": true,
+    "scheduled_files_unchanged": true
+  },
+  "tests": {
+    "flow_regressions_passed": 156,
+    "new_flow_isolation_passed": 43,
+    "restore_combined_before_final_hardening_passed": 135,
+    "restore_resume_final_passed": 36,
+    "fixture_tests_are_not_production_data_proof": true
+  },
+  "native_resume_fixture": {
+    "all_original_traces_preserved": true,
+    "destination_stopped": true,
+    "elapsed_seconds": 41.063,
+    "executed": true,
+    "existing_cluster_used": false,
+    "final_free_bytes": 24634990592,
+    "fixture_non_production": true,
+    "max_growth_bytes": 536870912,
+    "max_seconds": 180,
+    "net_volume_growth_bytes": 104558592,
+    "original_evidence_unchanged": true,
+    "passed": true,
+    "port": 54433,
+    "prefix_rows": 2,
+    "production_contacted": false,
+    "production_proof": false,
+    "remaining_rows": 3,
+    "replay": {
+      "saved_original_traces_compared": 2,
+      "saved_series_rows_compared": 2
+    },
+    "resume_sha256": "8cf6dfd5c97951fc6972d887c8a6c7a047e6e47c7cbd8ffa9883177c10874328",
+    "source_rows": 5,
+    "source_stopped": true
+  },
+  "dated_archive_resume": {
+    "at": "2026-10-10T05:36:24.925443+00:00",
+    "run": "82cf96ad6b684cfab19678431ad8f171",
+    "attempt": "resume-f7aa543c78ff4c91a4394019b6887905",
+    "free_bytes": 24597172224,
+    "result_exists": false,
+    "pid_exists": true,
+    "committed_checkpoint": {
+      "sequence": 32070,
+      "trace_rows": 8071,
+      "series_rows": 12819200,
+      "trace_complete": true,
+      "series_complete": false
+    }
+  },
+  "github": {
+    "branch": "codex/public-stock-dashboard",
+    "head": "788f599ec3819172bc0c3c28d52b58a976f7c323",
+    "passed_ci_runs": [
+      38027881433,
+      38027878079
+    ]
+  },
+  "completion": {
+    "release_deployed": true,
+    "fresh_live_stream_verified": false,
+    "whole_market_history_complete": false,
+    "full_archive_restore_complete": false,
+    "production_storage_migration_complete": false,
+    "performance_target_passed": false,
+    "real_android_or_father_usability_passed": false,
+    "not_a_whole_product_completion": true
+  }
+}
