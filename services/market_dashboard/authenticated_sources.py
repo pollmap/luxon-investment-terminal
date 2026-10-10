@@ -13,6 +13,7 @@ from zoneinfo import ZoneInfo
 
 from .providers import number, trace
 from .store import now
+from .dart_retry import endpoint_identity, provider_retry_for, retry_key
 
 class DartDailyBudgetExceeded(RuntimeError):
     """Raised before an OpenDART request exceeds the local daily safety budget."""
@@ -296,7 +297,7 @@ class AuthenticatedSources:
         if not self.dart:
             raise RuntimeError("OpenDART key is not configured")
         async with self.dart_lock:
-            retry = self.store.get('dart-provider-retry', {})
+            retry = provider_retry_for(self.store, url)
             if retry.get('next_at', '') > now():
                 raise DartProviderUnavailable('OpenDART provider maintenance retry pending')
             today = datetime.now(ZoneInfo("Asia/Seoul")).date().isoformat()
@@ -332,9 +333,14 @@ class AuthenticatedSources:
             raise DartDailyBudgetExceeded('OpenDART provider request limit reached')
         if status == '800':
             digest = self.store.raw('dart', url, response.content)
-            self.store.put('dart-provider-retry', {'status': '800', 'received_at': now(),
+            retry = {'status': '800', 'received_at': now(),
                 'source_hash': digest,
-                'next_at': (datetime.now(UTC) + timedelta(minutes=15)).isoformat()})
+                'scope': 'endpoint', 'endpoint': endpoint_identity(url),
+                'next_at': (datetime.now(UTC) + timedelta(minutes=15)).isoformat()}
+            self.store.put(retry_key(url), retry)
+            # Preserve the existing latest-observation diagnostic contract.
+            # A different API's maintenance must not block statement JSON.
+            self.store.put('dart-provider-retry', retry)
             raise DartProviderUnavailable('OpenDART provider maintenance')
         return response
 

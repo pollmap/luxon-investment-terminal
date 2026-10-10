@@ -17,6 +17,7 @@ from .raw_archive import read_original
 from .reviewed_eps_tables import CONCEPTS, KRW, SHARES
 from .share_basis_review_store import _document_receipt
 from .store import now
+from .dart_retry import provider_retry_for
 
 VERSION = "reviewed-bootstrap-eps-notes-v1"
 BASE = "https://dart.fss.or.kr/report/viewer.do?"
@@ -219,7 +220,7 @@ async def collect_bootstrap_note(source, code, *, archive_only=False):
                         }
                     if not getattr(source, "dart", None):
                         return {"status": "credentials_missing", "filing_id": binding["filing_id"]}
-                    if store.get("dart-provider-retry", {}).get("next_at", "") > now():
+                    if provider_retry_for(store, binding[url_key]).get("next_at", "") > now():
                         return {"status": "provider_retry_wait"}
                     if state.get("retry_after", "") > now():
                         return {

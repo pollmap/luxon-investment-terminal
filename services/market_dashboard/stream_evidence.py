@@ -1,7 +1,17 @@
 """Persist actual message evidence separately from subscription acknowledgements."""
-from datetime import datetime, UTC
-from zoneinfo import ZoneInfo
+import re
 import time
+from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
+
+
+def message_digest(evidence):
+    """Accept the canonical trace ID, keeping the legacy SHA alias consistent."""
+    values = [evidence[key] for key in ('source_document_id', 'sha256') if key in evidence]
+    if not values or any(not isinstance(value, str) or not re.fullmatch(r'[0-9a-f]{64}', value)
+                         for value in values) or len(set(values)) != 1:
+        return None
+    return values[0]
 
 
 class StreamEvidence:
@@ -25,7 +35,7 @@ class StreamEvidence:
         except (ValueError, TypeError, AttributeError):
             pass
         live = (lag is not None and -5 <= lag <= 120
-                and evidence.get('source') == 'toss_websocket' and bool(evidence.get('sha256')))
+                and evidence.get('source') == 'toss_websocket' and bool(message_digest(evidence)))
         key = (day, code, kind)
         row = self.pending.setdefault(key, {'messages':0,'fresh_messages':0,'epochs':[],
             'first_received_at':received.isoformat()})

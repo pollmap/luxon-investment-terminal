@@ -18,6 +18,7 @@ from .eps_calculation import EPS_ACCOUNTS, calculate_ttm_eps, quarters_at
 from .share_basis import valid_evidence
 from .share_basis_review_store import review_index_key
 from .store import now
+from .dart_retry import provider_retry_for
 
 VERSION = "first-share-basis-evidence-v1"
 REPLAY_VERSION = "eps-input-archive-replay-v1"
@@ -339,7 +340,7 @@ async def service_xbrl_intent(source):
 
     store = source.store
     provider_wait = (
-        not source.dart or store.get("dart-provider-retry", {}).get("next_at", "") > now()
+        not source.dart or provider_retry_for(store, "https://opendart.fss.or.kr/api/fnlttXbrl.xml").get("next_at", "") > now()
     )
     companies = store.get("dart-corporations", {}).get("codes", {})
     listed = set(store.listed_codes())

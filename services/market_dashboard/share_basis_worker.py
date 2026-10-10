@@ -14,6 +14,7 @@ from .raw_archive import read_original
 from .share_basis import extend_reviewed_history, valid_evidence
 from .share_basis_review_store import load_reviews, review_index_key, review_revision
 from .store import now
+from .dart_retry import provider_retry_for
 
 log = logging.getLogger('share-basis-review')
 VERSION = 'bounded-share-disclosure-window-v2'
@@ -190,7 +191,7 @@ async def review_share_basis(source, code):
         return apply_reviewed_window(store, code, company, evidence, job, revision)
     except Exception as exc:
         # No source fact or prior unit evidence is replaced on failure.
-        provider = store.get('dart-provider-retry', {})
+        provider = provider_retry_for(store, URL)
         needs_review = isinstance(exc, ValueError)
         tomorrow = (local_now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
         result = {**job, 'status': 'review_required' if needs_review else 'error',

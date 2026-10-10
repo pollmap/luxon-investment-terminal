@@ -48,7 +48,7 @@ def test_provider_maintenance_backoff_shared_between_instances(tmp_path, content
     assert retry['status'] == '800' and retry['source_hash']
     other, second_calls = source_for(store, [VALID])
     with pytest.raises(DartProviderUnavailable):
-        asyncio.run(other._dart_get('https://example.test/report.json', params={}))
+        asyncio.run(other._dart_get('https://example.test/corpCode.xml', params={}))
     assert len(calls) == 1 and second_calls == []
     assert store.get('dart-usage')['count'] == 1
 

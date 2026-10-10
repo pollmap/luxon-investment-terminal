@@ -7,6 +7,7 @@ import zipfile
 from zoneinfo import ZoneInfo
 
 from .store import now
+from .dart_retry import provider_retry_for
 
 URL = 'https://opendart.fss.or.kr/api/corpCode.xml'
 
@@ -69,7 +70,7 @@ async def refresh_corporations(source):
                  'next_at': (datetime.now(UTC) + timedelta(minutes=15)).isoformat()}
         if digest:
             retry['source_hash'] = digest
-        provider = store.get('dart-provider-retry') or {}
+        provider = provider_retry_for(store, URL)
         if provider.get('next_at', '') > now():
             retry.update(provider_status=provider.get('status'), next_at=provider['next_at'])
         store.put('dart-corporations-refresh', retry)
