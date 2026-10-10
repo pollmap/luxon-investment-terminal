@@ -36,6 +36,7 @@ class NamedCursor:
     def execute(self, sql, params):
         self.db.statements.append((sql, params))
         if self.name == "verify_series":
+            assert sql == v._series_statement(v.TABLES[self.db.target][0])
             assert 'ORDER BY series COLLATE "C"' in sql
             series = sorted(
                 {row[0] for row in self.db.rows}, key=lambda value: value.encode("utf8")
@@ -145,8 +146,52 @@ def verify(db, **limits):
         max_traces=limits.get("max_traces", 3),
     )
     assert checks
-    assert all(sql.startswith("SELECT ") for sql, _ in db.statements)
+    assert all(
+        sql.startswith("SELECT ") or sql == v._series_statement(v.TABLES[db.target][0])
+        for sql, _ in db.statements
+    )
     return report
+
+
+@pytest.mark.parametrize("target", ["source", "restored"])
+def test_series_enumeration_seeks_native_pk_and_only_sorts_distinct_keys_in_c(target):
+    table = v.TABLES[target][0]
+    sql = v._series_statement(table)
+    assert sql.startswith("WITH RECURSIVE series_keys(series) AS (")
+    assert f"(SELECT series FROM {table} ORDER BY series LIMIT 1)" in sql
+    assert "UNION ALL SELECT next_key.series FROM series_keys AS current_key" in sql
+    assert f"CROSS JOIN LATERAL (SELECT series FROM {table} " in sql
+    assert "WHERE series > current_key.series ORDER BY series LIMIT 1) AS next_key" in sql
+    assert sql.endswith('SELECT series FROM series_keys ORDER BY series COLLATE "C"')
+    assert sql.count("COLLATE") == 1
+    assert "GROUP BY" not in sql and "OFFSET" not in sql and "payload" not in sql
+
+
+@pytest.mark.parametrize("table", ["other.table", "public.market_time_series; DELETE FROM x", ""])
+def test_series_enumeration_refuses_nonfixed_identifier(table):
+    with pytest.raises(c.Refused, match="Fixed series table"):
+        v._series_statement(table)
+
+
+def test_many_distinct_keys_keep_all_rows_c_order_hash_and_bounded_fetches():
+    source, _, records, _ = fixtures()
+    prototype = source.rows[0]
+    # Mix locale-sensitive labels and duplicate series across fetch boundaries.
+    source.rows = [
+        (f"{label}{number:04}", stamp, prototype[2], prototype[3])
+        for number in range(140)
+        for label in ("가", "a", "B")
+        for stamp in ("z", "A")
+    ]
+    report = verify(source, max_rows=840)
+    expected = c.ordered_logical_hash(
+        sorted(source.rows, key=lambda row: (row[0].encode("utf8"), row[1].encode("utf8"))),
+        records,
+    )
+    assert (report["rows"], report["logical_sha256"]) == expected
+    assert report["series"] == 420
+    assert source.fetches.count(("verify_series", 400)) == 3  # 400,20,EOF
+    assert source.closed.count("verify_rows") == 420
 
 
 def test_c_order_hash_matches_codec_and_all_originals_include_unreferenced():

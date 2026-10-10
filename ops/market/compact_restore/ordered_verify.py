@@ -78,6 +78,24 @@ def _framed(checksum, value):
     checksum.update(body)
 
 
+def _series_statement(table):
+    if table not in {entry[0] for entry in TABLES.values()}:
+        raise codec.Refused("Fixed series table required")
+    # Seek the leading PK column in its own collation. Applying C before the
+    # seeks would prevent use of a locale-ordered (series,time) primary key.
+    # Only distinct keys are sorted in C order; every payload is still read
+    # below. Both tables require a NOT NULL series primary-key column.
+    return (
+        "WITH RECURSIVE series_keys(series) AS ("
+        "(SELECT series FROM " + table + " ORDER BY series LIMIT 1) "
+        "UNION ALL "
+        "SELECT next_key.series FROM series_keys AS current_key "
+        "CROSS JOIN LATERAL (SELECT series FROM " + table + " "
+        "WHERE series > current_key.series ORDER BY series LIMIT 1) AS next_key"
+        ') SELECT series FROM series_keys ORDER BY series COLLATE "C"'
+    )
+
+
 def verify_snapshot(db, target, *, check, max_rows, max_traces):
     """Read every row and trace. The result is data evidence, not restore approval."""
     if (
@@ -105,7 +123,7 @@ def verify_snapshot(db, target, *, check, max_rows, max_traces):
     for (series,) in _cursor_rows(
         db,
         "verify_series",
-        "SELECT series FROM " + table + ' GROUP BY series ORDER BY series COLLATE "C"',
+        _series_statement(table),
         (),
         check,
     ):
