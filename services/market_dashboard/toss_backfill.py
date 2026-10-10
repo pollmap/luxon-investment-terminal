@@ -404,6 +404,12 @@ class TossBackfill:
                 else:
                     status = trading_collection_status(snapshot)
                     count=snapshot.get('row_count',len(rows))
+                    if kind != 'program-trades':
+                        # Completed pages may predate collection receipts. The
+                        # existing projection verifies/reuses its small marker;
+                        # never fetch a provider page or reset the old cursor.
+                        self.collector._project_trading(
+                            code, kind, {'status': snapshot.get('status', 'error')})
                     if state.get('status') != status or state.get('rows') != count or not state.get('backfill_complete'):
                         self.store.put('backfill-status-review:'+code+':'+kind,state)
                         self.store.put(key, {'status':status,

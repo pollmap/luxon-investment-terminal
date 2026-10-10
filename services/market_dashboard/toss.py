@@ -89,6 +89,26 @@ def numeric(value):
         raise ValueError('Invalid market value') from exc
 
 
+def head_age_seconds(snapshot, clock):
+    """Latest-page receipt age; an old-page receipt is not a head refresh.
+
+    Only legacy snapshots without either split clock use received_at. An
+    explicit missing/invalid head stays unknown even when history arrived now.
+    This is a retry clock: data status/as-of remain independent (including an
+    empty head response that retained stale values).
+    """
+    stamp = snapshot.get('head_received_at')
+    if 'head_received_at' not in snapshot and not snapshot.get('history_received_at'):
+        stamp = snapshot.get('received_at')
+    try:
+        start, end = datetime.fromisoformat(stamp), datetime.fromisoformat(clock)
+        if start.tzinfo is None or end.tzinfo is None or start > end:
+            return float('inf')
+        return (end - start).total_seconds()
+    except (TypeError, ValueError):
+        return float('inf')
+
+
 def normalize_candles(items):
     rows = {}
     for item in items:
@@ -925,8 +945,7 @@ class TossCollector:
                             quote_day = trading_day(quote.get('as_of'))
                             current_day = datetime.now(ZoneInfo('Asia/Seoul')).date().isoformat()
                             volume = quote.get('daily_facts', {}).get('volume', {})
-                            daily_age = ((datetime.fromisoformat(now())-datetime.fromisoformat(daily['received_at'])).total_seconds()
-                                         if daily.get('received_at') else float('inf'))
+                            daily_age = head_age_seconds(daily, now())
                             needs_volume = quote_day and trading_day(volume.get('period')) != quote_day
                             if daily_age > (300 if quote_day == current_day else 3600) or (needs_volume and daily_age > 60):
                                 await self.history(code,'1d',pages=1,compact=True)
@@ -938,8 +957,8 @@ class TossCollector:
                                 await self.history(code,'1d',resume=bool(raw.get('received_at','')[:10]==now()[:10] and raw.get('next_before')),adjusted=False,compact=True)
                             self.last_history[code]=time.monotonic()
                         await self.snapshot(code, include_price=False)
-                        previous = self.store.get(f'toss:investor-trading:{code}',{})
-                        if not previous.get('received_at') or (datetime.fromisoformat(now())-datetime.fromisoformat(previous['received_at'])).total_seconds()>900:
+                        previous = self.store.metadata(f'toss:investor-trading:{code}',{})
+                        if head_age_seconds(previous, now()) > 900:
                             await self.fundamentals_of_trading(code)
                         self.store.put('provider-toss',{'status':'ready','received_at':now()})
                     except Exception as exc:

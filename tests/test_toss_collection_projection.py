@@ -1,12 +1,14 @@
 """fixture_non_production: normalized trading data must reach collection status."""
 from copy import deepcopy
+from types import SimpleNamespace
 
 import pytest
 
 from services.market_dashboard.collection import collection_snapshot
-from services.market_dashboard.store import Store
+from services.market_dashboard.store import Store, now
 from services.market_dashboard.time_series import put_series
 from services.market_dashboard.toss import TossCollector
+from services.market_dashboard.toss_backfill import KINDS, TossBackfill
 
 
 @pytest.fixture
@@ -225,3 +227,38 @@ async def test_later_page_failure_keeps_successful_prefix_but_does_not_report_re
     assert state['status'] == 'stale' and state['validated_rows'] == 1
     assert state['history_status'] == 'incomplete'
     assert store.metadata('toss:securities-lending:005930')['next_until'] == '2026-10-06'
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('compact', [False, True])
+@pytest.mark.parametrize('status', ['ready', 'stale'])
+@pytest.mark.parametrize(('endpoint', 'section', 'row'), [
+    ('credit-trades', 'credit', {'marginLoan': {'balanceQuantity': 10}}),
+    ('securities-lending', 'lending', {'balanceQuantity': 25}),
+])
+async def test_completed_fresh_queue_repairs_receipt_without_fetch_or_history_read(
+        store, monkeypatch, compact, status, endpoint, section, row):
+    monkeypatch.setenv('MARKET_COMPACT_TRADING_PROJECTIONS', str(int(compact)))
+    store.put('universe', {'rows': [{'code': '005930', 'market': 'KOSPI'}]})
+    key = seed(store, endpoint, [{'date': '2026-10-07', **row}], complete=True)
+    source = {**store.metadata(key), 'head_received_at': now(), 'status': status}
+    store.put(key, source)
+    receipt = deepcopy(project(store, endpoint, status)[section])
+    store.put('collection:005930', {'sources': {}, 'last_error': 'OtherSourceError'})
+    store.put('toss-backfill-progress', {'cursor': 0, 'phase': KINDS.index(endpoint),
+                                        'attempts': 1})
+    before = store.metadata(key)
+    # A normal marker already proves the normalized section. No provider client
+    # methods exist, and reading the normalized source history would fail.
+    collector = TossCollector(store, object())
+    monkeypatch.setattr(store.time_series, 'rows', lambda *_a, **_k: pytest.fail('History read'))
+    queue = TossBackfill(collector, lambda _: SimpleNamespace(total=100 * 1024**3,
+                                                             free=90 * 1024**3))
+    assert await queue.step() == status
+    sources = store.metadata('collection:005930')['sources']
+    for field in ('status', 'as_of', 'period', 'received_at', 'history_status'):
+        assert sources[section].get(field) == receipt.get(field)
+    assert store.metadata('collection:005930')['last_error'] == 'OtherSourceError'
+    assert store.metadata(key) == before
+    assert sources['short_balance']['status'] == 'pending'
+    assert sources[section]['backfill_complete'] is True
