@@ -1,0 +1,167 @@
+{
+  "recorded_at": "2026-10-10T00:50:14.440330+00:00",
+  "kind": "maintenance_not_app_release",
+  "public_app_release": "20261010-archive-atomic-v114",
+  "archive": {
+    "archive_sha256": "ffa19ed85e35e777165adbb9f8beb8f1b60c44265bb9cc46b1965a34f38b2c8a",
+    "compressed_bytes": 101802128,
+    "candidate_bytes": 434540669,
+    "verified_files": 3645,
+    "all_release_hashes_verified": true,
+    "restored_release": "20261010-dividend-reconcile-v108",
+    "restored_files": 1783,
+    "restored_bytes": 205050475,
+    "restored_tree_sha256": "d44f680adee8729a44e7cc19ee6bba41aa995bca7762fe684f60c2d365c97c47",
+    "restore_verified": true
+  },
+  "cleanup": {
+    "removed": 2,
+    "reclaimed_bytes": 434540669,
+    "kept": [
+      "20261005-share-universe-archive-v73",
+      "20261009-first-interaction-v93",
+      "20261010-archive-atomic-v114",
+      "20261010-ocf-republication-v112",
+      "20261010-reader-floor-v109",
+      "20261010-share-review-v113",
+      "20261010-storage-writes-v110"
+    ]
+  },
+  "candidate_allocated_files_bytes": 445173760,
+  "disk_before": {
+    "total": 154894188544,
+    "used": 138478551040,
+    "free": 16398860288
+  },
+  "disk_after": {
+    "total": 154894188544,
+    "used": 138062200832,
+    "free": 16815210496
+  },
+  "public": {
+    "at": "2026-10-10T00:46:40.096807+00:00",
+    "checks": [
+      {
+        "url": "https://stocks.62-171-141-206.sslip.io/api/market/v1/health",
+        "status": 200,
+        "bytes": 606,
+        "release": "20261010-archive-atomic-v114"
+      },
+      {
+        "url": "https://stocks.62-171-141-206.sslip.io/api/market/v1/securities/005930?view=summary",
+        "status": 200,
+        "bytes": 1868,
+        "release": null
+      },
+      {
+        "url": "https://korea-stocks-edge.lch68-workers.workers.dev/api/market/v1/health",
+        "status": 200,
+        "bytes": 606,
+        "release": "20261010-archive-atomic-v114"
+      },
+      {
+        "url": "https://korea-stocks-edge.lch68-workers.workers.dev/api/market/v1/securities/005930?view=summary",
+        "status": 200,
+        "bytes": 1868,
+        "release": null
+      }
+    ],
+    "passed": true
+  },
+  "native_checks": [
+    {
+      "path": "work/storage-migration-review-v111/compact-restore/pg-stream-runs/20261010T003844Z-db027855/RESULT.json",
+      "sha256": "d88290ec8f127a5efd06ac28c3cfa556d6d6f2265750d5d24416e225618db716",
+      "fixture_non_production": true,
+      "passed": true,
+      "cluster_stopped": true,
+      "cases": [
+        {
+          "name": "native_supervised_pipe",
+          "passed": true
+        },
+        {
+          "name": "real_completed_prefix_replay",
+          "passed": true
+        },
+        {
+          "name": "changed_row_refused",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "path": "work/storage-migration-review-v111/candidate/pg-target-fence-runs/20261010T004713Z-3f917efd/RESULT.json",
+      "sha256": "849370781112c7285c47188051e66cea813ce599071eaa3f830b65686fbe093d",
+      "fixture_non_production": true,
+      "passed": true,
+      "cluster_stopped": true,
+      "cases": [
+        {
+          "name": "target_api_continue",
+          "passed": true
+        },
+        {
+          "name": "target_waiting_series",
+          "passed": true
+        },
+        {
+          "name": "target_waiting_trace",
+          "passed": true
+        },
+        {
+          "name": "target_backup_mismatch",
+          "passed": true
+        },
+        {
+          "name": "target_copy_failure",
+          "passed": true
+        },
+        {
+          "name": "target_runtime_changed",
+          "passed": true
+        },
+        {
+          "name": "cut_success_rollback",
+          "passed": true
+        },
+        {
+          "name": "cut_owner_mismatch",
+          "passed": true
+        },
+        {
+          "name": "cut_acl_mismatch",
+          "passed": true
+        },
+        {
+          "name": "cut_view_dependency",
+          "passed": true
+        },
+        {
+          "name": "cut_mid_move_failure",
+          "passed": true
+        },
+        {
+          "name": "cut_new_write_rollback",
+          "passed": true
+        },
+        {
+          "name": "cut_lock_timeout",
+          "passed": true
+        },
+        {
+          "name": "cut_cancel",
+          "passed": true
+        },
+        {
+          "name": "cut_retire_without_recovery",
+          "passed": true
+        }
+      ]
+    }
+  ],
+  "production_migration": false,
+  "backfill_resumed": false,
+  "new_intraday_events_verified": false,
+  "new_performance_test": false
+}

@@ -76,6 +76,109 @@ def test_current_recent_two_openalgo_and_rollback_floor_are_protected(releases):
     assert state["keep"] == [f"20261009-test-v{i}" for i in (1, 2, 3, 6, 7, 8)]
 
 
+@pytest.mark.parametrize("measure_bytes", [True, False])
+def test_financial_and_dart_readers_survive_later_floor_advance(
+    tmp_path, monkeypatch, measure_bytes
+):
+    root = tmp_path / "fixture_non_production"
+    names = {n: f"20261010-fixture-v{n}" for n in range(108, 115)}
+    for number, name in names.items():
+        path = root / "releases" / name
+        document(path / "deployment.json", {"release": name, "state": "active"})
+        os.utime(path / "deployment.json", (number, number))
+    link(root / "current", root / "releases" / names[114], monkeypatch)
+    monkeypatch.setattr(retention, "ROOT", root)
+    monkeypatch.setattr(retention, "PUBLIC_ROOT", tmp_path / "public")
+    containers = [
+        {"service": service, "image": "korea-stocks-api:" + names[114], "mounts": []}
+        for service in retention.SERVICES
+    ]
+    document(
+        root / "shared/data/storage-format.json",
+        {
+            "version": 1,
+            "rollback_floor": names[112],
+            "previous_rollback_floor": names[109],
+            "financial_reader_release": names[110],
+            "financial_rollback_release": names[109],
+            "raw_dart": {"activated_release": names[110], "rollback_release": names[109]},
+        },
+    )
+    state = retention.inventory(measure_bytes=measure_bytes, containers=containers)
+    assert {row["name"] for row in state["candidates"]} == {names[108], names[111]}
+    assert set(state["keep"]) == {names[n] for n in (109, 110, 112, 113, 114)}
+    assert "storage_financial_reader_release" in state["protected_reasons"][names[110]]
+    assert "storage_financial_rollback_release" in state["protected_reasons"][names[109]]
+    assert "storage_raw_dart_activated_release" in state["protected_reasons"][names[110]]
+    assert "storage_raw_dart_rollback_release" in state["protected_reasons"][names[109]]
+    assert len(list((root / "releases").iterdir())) == 7
+
+
+@pytest.mark.parametrize(
+    "field",
+    ["rollback_floor", "financial_reader_release", "financial_rollback_release",
+     "raw_dart.activated_release", "raw_dart.rollback_release", "previous_rollback_floor"],
+)
+@pytest.mark.parametrize("value", ["../outside", "20261009-missing", "", 12])
+def test_invalid_storage_release_reference_stops_inventory(releases, field, value):
+    root, _, containers = releases
+    contract = {"version": 1, "rollback_floor": "20261009-test-v1"}
+    if field.startswith("raw_dart."):
+        contract["raw_dart"] = {field.split(".")[1]: value}
+    else:
+        contract[field] = value
+    document(root / "shared/data/storage-format.json", contract)
+    with pytest.raises(ValueError, match="Storage release reference"):
+        retention.inventory(containers=containers)
+    assert len(list((root / "releases").iterdir())) == 8
+
+
+def test_historical_floor_is_preserved_with_explicit_reason(releases):
+    root, _, containers = releases
+    document(root / "shared/data/storage-format.json", {
+        "version": 1, "rollback_floor": "20261009-test-v7",
+        "previous_rollback_floor": "20261009-test-v1",
+    })
+    state = retention.inventory(containers=containers)
+    assert state["protected_reasons"]["20261009-test-v1"] == [
+        "storage_previous_rollback_floor_historical"
+    ]
+
+
+def test_null_historical_floor_is_allowed_but_null_active_reader_is_not(releases):
+    root, _, containers = releases
+    path = root / "shared/data/storage-format.json"
+    contract = {"version": 1, "rollback_floor": "20261009-test-v7",
+                "previous_rollback_floor": None}
+    document(path, contract)
+    assert len(retention.inventory(containers=containers)["candidates"]) == 5
+    document(path, {**contract, "financial_reader_release": None})
+    with pytest.raises(ValueError, match="Storage release reference"):
+        retention.inventory(containers=containers)
+
+
+def test_linked_storage_reader_is_rejected(releases, monkeypatch):
+    root, _, containers = releases
+    reader = root / "releases/20261009-linked-reader"
+    link(reader, root / "releases/20261009-test-v1", monkeypatch)
+    document(root / "shared/data/storage-format.json", {
+        "version": 1, "rollback_floor": "20261009-test-v7",
+        "financial_reader_release": reader.name,
+    })
+    with pytest.raises(ValueError, match="Storage release reference directory"):
+        retention.inventory(containers=containers)
+
+
+@pytest.mark.parametrize("raw_dart", [None, [], "invalid"])
+def test_malformed_nested_reader_contract_fails_closed(releases, raw_dart):
+    root, _, containers = releases
+    document(root / "shared/data/storage-format.json", {
+        "version": 1, "rollback_floor": "20261009-test-v7", "raw_dart": raw_dart,
+    })
+    with pytest.raises(ValueError, match="Invalid storage DART retention contract"):
+        retention.inventory(containers=containers)
+
+
 def test_failed_new_release_does_not_replace_good_rollback(releases):
     root, _, containers = releases
     path = root / "releases/20261009-test-v9/deployment.json"
@@ -154,6 +257,20 @@ def evidence(state):
         "restored_tree_sha256": first["content_sha256"],
     }
     return saved, report
+
+
+def test_new_reader_reference_invalidates_prior_removal_evidence(releases):
+    root, _, containers = releases
+    saved, report = evidence(retention.inventory(containers=containers))
+    document(root / "shared/data/storage-format.json", {
+        "version": 1, "rollback_floor": "20261009-test-v7",
+        "financial_reader_release": "20261009-test-v1",
+        "financial_rollback_release": "20261009-test-v2",
+    })
+    fresh = retention.inventory(containers=containers)
+    with pytest.raises(ValueError, match="Release inventory changed"):
+        retention.apply_verified(saved, report, "a" * 64, fresh)
+    assert len(list((root / "releases").iterdir())) == 8
 
 
 @pytest.mark.parametrize(

@@ -122,6 +122,36 @@ def fingerprint_files(path, files):
     return {"bytes": total, "files": len(files), "content_sha256": signature.hexdigest()}
 
 
+def storage_release_references(contract, root):
+    """Keep every declared reader, not just the most recently advanced floor."""
+    if not isinstance(contract, dict) or contract.get("version") != 1:
+        raise ValueError("Invalid storage retention contract")
+    references = [(contract.get("rollback_floor"), "storage_rollback_floor")]
+    for field in ("financial_reader_release", "financial_rollback_release"):
+        if field in contract:
+            references.append((contract[field], "storage_" + field))
+    if "raw_dart" in contract:
+        raw = contract["raw_dart"]
+        if not isinstance(raw, dict):
+            raise ValueError("Invalid storage DART retention contract")
+        for field in ("activated_release", "rollback_release"):
+            if field in raw:
+                references.append((raw[field], "storage_raw_dart_" + field))
+    # This is historical evidence, not the current reader floor. Keep the named
+    # release conservatively until a separate contract review retires the link.
+    # Earlier writers can emit null when there was no previous floor.
+    previous = contract.get("previous_rollback_floor")
+    if previous is not None:
+        references.append((previous, "storage_previous_rollback_floor_historical"))
+    for name, _ in references:
+        if not isinstance(name, str) or not RELEASE_NAME.fullmatch(name):
+            raise ValueError("Storage release reference is missing or invalid")
+        target = root / name
+        if target.is_symlink() or not target.is_dir() or target.resolve() != target:
+            raise ValueError("Storage release reference directory is missing or invalid")
+    return references
+
+
 def inventory(*, measure_bytes=True, containers=None):
     root = (ROOT / "releases").resolve()
     current = (ROOT / "current").resolve(strict=True)
@@ -146,16 +176,10 @@ def inventory(*, measure_bytes=True, containers=None):
     if static:
         protect(static["release"], "active_static_web")
     contract_path = ROOT / "shared/data/storage-format.json"
-    if contract_path.exists():
+    if contract_path.exists() or contract_path.is_symlink():
         contract = read_json(contract_path)
-        floor = contract.get("rollback_floor", "")
-        if (
-            contract.get("version") != 1
-            or not RELEASE_NAME.fullmatch(floor)
-            or not (root / floor).is_dir()
-        ):
-            raise ValueError("Storage rollback floor is missing or invalid")
-        protect(floor, "storage_rollback_floor")
+        for name, reason in storage_release_references(contract, root):
+            protect(name, reason)
     paths = [p for p in root.iterdir() if p.is_dir() and not p.is_symlink()]
     # File existence alone is not a successful deployment: failed/prepared
     # releases must neither displace rollback versions nor be auto-cleaned.
