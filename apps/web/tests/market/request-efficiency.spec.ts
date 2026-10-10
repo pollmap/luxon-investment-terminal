@@ -1,7 +1,7 @@
 import {test,expect,type Page} from '@playwright/test';
 
 // Non-production fixtures verify requests and navigation, not financial coverage.
-async function fixture(page:Page,{indexCacheHeaders=true}:{indexCacheHeaders?:boolean}={}){
+async function fixture(page:Page,{indexCacheHeaders=true,indexFailure=false}:{indexCacheHeaders?:boolean;indexFailure?:boolean}={}){
   // The CI namespace has loopback only. Its OS network state can be offline even
   // though every endpoint below is fulfilled locally; model that fixture state.
   await page.addInitScript(()=>Object.defineProperty(navigator,'onLine',{configurable:true,get:()=>true}));
@@ -17,7 +17,11 @@ async function fixture(page:Page,{indexCacheHeaders=true}:{indexCacheHeaders?:bo
     calls.push(path+url.search);
     let data:unknown={rows:[],status:'ready'};
     if(path==='/metrics')data={};
-    else if(path==='/search-index')data={rows:[{code:stock.code,name:stock.name,market:stock.market,tokens:['005930','삼성전자','ㅅㅅㅈㅈ']}]};
+    else if(path==='/search-index'){
+      if(indexFailure)return route.fulfill({status:503,json:{error:'fixture_non_production_index_unavailable'}});
+      data={rows:[{code:stock.code,name:stock.name,market:stock.market,tokens:['005930','삼성전자','ㅅㅅㅈㅈ','삼전']}]};
+    }
+    else if(path==='/search')data={rows:[{code:stock.code,name:stock.name,market:stock.market}]};
     else if(path==='/screener')data={rows:[stock],total:1};
     else if(path==='/overview')data={indices:['KOSPI','KOSDAQ','KPI200'].map(code=>({code,price:100,change:1,market_status:'CLOSE'})),breadth:{up:1,down:0,flat:0},total:1,value:1000,sectors:[],filings:{rows:[],status:'ready'}};
     else if(path==='/securities/005930')data={security:stock,detail:{financials:[],flows:[]},prices:{rows:[]},filings:{rows:[]},official:{company:{},statements:[]}};
@@ -76,15 +80,58 @@ test('detail pauses the hidden market stream and restores the original list on r
   await expect.poll(()=>state.subscriptions.size).toBe(1);
 });
 
-test('header and keyboard search reuse the identity index without live search calls',async({page})=>{
+test('search intent loads one identity index and header and keyboard search reuse it',async({page})=>{
   const state=await fixture(page);await page.goto('/stocks');
+  await expect(page.locator('.mk-stock-link').first()).toBeVisible();
+  expect(state.count('/search-index')).toBe(0);
+  const input=page.getByRole('combobox',{name:'종목명 또는 코드 검색'});
+  await input.focus();
   await expect.poll(()=>state.count('/search-index')).toBe(1);
-  await page.getByRole('combobox',{name:'종목명 또는 코드 검색'}).fill('ㅅㅅㅈㅈ');
+  await input.fill('ㅅㅅㅈㅈ');
+  await expect(page.getByRole('listbox',{name:'검색 결과'}).getByRole('option')).toContainText('삼성전자');
+  await input.fill('삼전');
   await expect(page.getByRole('listbox',{name:'검색 결과'}).getByRole('option')).toContainText('삼성전자');
   await page.keyboard.press('Escape');await page.keyboard.press('Control+k');
   await page.getByRole('dialog').getByRole('textbox',{name:'종목명 또는 코드'}).fill('005930');
   await expect(page.getByRole('dialog').locator('.mk-search-result')).toContainText('삼성전자');
   expect(state.count('/search-index')).toBe(1);expect(state.calls.some(path=>path.startsWith('/search?'))).toBe(false);
+});
+
+test('keyboard-first search starts the index and header later reuses it',async({page})=>{
+  const state=await fixture(page);await page.goto('/stocks');
+  await expect(page.locator('.mk-stock-link').first()).toBeVisible();
+  expect(state.count('/search-index')).toBe(0);
+  await page.keyboard.press('Control+k');
+  const dialog=page.getByRole('dialog');
+  await dialog.getByRole('textbox',{name:'종목명 또는 코드'}).fill('005930');
+  await expect(dialog.locator('.mk-search-result')).toContainText('삼성전자');
+  await page.keyboard.press('Escape');
+  const input=page.getByRole('combobox',{name:'종목명 또는 코드 검색'});
+  await input.fill('삼전');
+  await expect(page.getByRole('listbox',{name:'검색 결과'}).getByRole('option')).toContainText('삼성전자');
+  await input.press('ArrowDown');await input.press('Enter');
+  await expect(page.getByRole('heading',{name:'삼성전자',exact:true})).toBeVisible();
+  expect(new URL(page.url()).searchParams.get('code')).toBe('005930');
+  expect(state.count('/search-index')).toBe(1);
+  expect(state.calls.some(path=>path.startsWith('/search?'))).toBe(false);
+});
+
+test('failed identity index preserves live search fallback and Enter navigation',async({page})=>{
+  const state=await fixture(page,{indexFailure:true});await page.goto('/stocks');
+  await expect(page.locator('.mk-stock-link').first()).toBeVisible();
+  expect(state.count('/search-index')).toBe(0);
+  const listURL=page.url(),input=page.getByRole('combobox',{name:'종목명 또는 코드 검색'});
+  await input.focus();
+  await expect.poll(()=>state.count('/search-index')).toBe(1);
+  await input.fill('ㅅㅅㅈㅈ');
+  await expect(page.getByRole('listbox',{name:'검색 결과'}).getByRole('option')).toContainText('삼성전자');
+  expect(state.calls).toContain('/search?q='+encodeURIComponent('ㅅㅅㅈㅈ'));
+  await input.press('Enter');
+  await expect(page.getByRole('heading',{name:'삼성전자',exact:true})).toBeVisible();
+  expect(new URL(page.url()).searchParams.get('code')).toBe('005930');
+  await page.goBack();
+  await expect(page.locator('.mk-stock-link').first()).toBeVisible();
+  await expect(page).toHaveURL(listURL);
 });
 
 test('identity index without an upstream date remains usable but is not memory cached',async({page})=>{

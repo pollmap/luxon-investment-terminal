@@ -6,8 +6,8 @@ import CompanyLogo from "./company-logo";
 
 export default function HeaderSearch({onOpen}: {onOpen: (code:string)=>void}) {
   const [value,setValue]=useState("");
-  const {rows,busy,failed,retry}=useStockSearch(value);
   const [open,setOpen]=useState(false), [index,setIndex]=useState(-1);
+  const {rows,busy,failed,retry}=useStockSearch(value,open||!!value.trim());
   const root=useRef<HTMLDivElement>(null), input=useRef<HTMLInputElement>(null);
   useEffect(()=>{
     const close=(event:PointerEvent)=>{if(!root.current?.contains(event.target as Node))setOpen(false);};
