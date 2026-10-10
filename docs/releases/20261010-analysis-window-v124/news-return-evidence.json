@@ -1,0 +1,63 @@
+{
+  "release": "20261010-analysis-window-v124",
+  "cloudflare_version": "8e99085e-81e1-46f5-ab16-add0ebd17e0a",
+  "fixture_non_production": false,
+  "scope": "One isolated CF 1440px observation: market, detail, back, then at most 20 seconds for news terminal UI state. No retry click or load test.",
+  "started_at": "2026-10-10T07:22:29.166Z",
+  "requests": [
+    {
+      "phase": "initial",
+      "host": "stocks.62-171-141-206.sslip.io",
+      "path": "/api/market/v1/news?limit=6",
+      "start_elapsed_ms": 6873,
+      "failed_elapsed_ms": 8044,
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "phase": "returned",
+      "host": "stocks.62-171-141-206.sslip.io",
+      "path": "/api/market/v1/news?limit=6",
+      "start_elapsed_ms": 10960,
+      "status": 200,
+      "response_elapsed_ms": 13595,
+      "finished_elapsed_ms": 13596,
+      "timing": {
+        "startTime": 1791616962316.8108,
+        "domainLookupStart": -1,
+        "domainLookupEnd": -1,
+        "connectStart": -1,
+        "secureConnectionStart": -1,
+        "connectEnd": -1,
+        "requestStart": 0.907,
+        "responseStart": 2630.17,
+        "responseEnd": 2637.566
+      },
+      "api_status": "ready",
+      "rows": 6,
+      "article_titles": [
+        "반도체 슈퍼사이클 실감…3분기 대기업 채용공고 2배 늘었다",
+        "삼성전자, 최대 실적에도 주가는 하락…외국인 8거래일 연속 순매도 ...",
+        "“둘이 합쳐 30억, 서민 탈출한 듯”…삼성전자 ‘성과급 대박’ 부부...",
+        "‘반도체 여제’ 리사수 방한…삼전닉스만 만난게 아니라는데",
+        "\"제2의 엔비디아 될까\"…앤트로픽 노리는 ETF 잇따라 출격 [이수의 ETF...",
+        "\"755억 썼는데\"...JYP '충격' 결과"
+      ]
+    }
+  ],
+  "errors": [],
+  "blocked": [],
+  "screenshots": "viewport only",
+  "manifest_sha256": "abb403a441d86836b884c305d28f586d609f301205477ad7d5bd980a9148fadc",
+  "initial_list_elapsed_ms": 7963,
+  "news": {
+    "terminal_elapsed_after_return_ms": 2950,
+    "text": "관련 소식\n날짜별 시장\n반도체 슈퍼사이클 실감…3분기 대기업 채용공고 2배 늘었다\n매경이코노미 · 2026-10-10 16:01 ↗\n삼성전자, 최대 실적에도 주가는 하락…외국인 8거래일 연속 순매도 ...\n서울경제 · 2026-10-10 16:01 ↗\n“둘이 합쳐 30억, 서민 탈출한 듯”…삼성전자 ‘성과급 대박’ 부부...\n세계일보 · 2026-10-10 15:15 ↗\n‘반도체 여제’ 리사수 방한…삼전닉스만 만난게 아니라는데\n매일경제 · 2026-10-10 15:10 ↗\n\"제2의 엔비디아 될까\"…앤트로픽 노리는 ETF 잇따라 출격 [이수의 ETF...\n한국경제 · 2026-10-10 15:01 ↗\n\"755억 썼는데\"...JYP '충격' 결과\n한경비즈니스 · 2026-10-10 14:57 ↗\n뉴스 더 보기",
+    "article_rows": 6,
+    "retry_button_count": 0,
+    "state": "ready"
+  },
+  "status": "terminal_state_observed",
+  "finished_at": "2026-10-10T07:22:45.455Z",
+  "browser_closed": true,
+  "api_ui_consistent": true
+}
