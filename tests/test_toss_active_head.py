@@ -68,7 +68,11 @@ async def test_active_old_head_refreshes_despite_a_recent_history_page(
         with pytest.raises(Finished):
             await collector.run()
         assert (('history', code, '1d', {'pages': 1, 'compact': True}) in calls) is old_head
-        assert (('trading', code, {}) in calls) is old_head
+        endpoints = ('investor-trading', 'program-trades', 'short-selling',
+                     'credit-trades', 'securities-lending')
+        assert [call for call in calls if call[0] == 'trading'] == [
+            ('trading', code, {'endpoints': (endpoint,)}) for endpoint in endpoints
+            if old_head or endpoint != 'investor-trading']
         assert {key: store.metadata(key) for key in before} == before
     finally:
         store.engine.dispose()

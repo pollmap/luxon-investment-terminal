@@ -166,4 +166,7 @@
  .mk-app:is(.mk-large,.mk-largest) .mk-mobile-company-text small{font-size:var(--mk-phone-small)}
  .mk-app .mk-market-journal .mk-document strong{font-size:var(--mk-phone-text)}
  .mk-app .mk-market-journal .mk-document small{font-size:var(--mk-phone-small)}
+ /* Keep trading-period labels intact without changing other segmented controls. */
+ .mk-app :is(.mk-activity [aria-label="수급 기간"],.mk-financing [aria-label="대차·신용 기간"],.mk-short-selling [aria-label="공매도 기간"]){display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;gap:8px}
+ .mk-app :is(.mk-activity [aria-label="수급 기간"],.mk-financing [aria-label="대차·신용 기간"],.mk-short-selling [aria-label="공매도 기간"])>button{min-width:0;min-height:52px;white-space:nowrap}
 }

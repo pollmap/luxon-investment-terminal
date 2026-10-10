@@ -932,38 +932,87 @@ class TossCollector:
                 self.store.put('toss-price-error', {'error':type(exc).__name__,'received_at':now()})
             await asyncio.sleep(5)
 
+    async def refresh_active_once(self):
+        """Refresh each due endpoint independently within the existing active set."""
+        from .quote_metrics import trading_day
+        provider_failures = 0
+        halt = False
+        for code in self.store.active():
+            errors = []
+
+            async def attempt(part, operation, errors=errors):
+                nonlocal provider_failures, halt
+                try:
+                    performed = await operation()
+                    # A fresh/no-op section is not evidence of provider recovery.
+                    if performed is not False:
+                        provider_failures = 0
+                except asyncio.CancelledError:
+                    raise
+                except Exception as exc:
+                    errors.append((part, type(exc).__name__))
+                    status = (exc.response.status_code
+                              if isinstance(exc, httpx.HTTPStatusError) else None)
+                    if status in (401, 403, 429):
+                        halt = True  # Client already applied token/Retry-After retries.
+                    elif isinstance(exc, httpx.RequestError) or (status and status >= 500):
+                        provider_failures += 1
+                        halt = provider_failures >= 2
+
+            async def history(code=code):
+                if time.monotonic()-self.last_history.get(code, 0) <= 60:
+                    return False
+                daily = self.store.metadata(f'bars:{code}:통합:day', {})
+                quote = self.store.get('quotes', {}).get(code, {})
+                quote_day = trading_day(quote.get('as_of'))
+                current_day = datetime.now(ZoneInfo('Asia/Seoul')).date().isoformat()
+                volume = quote.get('daily_facts', {}).get('volume', {})
+                daily_age = head_age_seconds(daily, now())
+                needs_volume = quote_day and trading_day(volume.get('period')) != quote_day
+                if (daily_age > (300 if quote_day == current_day else 3600)
+                        or (needs_volume and daily_age > 60)):
+                    await self.history(code, '1d', pages=1, compact=True)
+                await self.history(code, '1m', pages=1, cover_session=True)
+                raw = self.store.metadata(f'bars:{code}:통합:raw', {})
+                # Preserve the prior raw-price cursor/one-page behavior.
+                if (not raw.get('received_at') or raw['received_at'][:10] != now()[:10]
+                        or (raw.get('next_before') and (raw.get('first_time') or '9999')
+                            > str(datetime.now().year-10)+'-01-01')):
+                    resume = bool(raw.get('received_at', '')[:10] == now()[:10]
+                                  and raw.get('next_before'))
+                    await self.history(code, '1d', resume=resume, adjusted=False, compact=True)
+                self.last_history[code] = time.monotonic()
+
+            await attempt('history', history)
+            if not halt:
+                await attempt('snapshot',
+                              lambda code=code: self.snapshot(code, include_price=False))
+            if not halt:
+                for endpoint in ('investor-trading', 'program-trades', 'short-selling',
+                                 'credit-trades', 'securities-lending'):
+                    async def trading(endpoint=endpoint, code=code):
+                        previous = self.store.metadata(f'toss:{endpoint}:{code}', {})
+                        if head_age_seconds(previous, now()) > 900:
+                            await self.fundamentals_of_trading(code, endpoints=(endpoint,))
+                            return True
+                        return False
+                    await attempt(endpoint, trading)
+                    if halt:
+                        break
+            self.store.put('provider-toss', {
+                'status': 'error' if errors else 'ready', 'received_at': now(),
+                **({'error': errors[-1][1], 'failed_parts': [part for part, _ in errors]}
+                   if errors else {})})
+            if halt:
+                return
+
     async def run(self):
         async def refresh():
             while True:
-                codes = self.store.active()
-                for code in codes:
-                    try:
-                        if time.monotonic()-self.last_history.get(code,0)>60:
-                            daily = self.store.metadata(f'bars:{code}:통합:day',{})
-                            quote = self.store.get('quotes', {}).get(code, {})
-                            from .quote_metrics import trading_day
-                            quote_day = trading_day(quote.get('as_of'))
-                            current_day = datetime.now(ZoneInfo('Asia/Seoul')).date().isoformat()
-                            volume = quote.get('daily_facts', {}).get('volume', {})
-                            daily_age = head_age_seconds(daily, now())
-                            needs_volume = quote_day and trading_day(volume.get('period')) != quote_day
-                            if daily_age > (300 if quote_day == current_day else 3600) or (needs_volume and daily_age > 60):
-                                await self.history(code,'1d',pages=1,compact=True)
-                            await self.history(code,'1m',pages=1,cover_session=True)
-                            raw = self.store.metadata(f'bars:{code}:통합:raw',{})
-                            # Explicit raw-price requests are independent from
-                            # adjusted chart pages; never relabel old snapshots.
-                            if not raw.get('received_at') or raw['received_at'][:10] != now()[:10] or (raw.get('next_before') and (raw.get('first_time') or '9999') > str(datetime.now().year-10)+'-01-01'):
-                                await self.history(code,'1d',resume=bool(raw.get('received_at','')[:10]==now()[:10] and raw.get('next_before')),adjusted=False,compact=True)
-                            self.last_history[code]=time.monotonic()
-                        await self.snapshot(code, include_price=False)
-                        previous = self.store.metadata(f'toss:investor-trading:{code}',{})
-                        if head_age_seconds(previous, now()) > 900:
-                            await self.fundamentals_of_trading(code)
-                        self.store.put('provider-toss',{'status':'ready','received_at':now()})
-                    except Exception as exc:
-                        self.store.put('provider-toss',{'status':'error','error':type(exc).__name__,'received_at':now()})
+                await self.refresh_active_once()
                 await asyncio.sleep(15)
         from .toss_backfill import TossBackfill
         from .toss_market import TossMarket
-        await asyncio.gather(self.refresh_prices(), refresh(), self.stream(), self.recover_snapshots(), TossBackfill(self).run(), TossMarket(self).run())
+        await asyncio.gather(self.refresh_prices(), refresh(), self.stream(),
+                             self.recover_snapshots(), TossBackfill(self).run(),
+                             TossMarket(self).run())
