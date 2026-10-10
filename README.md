@@ -16,9 +16,11 @@
 
 ## 현재 상태
 
-2026년 10월 10일 14:38 KST 공개 API·수집기·기존 주소와 Cloudflare 정적 화면은 **v120**입니다. [최신 변경·실제 검증 기록](docs/releases/20261010-flow-projection-v120/ACCEPTANCE.md)에서 구현, 실제 자료, 화면, 공개 반영을 구분합니다. 수급 원천에 새 자료가 있어도 기존 혼합 상세 때문에 화면 연결이 막히던 오류를 고쳤습니다. 공개 JYP 투자자 수급은 100일에서 103일로 늘고 마지막 거래일이 10월 2일에서 8일로 갱신됐습니다. 삼성전자 1,847일 이력과 두 종목의 원본·기존 상세는 보존했습니다. 수급 관련 156개 검사, 공개 자산/API 18개 검사와 1440·390px의 검색→수급→목록 복귀를 통과했습니다.
+2026년 10월 10일 15:19 KST 공개 API·수집기·기존 주소와 Cloudflare 정적 화면은 **v122**입니다. [최신 변경·실제 검증 기록](docs/releases/20261010-active-refresh-v122/ACCEPTANCE.md)에서 구현·실제 자료·화면·공개 반영을 구분합니다.
 
-14:35:58 KST VPS 여유는 약 15.95GB, 사용률 89.692%로 과거 수집의 `capacity_limited`가 유지됩니다. 최신 자료 갱신과 전체 과거 확보는 별개입니다. 중단된 17,014,175행 백업 복원은 재개 도구와 실제 격리 PostgreSQL 시험을 거쳐 기존 12,819,200행부터 다시 대조하고 있습니다. 전체 복원 성공·운영 테이블 전환·원본 삭제는 아직 수행하지 않았습니다. 전체 과거 자료·TTM/분할·배당 근거·장중 실제 수신·공개 성능 목표·실사용 및 보안 경고 검토가 남아 있습니다. [최근 공개 100동시 측정](docs/releases/20261010-backfill-status-v118/ACCEPTANCE.md)에서는 오류 없이 응답했지만 검색 300ms·상세 500ms 목표를 충족하지 못했습니다. 이를 전체 완료나 전 종목 데이터 완성으로 표시하지 않습니다.
+JYP 투자자·대차·신용 103일과 공매도 거래 203일을 10월 8일까지 연결했습니다. 검색의 중복 DB 조회를 줄이고, 다섯 거래 자료가 각자의 시각으로 최신화를 판단하도록 수정했습니다. 모바일 기간 버튼은 글자가 갈라지지 않게 3열×2행으로 배치했습니다. 공개 자산/API 18개 검사, VPS390·Cloudflare1440의 검색→수급→대차·신용→공매도→목록 복귀와 해당 앱 커밋의 GitHub CI를 통과했습니다. 정상 worker의 삼성전자 5종 자료 재수신과 기존 과거 행 보존도 확인했습니다.
+
+**전체 완료는 아닙니다.** VPS 여유 약 15.41GB에서 과거 수집은 `capacity_limited`입니다. 중단된 17,014,175행 백업의 독립 복원은 실행 중이며 전체 복원·현재 운영 저장 구조 전환·원본 삭제는 아직 하지 않았습니다. 전체 과거 자료·404·TTM/분할·배당 근거·장중 실제 수신·실사용·보안 경고가 남습니다. 공개 첫 목록은 각 1회 관측에서 7.03초(VPS390)·4.73초(Cloudflare1440)였고, 폭과 조건이 달라 호스트 비교로 사용하지 않습니다. [최근 공개 100동시 측정](docs/releases/20261010-backfill-status-v118/ACCEPTANCE.md)의 검색300ms·상세500ms 목표 미달도 유지됩니다.
 
 ## 구조
 
@@ -60,7 +62,7 @@ pnpm build
 - [API와 옵션 계약](docs/toss-api-contract.md)
 - [출처 공유 저장](docs/SOURCE_TRACE_STORAGE.md) · [거래 자료 저장](docs/TRADING_PROJECTION_STORAGE.md)
 - [외부 백업·복구](docs/PC_OFFSITE_BACKUP.md)
-- [최신 공개 검증](docs/releases/20261010-flow-projection-v120/ACCEPTANCE.md) · [전체 저장 대조](docs/releases/20261010-v113/STORAGE_VALIDATION.md)
+- [최신 공개 검증](docs/releases/20261010-active-refresh-v122/ACCEPTANCE.md) · [전체 저장 대조](docs/releases/20261010-v113/STORAGE_VALIDATION.md)
 - [현재 앱 CI와 로컬 검사](docs/CI.md)
 - [이전 터미널 README](docs/history/LEGACY_TERMINAL_README.md)
 
