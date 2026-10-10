@@ -78,7 +78,7 @@ jobs:
           export NEXT_TELEMETRY_DISABLED=1 MARKET_RELEASE=ci-candidate
           export MARKET_WEB_URL=http://127.0.0.1:3219
           node --test apps/web/tests/market/*.node.test.mjs apps/web/tests/market/search-proxy.test.mjs
-          node --test ops/cloudflare/worker.test.mjs scripts/market_benchmark_metrics.test.mjs
+          node --test ops/cloudflare/worker.test.mjs scripts/market_benchmark_metrics.test.mjs scripts/benchmark_market_http2.test.mjs
           pnpm --dir apps/web exec next typegen
           pnpm --dir apps/web typecheck
           node scripts/build-market-static.mjs
