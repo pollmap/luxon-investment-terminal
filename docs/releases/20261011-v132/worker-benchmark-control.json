@@ -1,0 +1,11 @@
+{
+  "at": "2026-10-11T13:30:39.764109+00:00",
+  "container": "korea-stocks-market-worker-1",
+  "container_id": "660803ecfffd4b290bd74e23012e57861c03f13755060578ed8f5efe77ce2f1c",
+  "before": "running",
+  "purpose": "bounded public benchmark without stock collector load",
+  "initial_attempt": "remote format quoting rejected before mutation",
+  "stopped": true,
+  "benchmark_exit_code": 0,
+  "after": "running"
+}

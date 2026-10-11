@@ -1,0 +1,182 @@
+{
+  "before": {
+    "total": 154894188544,
+    "used": 144442179584,
+    "free": 10435231744
+  },
+  "after": {
+    "total": 154894188544,
+    "used": 143875407872,
+    "free": 11002003456
+  },
+  "removed": [
+    {
+      "path": "/var/www/korea-stocks/releases/20261009-final-read-v96-20261009T133147033117Z",
+      "release": "20261009-final-read-v96",
+      "files": 73,
+      "manifest_sha256": "93f212ff076211f49478537feeef6d5ed83d9ad0c1e2c8e10050c51f54849e6f"
+    },
+    {
+      "path": "/var/www/korea-stocks/releases/20261009-operating-v99-20261009T141237074069Z",
+      "release": "20261009-operating-v99",
+      "files": 73,
+      "manifest_sha256": "c455d36610168e0bf966d4b4aa70f67800536b026b95b84e37699f53ad10626c"
+    },
+    {
+      "path": "/var/www/korea-stocks/releases/20261009-query-recovery-v95-20261009T131750448284Z",
+      "release": "20261009-query-recovery-v95",
+      "files": 73,
+      "manifest_sha256": "4af9ac9efa809ba42366a9f3655709d5701d0acc125171b812a463d1c85d80a5"
+    },
+    {
+      "path": "/var/www/korea-stocks/releases/20261009-read-recovery-v100-20261009T145947136402Z",
+      "release": "20261009-read-recovery-v100",
+      "files": 73,
+      "manifest_sha256": "9939413b99905725ba2a578dde33f89014db75aa08caa95bf1b33718a085be24"
+    },
+    {
+      "path": "/var/www/korea-stocks/releases/20261009-shared-write-v98-20261009T140029275403Z",
+      "release": "20261009-shared-write-v98",
+      "files": 73,
+      "manifest_sha256": "38a1a34657c205916964a07099aa74c105bc6c00e2744f0410d791bf5118c2bb"
+    },
+    {
+      "path": "/var/www/korea-stocks/releases/20261009-static-read-v94-20261009T130209866010Z",
+      "release": "20261009-static-read-v94",
+      "files": 73,
+      "manifest_sha256": "e8c3cc75422d6a0565fcbab10791a40fbc515fff11bd6e731bd544997697d4e1"
+    },
+    {
+      "path": "/var/www/korea-stocks/releases/20261009-static-read-v94-20261009T130804508163Z",
+      "release": "20261009-static-read-v94",
+      "files": 73,
+      "manifest_sha256": "e8c3cc75422d6a0565fcbab10791a40fbc515fff11bd6e731bd544997697d4e1"
+    },
+    {
+      "path": "/var/www/korea-stocks/releases/20261010-active-refresh-v122-20261010T061645858519Z",
+      "release": "20261010-active-refresh-v122",
+      "files": 73,
+      "manifest_sha256": "dce22bd71c225934763d1acec8e649ffaabf54d0dd14dfbf660b1f7db9b19b7f"
+    },
+    {
+      "path": "/var/www/korea-stocks/releases/20261010-analysis-window-v124-20261010T071738407598Z",
+      "release": "20261010-analysis-window-v124",
+      "files": 73,
+      "manifest_sha256": "abb403a441d86836b884c305d28f586d609f301205477ad7d5bd980a9148fadc"
+    },
+    {
+      "path": "/var/www/korea-stocks/releases/20261010-archive-atomic-v114-20261010T001115532707Z",
+      "release": "20261010-archive-atomic-v114",
+      "files": 73,
+      "manifest_sha256": "8125b6ebd9a4d42c70b4a6159dc5a1ccb05f920a47db71d6885b30d6eae044b6"
+    },
+    {
+      "path": "/var/www/korea-stocks/releases/20261010-backfill-status-v118-20261010T045216501826Z",
+      "release": "20261010-backfill-status-v118",
+      "files": 73,
+      "manifest_sha256": "a20a97592e5baf61a8ca1028177c72c1b7728f8c3c2f958cb77ef6e783fe921a"
+    },
+    {
+      "path": "/var/www/korea-stocks/releases/20261010-chart-projection-v102-20261009T161440708878Z",
+      "release": "20261010-chart-projection-v102",
+      "files": 73,
+      "manifest_sha256": "2c564b87818018592399fd32ca4f469212cb5f751504792868b15d3f4b46f66e"
+    },
+    {
+      "path": "/var/www/korea-stocks/releases/20261010-flow-projection-v120-20261010T053440215445Z",
+      "release": "20261010-flow-projection-v120",
+      "files": 73,
+      "manifest_sha256": "bde435b9370c70f59d2c47d73ff235980a1fbbbf44052d957104c84fa16706d7"
+    },
+    {
+      "path": "/var/www/korea-stocks/releases/20261010-freshness-v101-20261009T152332651180Z",
+      "release": "20261010-freshness-v101",
+      "files": 73,
+      "manifest_sha256": "097a0f2cc838585f25131356cc0d339439f13a6bc8bf7bcd0cfe569aabc9f289"
+    },
+    {
+      "path": "/var/www/korea-stocks/releases/20261010-history-contract-v116-20261010T011217648138Z",
+      "release": "20261010-history-contract-v116",
+      "files": 73,
+      "manifest_sha256": "272d93748d5ec4299897eab473b2d204ae7de4d39dd9be3f15b478eb00e496ff"
+    },
+    {
+      "path": "/var/www/korea-stocks/releases/20261010-history-contract-v116-20261010T021508428855Z",
+      "release": "20261010-history-contract-v116",
+      "files": 73,
+      "manifest_sha256": "cbbdc77c4d476564515014f07f253588a233df721df762bd6a9fb031a0e79137"
+    },
+    {
+      "path": "/var/www/korea-stocks/releases/20261010-index-reuse-v125-20261010T074954319863Z",
+      "release": "20261010-index-reuse-v125",
+      "files": 73,
+      "manifest_sha256": "e413135197a630a1f55fd8e1fac0fa5e2a6def7f7273eef8a69b38365542512a"
+    },
+    {
+      "path": "/var/www/korea-stocks/releases/20261010-ocf-republication-v112-20261009T222135651735Z",
+      "release": "20261010-ocf-republication-v112",
+      "files": 73,
+      "manifest_sha256": "d37d8ccd929b54d1b45579fa9ff88c1c32a543ef459e369696d91f7ca30d1ee5"
+    },
+    {
+      "path": "/var/www/korea-stocks/releases/20261010-raw-boundary-v111-20261009T221100129595Z",
+      "release": "20261010-raw-boundary-v111",
+      "files": 73,
+      "manifest_sha256": "a152b8e8579ec76f89b41f832539db10579f662592b485e8d9520b7905a61c77"
+    },
+    {
+      "path": "/var/www/korea-stocks/releases/20261010-read-consistency-v119-20261010T050544531907Z",
+      "release": "20261010-read-consistency-v119",
+      "files": 73,
+      "manifest_sha256": "4c86055d240e4f5d003ba92e257be25f6084ebdb131ec10f580636b3a9cb94ab"
+    },
+    {
+      "path": "/var/www/korea-stocks/releases/20261010-search-intent-v123-20261010T064235304193Z",
+      "release": "20261010-search-intent-v123",
+      "files": 73,
+      "manifest_sha256": "73eae7fbac6000dee3974a4f46bcf802d772ab09eb977b1e77039def54b09c3b"
+    },
+    {
+      "path": "/var/www/korea-stocks/releases/20261010-share-review-v113-20261009T232534172045Z",
+      "release": "20261010-share-review-v113",
+      "files": 73,
+      "manifest_sha256": "0e2aed3b07c385d968392bc9b77337e4735639b00c8176dd5461272c24d14e12"
+    },
+    {
+      "path": "/var/www/korea-stocks/releases/20261010-storage-resume-v126-20261010T095041348050Z",
+      "release": "20261010-storage-resume-v126",
+      "files": 73,
+      "manifest_sha256": "95514b23ecd75cbea2a58e2c0dc1d52739c82cde7779d68dc8613d6e9f543cd3"
+    },
+    {
+      "path": "/var/www/korea-stocks/releases/20261010-storage-writes-v110-20261009T210541542339Z",
+      "release": "20261010-storage-writes-v110",
+      "files": 73,
+      "manifest_sha256": "505c2e76aa31f114fdc197127157a76992ecb3f911d0e6dbbaae942d610f0d27"
+    },
+    {
+      "path": "/var/www/korea-stocks/releases/20261010-trading-readmodels-v121-20261010T060137510202Z",
+      "release": "20261010-trading-readmodels-v121",
+      "files": 73,
+      "manifest_sha256": "aa86e4c51ed3f98cac7263fd1fd01857cf4c753df682399812839d7127333275"
+    },
+    {
+      "path": "/var/www/korea-stocks/releases/20261010-ttm-queue-v127-20261010T102629282694Z",
+      "release": "20261010-ttm-queue-v127",
+      "files": 73,
+      "manifest_sha256": "50520fe46933fb031f7ebbc67fa9893c2271dc9c76e6f3355a7814d5cdff3115"
+    },
+    {
+      "path": "/var/www/korea-stocks/releases/20261011-candle-research-v128-20261010T164241912445Z",
+      "release": "20261011-candle-research-v128",
+      "files": 74,
+      "manifest_sha256": "32e8f6f4b0db9f4df8fac44ad266353b38f835aeb6cd63b372504e089bb0da58"
+    }
+  ],
+  "retained_current": "/var/www/korea-stocks/releases/20261011-stock-shopping-v131-20261011T101209007065Z",
+  "retained_recent_versions": [
+    129,
+    130
+  ],
+  "raw_db_untouched": true
+}

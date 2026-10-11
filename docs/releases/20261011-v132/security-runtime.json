@@ -1,0 +1,153 @@
+{
+  "observed_at": "2026-10-11T14:10:32Z",
+  "method": "Read-only docker inspect and importlib.metadata.distributions; no install, restart, or code execution using remote input",
+  "containers": [
+    {
+      "name": "korea-stocks-market-api-1",
+      "image": "korea-stocks-api:20261011-stock-shopping-v132",
+      "image_id": "sha256:9873c59c39ba42aa3b1bd904d4777ae92293cc682ebde3bc9ffe5b39cb693334",
+      "installed_packages": {
+        "mako": null,
+        "urllib3": null,
+        "requests": null,
+        "alembic": null
+      }
+    },
+    {
+      "name": "korea-stocks-market-worker-1",
+      "image": "korea-stocks-api:20261011-stock-shopping-v132",
+      "image_id": "sha256:9873c59c39ba42aa3b1bd904d4777ae92293cc682ebde3bc9ffe5b39cb693334",
+      "installed_packages": {
+        "mako": null,
+        "urllib3": null,
+        "requests": null,
+        "alembic": null
+      }
+    },
+    {
+      "name": "korea-stocks-openalgo-1",
+      "image": "korea-stocks-openalgo:20261005-share-universe-archive-v73",
+      "image_id": "sha256:f46ef529b0ccc7102c0f71dbc8b4d065a50de4ff91e713bb7ce058be1cab96cb",
+      "installed_packages": {
+        "mako": null,
+        "urllib3": null,
+        "requests": null,
+        "alembic": null
+      }
+    }
+  ],
+  "meaning_of_null": "Distribution is not installed according to Python package metadata.",
+  "github_alerts": {
+    "observed_open": [
+      27,
+      28,
+      29,
+      30,
+      31
+    ],
+    "new_patch_targets": {
+      "Mako": {
+        "version": "1.4.2",
+        "alert_numbers": [
+          31
+        ],
+        "scope": "migration and dev extras via alembic"
+      },
+      "urllib3": {
+        "version": "2.8.0",
+        "alert_numbers": [
+          28,
+          29,
+          30
+        ],
+        "scope": "ingestion and dev extras via requests"
+      }
+    },
+    "unpatched": {
+      "braces": {
+        "version": "3.0.3",
+        "alert_numbers": [
+          27
+        ],
+        "github_reported_scope": "runtime",
+        "observed_dependency_path": "eslint-config-next -> @next/eslint-plugin-next -> fast-glob -> micromatch -> braces",
+        "upstream_fix_available": false
+      }
+    },
+    "source": "GitHub Dependabot alerts REST API: pollmap/luxon-investment-terminal (state=open)",
+    "observed_details": [
+      {
+        "number": 31,
+        "package": "Mako",
+        "manifest": "uv.lock",
+        "scope": "runtime",
+        "severity": "medium",
+        "ghsa": "GHSA-5639-2j2p-m4mx",
+        "affected": "<= 1.4.1",
+        "fixed": "1.4.2"
+      },
+      {
+        "number": 30,
+        "package": "urllib3",
+        "manifest": "uv.lock",
+        "scope": "runtime",
+        "severity": "medium",
+        "ghsa": "GHSA-gh4c-6fx4-qh6g",
+        "affected": ">= 2.6.2, < 2.8.0",
+        "fixed": "2.8.0"
+      },
+      {
+        "number": 29,
+        "package": "urllib3",
+        "manifest": "uv.lock",
+        "scope": "runtime",
+        "severity": "high",
+        "ghsa": "GHSA-vxq7-64xx-v4gw",
+        "affected": ">= 1.10.3, < 2.8.0",
+        "fixed": "2.8.0"
+      },
+      {
+        "number": 28,
+        "package": "urllib3",
+        "manifest": "uv.lock",
+        "scope": "runtime",
+        "severity": "high",
+        "ghsa": "GHSA-8988-9cw3-xx77",
+        "affected": ">= 1.26.0, < 2.8.0",
+        "fixed": "2.8.0"
+      },
+      {
+        "number": 27,
+        "package": "braces",
+        "manifest": "pnpm-lock.yaml",
+        "scope": "runtime",
+        "severity": "high",
+        "ghsa": "GHSA-vfj7-8cjw-p6xm",
+        "affected": "<= 3.0.3",
+        "fixed": null
+      }
+    ]
+  },
+  "limitations": [
+    "This is a targeted package-presence check, not an exhaustive container security scan.",
+    "Master and product uv.lock contained vulnerable optional/development dependencies and require the reviewed manifest/lock update.",
+    "No claim that Dependabot alerts are closed before GitHub rescans merged default-branch dependencies."
+  ],
+  "lockfile_audit": {
+    "provider": "https://api.osv.dev/v1/querybatch",
+    "observed_at": "2026-10-11T14:11:48.761Z",
+    "unique_package_versions": 69,
+    "complete": true,
+    "branches": {
+      "master_patch": {
+        "registry_packages": 64,
+        "findings": []
+      },
+      "product_patch": {
+        "registry_packages": 69,
+        "findings": []
+      }
+    }
+  },
+  "worker_observed_at": "2026-10-11T14:13:18.245Z"
+}

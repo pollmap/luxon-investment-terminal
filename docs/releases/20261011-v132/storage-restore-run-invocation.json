@@ -1,0 +1,11 @@
+{
+  "started_at": "2026-10-11T13:45:31.9287966+00:00",
+  "estimated_deadline": "2026-10-11T17:45:31.9287966+00:00",
+  "max_seconds": 14400,
+  "max_growth_bytes": 6442450944,
+  "max_total_cluster_bytes": 17179869184,
+  "minimum_free_bytes": 4294967296,
+  "archive_sha256": "6c1861479624e5dfac87bdeb767579a818933ac87836b754490fe27cfcdf1c4c",
+  "input_scope": "dated_archive_independent_restore_only",
+  "retry_count": 0
+}

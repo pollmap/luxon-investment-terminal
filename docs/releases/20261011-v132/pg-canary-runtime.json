@@ -1,0 +1,9 @@
+{
+  "fixture_non_production": true,
+  "schema": "quote_canary_a20dd056f2164abb851c8ce2cc807707",
+  "status": "passed",
+  "search_projection": "passed",
+  "enrichment_revision_isolation": "passed",
+  "schema_removed": true,
+  "elapsed_seconds": 1.934
+}

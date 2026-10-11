@@ -1,0 +1,18 @@
+{
+  "release": "20261011-stock-shopping-v132",
+  "changed": true,
+  "cache_control": "no-store",
+  "config_sha256": "68f29c753ecaa3a589c57df85f373894906f07b4e46f655cc2f370214f1773d9",
+  "backup": "/srv/services/korea-stocks/backups/nginx/hannun-version-20261011T140444Z.conf",
+  "checked_at": "2026-10-11T14:04:44.643893+00:00",
+  "attempts": 2,
+  "first_attempt": "nginx_test_passed_reload_not_yet_visible_probe_failed_config_rolled_back",
+  "second_attempt": "nginx_test_passed_bounded_readiness_poll_confirmed_no_store",
+  "readiness_observed": [
+    ["HTTP/2 200"],
+    ["HTTP/2 200", "cache-control: no-store"]
+  ],
+  "unrelated_existing_warnings": ["protocol_options_redefined_llama_api", "protocol_options_redefined_quant_web_lab"],
+  "database_changed": false,
+  "unrelated_config_changed": false
+}

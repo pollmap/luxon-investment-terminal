@@ -1,0 +1,28 @@
+{
+  "archive_rehashed": false,
+  "database_started": false,
+  "production_contacted": false,
+  "checks": [],
+  "state": "failed",
+  "phase": "coordinator",
+  "error_type": "Refused",
+  "winerror": null,
+  "errno": null,
+  "trace": [
+    {
+      "file": "<stdin>",
+      "line": 9,
+      "function": "<module>"
+    },
+    {
+      "file": "resume_restore.py",
+      "line": 381,
+      "function": "__init__"
+    },
+    {
+      "file": "resume_restore.py",
+      "line": 89,
+      "function": "__init__"
+    }
+  ]
+}

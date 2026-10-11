@@ -1,0 +1,8 @@
+{
+  "release": "20261011-stock-shopping-v132",
+  "archive_sha256": "76cd54b42581fd5db1ceeaa47f2c8c1892c884fa2acbec6d88dd17103898c21c",
+  "dry_run": "{\"status\": \"dry-run\", \"release\": \"20261011-stock-shopping-v132\", \"files\": 75, \"bytes\": 24364629, \"web\": \"exited\"}",
+  "applied": true,
+  "files": 76,
+  "result": "{\"status\": \"promoted\", \"release\": \"20261011-stock-shopping-v132\", \"files\": 75, \"bytes\": 24364629, \"nginx_backup\": \"/srv/services/korea-stocks/backups/nginx/hannun-20261011T132633345074Z-static-20261011-stock-shopping-v132.conf\", \"web\": \"stopped\", \"static_root\": \"/srv/services/korea-stocks/releases/20261011-stock-shopping-v132/static-web\", \"previous_static\": \"/srv/services/korea-stocks/releases/20261011-stock-shopping-v132/static-web.previous-20261011T132633345074Z\", \"marker\": \"/srv/services/korea-stocks/releases/20261011-stock-shopping-v132/static-web-deployment.json\", \"public_root\": \"/var/www/korea-stocks/releases/20261011-stock-shopping-v132-20261011T132633345074Z\", \"previous_public\": \"/var/www/korea-stocks/releases/20261011-stock-shopping-v131-20261011T101209007065Z\"}"
+}

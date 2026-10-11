@@ -1,0 +1,23 @@
+{
+  "repository": "pollmap/luxon-investment-terminal",
+  "product_commit": "21ba903766893e45b556414dc6534e2ac588000e",
+  "run_id": 38147113724,
+  "run_url": "https://github.com/pollmap/luxon-investment-terminal/actions/runs/38147113724",
+  "status": "completed",
+  "conclusion": "success",
+  "jobs": [
+    {"name": "Market Python fixtures (offline)", "conclusion": "success", "job_id": 114492687196},
+    {"name": "Market static candidate and fixture browsers (offline)", "conclusion": "success", "job_id": 114492687294}
+  ],
+  "master_security_prs": [
+    {"number": 6, "checks_passed": 6, "merged_commit": "29313394a99430128c9e5984ca056a3963a07652"},
+    {"number": 9, "checks_passed": 6, "merged_commit": "9ba38da0fb1b38f1ff48d2518feeec24e5d2d613"}
+  ],
+  "dependabot_verified_fixed": [16,17,18,19,20,21,22,23,24,25,26,28,29,30,31],
+  "dependabot_remaining_open": [27],
+  "limitations": [
+    "Fixture tests do not establish complete production data coverage or live-market reception.",
+    "Public performance targets and full independent restore have not passed.",
+    "The final documentation commit contains only evidence and does not alter the tested application."
+  ]
+}

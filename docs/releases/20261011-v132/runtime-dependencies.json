@@ -1,0 +1,6 @@
+{
+  "anyio": "4.15.1",
+  "soupsieve": "2.10",
+  "fastapi": "0.141.1",
+  "sqlalchemy": "2.0.54"
+}

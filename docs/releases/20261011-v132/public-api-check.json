@@ -1,0 +1,126 @@
+{
+  "at": "2026-10-11T13:27:50.609677+00:00",
+  "results": [
+    {
+      "path": "/api/market/v1/health",
+      "status": 200,
+      "cache_control": null,
+      "body": {
+        "status": "ok",
+        "worker": {
+          "error": null,
+          "listed_securities": 2765,
+          "market_collection_seconds": 383.39,
+          "process_heartbeat_at": "2026-10-11T13:27:17.858226+00:00",
+          "quote_policy": "공유 원천 속도 제한 · 요청 종목 우선 갱신",
+          "status": "collecting",
+          "updated_at": "2026-10-11T13:24:06.744258+00:00",
+          "reported_status": "collecting",
+          "heartbeat_status": "current",
+          "heartbeat_source": "process_heartbeat_at",
+          "heartbeat_age_seconds": 23.62,
+          "heartbeat_stale_after_seconds": 120,
+          "health_checked_at": "2026-10-11T13:27:41.478408+00:00"
+        },
+        "database": "postgresql",
+        "mode": "source_observed",
+        "release": "20261011-stock-shopping-v132"
+      }
+    },
+    {
+      "path": "/api/market/v1/search?q=005930",
+      "status": 200,
+      "cache_control": "no-store",
+      "json_keys": [
+        "rows",
+        "total"
+      ]
+    },
+    {
+      "path": "/api/market/v1/securities/005930?view=summary",
+      "status": 200,
+      "cache_control": "no-store",
+      "json_keys": [
+        "security",
+        "detail",
+        "prices",
+        "status",
+        "company",
+        "official",
+        "filings"
+      ]
+    },
+    {
+      "path": "/api/market/v1/securities/005935/events",
+      "status": 200,
+      "cache_control": "public, max-age=0, must-revalidate",
+      "dividend_fields": [
+        {
+          "amount": "20050",
+          "share_class": "preferred",
+          "field_availability": {
+            "amount": "reported",
+            "record_date": "reported",
+            "ex_date": "missing",
+            "payment_date": "missing"
+          }
+        },
+        {
+          "amount": "1000",
+          "share_class": "preferred",
+          "field_availability": {
+            "amount": "reported",
+            "record_date": "reported",
+            "ex_date": "missing",
+            "payment_date": "announced"
+          }
+        },
+        {
+          "amount": "27550",
+          "share_class": "preferred",
+          "field_availability": {
+            "amount": "reported",
+            "record_date": "reported",
+            "ex_date": "missing",
+            "payment_date": "missing"
+          }
+        },
+        {
+          "amount": "7000",
+          "share_class": "preferred",
+          "field_availability": {
+            "amount": "reported",
+            "record_date": "reported",
+            "ex_date": "missing",
+            "payment_date": "announced"
+          }
+        },
+        {
+          "amount": "7000",
+          "share_class": "preferred",
+          "field_availability": {
+            "amount": "reported",
+            "record_date": "reported",
+            "ex_date": "missing",
+            "payment_date": "announced"
+          }
+        }
+      ]
+    },
+    {
+      "path": "/internal",
+      "status": 404,
+      "error": "HTTPError"
+    },
+    {
+      "path": "/ops",
+      "status": 404,
+      "error": "HTTPError"
+    },
+    {
+      "path": "/api/market/v1/ops/status",
+      "status": 404,
+      "error": "HTTPError"
+    }
+  ]
+}

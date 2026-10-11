@@ -1,0 +1,9 @@
+{
+  "observed_at": "2026-10-11T13:53:57.935133+00:00",
+  "ok": true,
+  "memory_load_percent": 93,
+  "total_physical_bytes": 33598853120,
+  "available_physical_bytes": 2184208384,
+  "total_commit_limit_bytes": 53447241728,
+  "available_commit_bytes": 6737154048
+}

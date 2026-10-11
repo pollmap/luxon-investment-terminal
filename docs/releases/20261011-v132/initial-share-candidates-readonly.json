@@ -1,0 +1,530 @@
+{
+  "observed_at": "2026-10-11T13:51:26.233207+00:00",
+  "mode": "read_only",
+  "max_fact_rows_per_company": 500,
+  "new_collection": false,
+  "promotion": false,
+  "companies": [
+    {
+      "code": "066570",
+      "name": "LG Electronics",
+      "company_id": "00401731",
+      "share-basis-bootstrap": {
+        "exists": false,
+        "revision": null,
+        "status": null,
+        "verified": null,
+        "start": null,
+        "end": null,
+        "rows": 0,
+        "inputs": {
+          "input_count": null,
+          "period_inputs_complete": null,
+          "candidate_window": null,
+          "missing_period_ranges": null,
+          "rejected": null
+        }
+      },
+      "share-basis": {
+        "exists": false,
+        "revision": null,
+        "status": null,
+        "verified": null,
+        "start": null,
+        "end": null,
+        "rows": 0,
+        "inputs": {
+          "input_count": null,
+          "period_inputs_complete": null,
+          "candidate_window": null,
+          "missing_period_ranges": null,
+          "rejected": null
+        }
+      },
+      "share-basis-promotion": {
+        "exists": false,
+        "revision": null,
+        "status": null,
+        "verified": null,
+        "start": null,
+        "end": null,
+        "rows": 0,
+        "inputs": {
+          "input_count": null,
+          "period_inputs_complete": null,
+          "candidate_window": null,
+          "missing_period_ranges": null,
+          "rejected": null
+        }
+      },
+      "share-unit-reviews": {
+        "exists": false,
+        "revision": null,
+        "status": null,
+        "verified": null,
+        "start": null,
+        "end": null,
+        "rows": 0,
+        "inputs": {
+          "input_count": null,
+          "period_inputs_complete": null,
+          "candidate_window": null,
+          "missing_period_ranges": null,
+          "rejected": null
+        }
+      },
+      "truncated": false,
+      "stored_eps_fact_rows": 36,
+      "accounts": {
+        "BasicEarningsLossPerShare": 16,
+        "ProfitLossAttributableToOwnersOfParent": 4,
+        "ProfitLossAttributableToOrdinaryEquityHoldersOfParentEntity": 8,
+        "WeightedAverageShares": 8
+      },
+      "actual_inputs": {
+        "basis": "CFS",
+        "input_count": 7,
+        "filing_ids": [
+          "20260814001997"
+        ],
+        "periods": [
+          {
+            "period_start": "2025-04-01",
+            "period_end": "2025-06-30",
+            "filing_id": "20260814001997",
+            "published_at": "2026-08-14",
+            "input_fact_ids": [
+              "0481243b9e080d9fa2be0259ea9b5bf17b288ee6e4f4f3224625622a4b3f26c0",
+              "7d4bea6081a1a2be09cd081000385a1a885913a7bb0b89205a58cc2c4e70cb7b",
+              "84f98e80132fe296d62a00198c728a7c5ae03b6ec34014bb6c3d890e3b760381",
+              "a2a0dab8e34d2cf7afb34913405684a27e0e18c5fd17300e39a0f48bb88dd2a3"
+            ]
+          }
+        ],
+        "candidate_window": {
+          "start": "2024-07-01",
+          "end": "2025-06-30"
+        },
+        "period_inputs_complete": false,
+        "missing_period_ranges": [
+          {
+            "start": "2024-07-01",
+            "end": "2025-03-31"
+          }
+        ],
+        "rejected": {
+          "reported_eps_mismatch": 1
+        }
+      },
+      "actual_input_fact_ids_count": 28,
+      "reviewed_eps_note_bindings": [],
+      "existing_original_replay": {
+        "observed_date_kst": "2026-10-11",
+        "mode": "read_only_existing_archive",
+        "filing_id": "20260814001997",
+        "filing_title": "반기보고서 (2026.06)",
+        "published_date": "2026-08-14",
+        "raw_source": "dart-xbrl",
+        "raw_sha256": "384e80262f96da1506ef4804b0eb7e1444c050c1babe8284a1c980ecc3cb0a77",
+        "raw_size_bytes": 707252,
+        "sha256_verified": true,
+        "parser": "parse_xbrl_zip",
+        "raw_bytes_replayed": true,
+        "raw_file_added_to_release": false,
+        "eps_reconciliation": {
+          "basis": "CFS",
+          "share_class": "ordinary",
+          "period_start": "2026-04-01",
+          "period_end": "2026-06-30",
+          "ordinary_attributable_profit": {"value": "604363000000", "unit": "KRW"},
+          "weighted_average_shares": {"value": "162387226", "unit": "shares"},
+          "reported_basic_eps": {"value": "3723", "unit": "KRW/share"},
+          "calculated_basic_eps": {"value": "3721.7398", "unit": "KRW/share", "display_decimal_places": 4},
+          "absolute_difference": {"value": "1.2602", "unit": "KRW/share", "display_decimal_places": 4},
+          "rounding_tolerance": {"value": "0.5031", "unit": "KRW/share", "display_decimal_places": 4},
+          "reconciled": false,
+          "other_reconciled_period_basis_groups": 7,
+          "conclusion": "Mismatch is reproducible from the archived original account values, not introduced only by DB transformation. EPS note interpretation and profit allocation adjustments remain unresolved; no issuer error or parser defect is established."
+        },
+        "latest_regular_filing_jobs": [
+          {"filing_id": "20260814001997", "date": "2026-08-14", "title": "반기보고서 (2026.06)", "job_present": true, "job_status": "ready", "raw_hash_present": true},
+          {"filing_id": "20260706000276", "date": "2026-07-06", "title": "[기재정정]사업보고서 (2025.12)", "job_present": false, "job_status": null, "raw_hash_present": false},
+          {"filing_id": "20260515000856", "date": "2026-05-15", "title": "분기보고서 (2026.03)", "job_present": false, "job_status": null, "raw_hash_present": false},
+          {"filing_id": "20260313000662", "date": "2026-03-13", "title": "사업보고서 (2025.12)", "job_present": false, "job_status": null, "raw_hash_present": false},
+          {"filing_id": "20251114001332", "date": "2025-11-14", "title": "분기보고서 (2025.09)", "job_present": false, "job_status": null, "raw_hash_present": false},
+          {"filing_id": "20250814002000", "date": "2025-08-14", "title": "반기보고서 (2025.06)", "job_present": false, "job_status": null, "raw_hash_present": false},
+          {"filing_id": "20250515001401", "date": "2025-05-15", "title": "분기보고서 (2025.03)", "job_present": false, "job_status": null, "raw_hash_present": false},
+          {"filing_id": "20250317001029", "date": "2025-03-17", "title": "사업보고서 (2024.12)", "job_present": false, "job_status": null, "raw_hash_present": false}
+        ],
+        "job_observation_scope": "Latest eight regular-report receipts ordered by filing date/receipt descending in filing-index:066570, and their xbrl-job snapshots. Missing jobs do not prove absence from every archive path.",
+        "missing_inputs": [
+          "Continuous validated quarter inputs; recent 2025 Q3, 2025 annual/correction and 2026 Q1 reports have no corresponding XBRL job in the checked snapshots.",
+          "2026 Q2 consolidated EPS note reconciliation and any supported ordinary-profit allocation adjustment.",
+          "Reviewed issuer share history, ordinary-share identity and filing-unit alignment for the initial share basis."
+        ],
+        "reviewed_queue_created": false,
+        "promotion": false,
+        "new_collection": false,
+        "database_write": false,
+        "initial_share_basis_status": "not_promoted_insufficient_evidence"
+      }
+    },
+    {
+      "code": "005380",
+      "name": "Hyundai Motor",
+      "company_id": "00164742",
+      "share-basis-bootstrap": {
+        "exists": false,
+        "revision": null,
+        "status": null,
+        "verified": null,
+        "start": null,
+        "end": null,
+        "rows": 0,
+        "inputs": {
+          "input_count": null,
+          "period_inputs_complete": null,
+          "candidate_window": null,
+          "missing_period_ranges": null,
+          "rejected": null
+        }
+      },
+      "share-basis": {
+        "exists": true,
+        "revision": "2026-10-08T21:59:52.835883+00:00",
+        "status": null,
+        "verified": true,
+        "start": "2021-12-31",
+        "end": "2026-10-08",
+        "rows": 0,
+        "inputs": {
+          "input_count": null,
+          "period_inputs_complete": null,
+          "candidate_window": null,
+          "missing_period_ranges": null,
+          "rejected": null
+        }
+      },
+      "share-basis-promotion": {
+        "exists": false,
+        "revision": null,
+        "status": null,
+        "verified": null,
+        "start": null,
+        "end": null,
+        "rows": 0,
+        "inputs": {
+          "input_count": null,
+          "period_inputs_complete": null,
+          "candidate_window": null,
+          "missing_period_ranges": null,
+          "rejected": null
+        }
+      },
+      "share-unit-reviews": {
+        "exists": false,
+        "revision": null,
+        "status": null,
+        "verified": null,
+        "start": null,
+        "end": null,
+        "rows": 0,
+        "inputs": {
+          "input_count": null,
+          "period_inputs_complete": null,
+          "candidate_window": null,
+          "missing_period_ranges": null,
+          "rejected": null
+        }
+      },
+      "error_type": "OperationalError"
+    },
+    {
+      "code": "035420",
+      "name": "NAVER",
+      "company_id": "00266961",
+      "share-basis-bootstrap": {
+        "exists": false,
+        "revision": null,
+        "status": null,
+        "verified": null,
+        "start": null,
+        "end": null,
+        "rows": 0,
+        "inputs": {
+          "input_count": null,
+          "period_inputs_complete": null,
+          "candidate_window": null,
+          "missing_period_ranges": null,
+          "rejected": null
+        }
+      },
+      "share-basis": {
+        "exists": false,
+        "revision": null,
+        "status": null,
+        "verified": null,
+        "start": null,
+        "end": null,
+        "rows": 0,
+        "inputs": {
+          "input_count": null,
+          "period_inputs_complete": null,
+          "candidate_window": null,
+          "missing_period_ranges": null,
+          "rejected": null
+        }
+      },
+      "share-basis-promotion": {
+        "exists": false,
+        "revision": null,
+        "status": null,
+        "verified": null,
+        "start": null,
+        "end": null,
+        "rows": 0,
+        "inputs": {
+          "input_count": null,
+          "period_inputs_complete": null,
+          "candidate_window": null,
+          "missing_period_ranges": null,
+          "rejected": null
+        }
+      },
+      "share-unit-reviews": {
+        "exists": false,
+        "revision": null,
+        "status": null,
+        "verified": null,
+        "start": null,
+        "end": null,
+        "rows": 0,
+        "inputs": {
+          "input_count": null,
+          "period_inputs_complete": null,
+          "candidate_window": null,
+          "missing_period_ranges": null,
+          "rejected": null
+        }
+      },
+      "truncated": false,
+      "stored_eps_fact_rows": 24,
+      "accounts": {
+        "BasicEarningsLossPerShare": 16,
+        "ProfitLossAttributableToOwnersOfParent": 8
+      },
+      "actual_inputs": {
+        "basis": null,
+        "input_count": 0,
+        "filing_ids": [],
+        "periods": [],
+        "candidate_window": null,
+        "period_inputs_complete": false,
+        "missing_period_ranges": [],
+        "rejected": {
+          "numerator_denominator_or_eps_missing": 12
+        }
+      },
+      "actual_input_fact_ids_count": 0,
+      "reviewed_eps_note_bindings": []
+    },
+    {
+      "code": "000270",
+      "name": "Kia",
+      "company_id": "00106641",
+      "share-basis-bootstrap": {
+        "exists": true,
+        "revision": "2026-10-09T15:03:19.842333+00:00",
+        "status": "review_required",
+        "verified": null,
+        "start": null,
+        "end": null,
+        "rows": 0,
+        "inputs": {
+          "input_count": 21,
+          "period_inputs_complete": true,
+          "candidate_window": {
+            "end": "2026-06-30",
+            "start": "2025-07-01"
+          },
+          "missing_period_ranges": [],
+          "rejected": {
+            "reported_eps_mismatch": 2,
+            "share_basis_required": 6
+          }
+        }
+      },
+      "share-basis": {
+        "exists": true,
+        "revision": "2026-10-10T10:00:28.565186+00:00",
+        "status": null,
+        "verified": true,
+        "start": "2025-01-01",
+        "end": "2026-10-08",
+        "rows": 0,
+        "inputs": {
+          "input_count": null,
+          "period_inputs_complete": null,
+          "candidate_window": null,
+          "missing_period_ranges": null,
+          "rejected": null
+        }
+      },
+      "share-basis-promotion": {
+        "exists": false,
+        "revision": null,
+        "status": null,
+        "verified": null,
+        "start": null,
+        "end": null,
+        "rows": 0,
+        "inputs": {
+          "input_count": null,
+          "period_inputs_complete": null,
+          "candidate_window": null,
+          "missing_period_ranges": null,
+          "rejected": null
+        }
+      },
+      "share-unit-reviews": {
+        "exists": false,
+        "revision": null,
+        "status": null,
+        "verified": null,
+        "start": null,
+        "end": null,
+        "rows": 0,
+        "inputs": {
+          "input_count": null,
+          "period_inputs_complete": null,
+          "candidate_window": null,
+          "missing_period_ranges": null,
+          "rejected": null
+        }
+      },
+      "truncated": false,
+      "stored_eps_fact_rows": 105,
+      "accounts": {
+        "ProfitLossAttributableToOwnersOfParent": 32,
+        "BasicEarningsLossPerShare": 47,
+        "WeightedAverageShares": 23,
+        "ProfitLossAttributableToOrdinaryEquityHoldersOfParentEntity": 3
+      },
+      "actual_inputs": {
+        "basis": "CFS",
+        "input_count": 21,
+        "filing_ids": [
+          "20251114002676",
+          "20260312001224",
+          "20260515002675",
+          "20260814003932",
+          "20260916000427"
+        ],
+        "periods": [
+          {
+            "period_start": "2025-01-01",
+            "period_end": "2025-03-31",
+            "filing_id": "20260515002675",
+            "published_at": "2026-05-15",
+            "input_fact_ids": [
+              "3b42a359fbc360eb742b4cd3b103f730be6e5f16fae7290741b0a9ccd4b61f4e",
+              "5c9d241abdb8bdc0e8c64ffba5f160882148447eb8b049ae9080f156e1aa648b",
+              "ad37ea3848cbf2fa83f40e9b7ea80bc5ea551934327732b0402d1f60932d63b5",
+              "d746b31b505df891d83bb6603e3ef9b688437057b6d4877ddc623c2c9b2276b1",
+              "ed00c4efc23d5e35a360c36605eb27dd4fce57b81dbc9cb79cca6ad9a999052d"
+            ]
+          },
+          {
+            "period_start": "2025-04-01",
+            "period_end": "2025-06-30",
+            "filing_id": "20260916000427",
+            "published_at": "2026-09-16",
+            "input_fact_ids": [
+              "1629d82f7a06f5fde1e8da628f031283c88acd3232c1e0d93e37b30823c36342",
+              "5a91dbd5c2cad24e2641eea24fe172fabd7c39141c73697d2b37e86d9c96ff7e",
+              "d2f1a496db297a45e58d57ddee309b9de41963de1d5dabf1b2b3820e02330597",
+              "dfe3c0bdf5c54cc9a78ed69d869d5248bda8c652dc467f4a0aa1600c2ad9589e"
+            ]
+          },
+          {
+            "period_start": "2025-07-01",
+            "period_end": "2025-09-30",
+            "filing_id": "20251114002676",
+            "published_at": "2025-11-14",
+            "input_fact_ids": [
+              "01ef0819c646b47e793bb8cea6fb76eea61c99513276aabbee7cd0dd6acdf19f",
+              "91196336db8aa300b15cc84dfcf4b035efcd9bf5a61579d2434af6f31ad453df",
+              "ee12cd73503e04e2186b9aacf967661600c6dfb89724854ed719b8392244be85"
+            ]
+          },
+          {
+            "period_start": "2025-10-01",
+            "period_end": "2025-12-31",
+            "filing_id": "20260312001224",
+            "published_at": "2026-03-12",
+            "input_fact_ids": [
+              "029eb8a11ce649a0cddb3326bbb019c6d2c0f40e73e7e9d62d66893a36e32066",
+              "08c9401cc853031a1d65d7ed3b56b9eceb2a69caa84284e882bc0c415e401a53",
+              "360afd4c8fe07edeb4d3fb7e18d6e93864570a935dbb52a675be90a8a53a1205",
+              "4a72198590b3b507c7e26e189d7ac34b6e53b0488eb84e8cbbd6c7811cdef884",
+              "8268041a519e29bf8bfc190be2ca312864d621b0e163bca520458a018648da09",
+              "8df383dfd59fba6d801eb259ed9c8dec0061472b7e0f93c5f328a155f3dcbca6"
+            ]
+          },
+          {
+            "period_start": "2026-01-01",
+            "period_end": "2026-03-31",
+            "filing_id": "20260515002675",
+            "published_at": "2026-05-15",
+            "input_fact_ids": [
+              "52dc051b3109d5e6cbbee2d64888787bf654000bfa77e9130841b210b98bce16",
+              "74f51c12ac5122df056c5d8847d775972a76b8c8cc53802dd904005c275c5b42",
+              "92c7f3ff0b51dfe9e0e1071229b0e694197bfbc2b5868e8b9117bbee2260be3c",
+              "a94ccd6541c2bf1d9220ac1094f2e50d79b3a1141917bd1d4d14e2d8b0679689",
+              "f29cc2a6233fbb14cde57f5cc5e6993c3d506e84f434135f97c892162ba11885"
+            ]
+          },
+          {
+            "period_start": "2026-04-01",
+            "period_end": "2026-06-30",
+            "filing_id": "20260916000427",
+            "published_at": "2026-09-16",
+            "input_fact_ids": [
+              "2ad178e47682f2e06185b62a5153043266dc9e0638018eaa1491f95ad6eac62c",
+              "2ce3396b4212716bac5e298c94fc0d01fcd633eb55e6e33cd3985c3e5eb459e7",
+              "be6f314fed68e1c5ac7cd73ee03dbed89a0967ebffc2c3dc4d913c03f101c156",
+              "c59949bba0a7d4e79b531e61c56d191c92e101a5f7c9134373ef7507cf49b604"
+            ]
+          }
+        ],
+        "candidate_window": {
+          "start": "2025-07-01",
+          "end": "2026-06-30"
+        },
+        "period_inputs_complete": true,
+        "missing_period_ranges": [],
+        "rejected": {
+          "reported_eps_mismatch": 2,
+          "share_basis_required": 6
+        }
+      },
+      "actual_input_fact_ids_count": 85,
+      "reviewed_eps_note_bindings": [
+        {
+          "filing_id": "20251114002676",
+          "published_at": "2025-11-14",
+          "note_archive_manifest_present": true,
+          "period_archive_manifest_present": true,
+          "original_bytes_replayed": false
+        },
+        {
+          "filing_id": "20260312001224",
+          "published_at": "2026-03-12",
+          "note_archive_manifest_present": true,
+          "period_archive_manifest_present": true,
+          "original_bytes_replayed": false
+        }
+      ]
+    }
+  ]
+}

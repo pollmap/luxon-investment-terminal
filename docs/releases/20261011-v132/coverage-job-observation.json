@@ -1,0 +1,139 @@
+{
+  "at": "2026-10-11T13:44:28.034346+00:00",
+  "universe": 2765,
+  "basis": "resumable_collection_job_metadata",
+  "kinds": {
+    "history": {
+      "securities": {
+        "last_page_received": 608,
+        "older_pages_pending": 2156,
+        "provider_catalogue_omission": 1,
+        "no_collection_job": 0
+      },
+      "reported_rows": 2426118,
+      "last_page_fraction": 0.21989150090415913,
+      "provider_catalogue_omission_fraction": 0.0003616636528028933,
+      "error_types": {},
+      "error_samples": []
+    },
+    "investor-trading": {
+      "securities": {
+        "last_page_received": 356,
+        "older_pages_pending": 2408,
+        "provider_catalogue_omission": 1,
+        "no_collection_job": 0
+      },
+      "reported_rows": 1336211,
+      "last_page_fraction": 0.12875226039783003,
+      "provider_catalogue_omission_fraction": 0.0003616636528028933,
+      "error_types": {},
+      "error_samples": []
+    },
+    "program-trades": {
+      "securities": {
+        "older_pages_pending": 2007,
+        "last_page_received": 638,
+        "source_empty": 119,
+        "provider_catalogue_omission": 1,
+        "no_collection_job": 0
+      },
+      "reported_rows": 1395300,
+      "last_page_fraction": 0.23074141048824592,
+      "provider_catalogue_omission_fraction": 0.0003616636528028933,
+      "error_types": {},
+      "error_samples": []
+    },
+    "short-selling": {
+      "securities": {
+        "older_pages_pending": 1721,
+        "last_page_received": 960,
+        "source_empty": 83,
+        "provider_catalogue_omission": 1,
+        "no_collection_job": 0
+      },
+      "reported_rows": 1361176,
+      "last_page_fraction": 0.3471971066907776,
+      "provider_catalogue_omission_fraction": 0.0003616636528028933,
+      "error_types": {},
+      "error_samples": []
+    },
+    "credit-trades": {
+      "securities": {
+        "last_page_received": 1041,
+        "source_empty": 62,
+        "older_pages_pending": 1661,
+        "provider_catalogue_omission": 1,
+        "no_collection_job": 0
+      },
+      "reported_rows": 920721,
+      "last_page_fraction": 0.3764918625678119,
+      "provider_catalogue_omission_fraction": 0.0003616636528028933,
+      "error_types": {},
+      "error_samples": []
+    },
+    "securities-lending": {
+      "securities": {
+        "older_pages_pending": 1941,
+        "last_page_received": 760,
+        "source_empty": 63,
+        "provider_catalogue_omission": 1,
+        "no_collection_job": 0
+      },
+      "reported_rows": 1124470,
+      "last_page_fraction": 0.27486437613019893,
+      "provider_catalogue_omission_fraction": 0.0003616636528028933,
+      "error_types": {},
+      "error_samples": []
+    },
+    "raw-history": {
+      "securities": {
+        "last_page_received": 607,
+        "older_pages_pending": 2157,
+        "provider_catalogue_omission": 1,
+        "no_collection_job": 0
+      },
+      "reported_rows": 2444075,
+      "last_page_fraction": 0.21952983725135625,
+      "provider_catalogue_omission_fraction": 0.0003616636528028933,
+      "error_types": {},
+      "error_samples": []
+    }
+  },
+  "related_company_repair": {
+    "402340": {
+      "rows": 1,
+      "reason": "related_company_not_security"
+    }
+  },
+  "public_events_402340": 1,
+  "progress": {
+    "attempts": 57348,
+    "capacity": {
+      "configuration_error": null,
+      "free_bytes": 10732150784,
+      "limited": true,
+      "minimum_free_bytes": 805306368,
+      "profile": "default",
+      "resume_below_used_percent": 80,
+      "resume_minimum_free_bytes": 805306368,
+      "stop_used_percent": 90,
+      "used_percent": 93.07,
+      "warning": true,
+      "write_verified": null
+    },
+    "cursor": 513,
+    "cycles": 3,
+    "last_code": "011330",
+    "last_kind": "credit-trades",
+    "last_result": "ready",
+    "next_code": "011330",
+    "phase": 5,
+    "priority_cursor": 1473,
+    "retry_after": null,
+    "schedule": "security_then_kind",
+    "schedule_version": 3,
+    "status": "capacity_limited",
+    "universe_total": 2765,
+    "updated_at": "2026-10-11T13:44:19.615723+00:00"
+  }
+}

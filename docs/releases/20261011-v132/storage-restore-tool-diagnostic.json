@@ -1,0 +1,18 @@
+{
+  "production_contacted": false,
+  "database_started": false,
+  "checks": [
+    {
+      "tool": "postgres",
+      "bytes": 9939456,
+      "exit": 0,
+      "version": "postgres (PostgreSQL) 17.11"
+    },
+    {
+      "tool": "pg_restore",
+      "bytes": 371200,
+      "exit": 0,
+      "version": "pg_restore (PostgreSQL) 17.11"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "archive_rehashed": false,
+  "database_started": false,
+  "production_contacted": false,
+  "checks": [],
+  "state": "failed",
+  "phase": "postgres_version",
+  "error_type": "Refused",
+  "winerror": null,
+  "errno": null,
+  "trace": [
+    {
+      "file": "<stdin>",
+      "line": 13,
+      "function": "<module>"
+    },
+    {
+      "file": "local_restore.py",
+      "line": 343,
+      "function": "command"
+    },
+    {
+      "file": "local_restore.py",
+      "line": 331,
+      "function": "check"
+    }
+  ]
+}

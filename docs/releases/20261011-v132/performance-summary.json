@@ -1,0 +1,1683 @@
+{
+  "version": "v132-performance-readout-v1",
+  "generated_at": "2026-10-11T13:45:32.625281+00:00",
+  "method": "Source phase summaries retained unchanged. Additional p95 uses nearest rank ceil(0.95*n). Cached timing headers are excluded from current application stages. Stage durations overlap and must not be added.",
+  "confounders": [
+    "The first run overlapped static deployment transfer according to the run owner; interference size is not measured.",
+    "These are sequential observations, not controlled randomized worker on/off tests. Cache history and other client/server load can differ.",
+    "No pool-checkout, database execution-only, I/O-wait or packet-loss samples are available.",
+    "HTTP/2 independent TLS sessions test endpoints, not browser journeys. Connection setup is excluded from request timing."
+  ],
+  "targets_ms": {
+    "search": 300,
+    "summary": 500
+  },
+  "runs": [
+    {
+      "source": "public-100connections.json",
+      "sha256": "39e6b5cc6e5f5de1037af0fda10fcaa18ced3f13ecf214c00a76d8196f300ce6",
+      "condition": "worker_on",
+      "condition_evidence": "Run owner supplied worker state; benchmark JSON does not independently attest worker status",
+      "at": "2026-10-11T13:25:28.518Z",
+      "complete": true,
+      "cache_probe": "v132-first",
+      "concurrency": 100,
+      "connections": 100,
+      "transport": "HTTP/2 100 independent TLS sessions, one concurrent request per session, Windows PC public internet",
+      "measurement_contract": {
+        "version": "http2-receive-end-v2",
+        "scope": "API endpoint load; not the browser search/detail user flow",
+        "phases": {
+          "first": "First batch; not guaranteed cold",
+          "warm": "Three subsequent batches; not guaranteed cache hits",
+          "after_1600ms": "Batch after a 1600ms pause; classify expiry from response headers"
+        },
+        "request_headers": {
+          "accept-encoding": "gzip",
+          "origin": null,
+          "if-none-match": null,
+          "cache-control": null
+        },
+        "browser_behaviour_included": false,
+        "connection_setup_in_request_timing": false,
+        "request_model": "100 independent TLS sessions; one offered concurrent request per session; sessions reused across phases and endpoints",
+        "body_validation": "ms/body_ms end at the readable end event; JSON/gzip validation runs only after the entire batch has received or failed",
+        "stream_readiness": "stream_ready_ms records Node stream readiness, not proven network-only or server queue time; peer_max_concurrent_streams is the observed peer limit",
+        "timing": "TTFB includes proxy/queue/transit; app_ms is current uncached application-header time. Do not subtract independent percentiles.",
+        "origin_header": "On edge HIT the origin cache header is historical, not a new origin lookup",
+        "connection_setup": "DNS/TCP/TLS/connect and peer-settings readiness recorded separately; all attempts settle before the first batch; no automatic reconnect"
+      },
+      "endpoints": {
+        "search": {
+          "summary": {
+            "first": {
+              "requests": 100,
+              "ttfb_p95_ms": 1334.02,
+              "body_p95_ms": 3.82,
+              "wire_bytes": 183680,
+              "origin_cache": {
+                "MISS": 100
+              },
+              "p50_ms": 1108.65,
+              "p95_ms": 1334.43,
+              "app_timing_samples": 100,
+              "app_p95_ms": 946.14,
+              "errors": 0,
+              "cache": {
+                "ORIGIN": 100
+              }
+            },
+            "warm": {
+              "requests": 300,
+              "ttfb_p95_ms": 499.79,
+              "body_p95_ms": 2.17,
+              "wire_bytes": 551040,
+              "origin_cache": {
+                "EXPIRED": 190,
+                "HIT": 100,
+                "MISS": 10
+              },
+              "p50_ms": 466,
+              "p95_ms": 500.09,
+              "app_timing_samples": 200,
+              "app_p95_ms": 155.16,
+              "errors": 0,
+              "cache": {
+                "ORIGIN": 300
+              }
+            },
+            "after_1600ms": {
+              "requests": 100,
+              "ttfb_p95_ms": 501.81,
+              "body_p95_ms": 2.1,
+              "wire_bytes": 183680,
+              "origin_cache": {
+                "EXPIRED": 100
+              },
+              "p50_ms": 490.54,
+              "p95_ms": 502.02,
+              "app_timing_samples": 100,
+              "app_p95_ms": 170.13,
+              "errors": 0,
+              "cache": {
+                "ORIGIN": 100
+              }
+            }
+          },
+          "batches": {
+            "first": {
+              "requests": 100,
+              "header_dates_utc": [
+                "Sun, 11 Oct 2026 13:25:30 GMT",
+                "Sun, 11 Oct 2026 13:25:31 GMT"
+              ],
+              "observed_p95_ms": 1334.43,
+              "origin_cache": {
+                "MISS": 100
+              },
+              "current_app_samples": 100,
+              "stages_ms": {
+                "app": {
+                  "samples": 100,
+                  "p95": 946.14
+                },
+                "executor_wait": {
+                  "samples": 11,
+                  "p95": 275.23
+                },
+                "flight_wait": {
+                  "samples": 100,
+                  "p95": 786.3
+                },
+                "response_build": {
+                  "samples": 10,
+                  "p95": 746.68
+                },
+                "response_encode": {
+                  "samples": 10,
+                  "p95": 8.14
+                },
+                "response_lock": {
+                  "samples": 10,
+                  "p95": 0.02
+                },
+                "revision_db": {
+                  "samples": 11,
+                  "p95": 196.56
+                },
+                "revision_wait": {
+                  "samples": 100,
+                  "p95": 277.15
+                },
+                "rows_build": {
+                  "samples": 10,
+                  "p95": 0.96
+                }
+              },
+              "work_count_totals": {
+                "revision_wait": 100,
+                "revision_db": 13,
+                "executor_wait": 13,
+                "rows_build": 10,
+                "response_lock": 10,
+                "response_build": 10,
+                "response_encode": 10,
+                "flight_wait": 100,
+                "rows_built": 61,
+                "rows_reused": 0,
+                "flight_join": 90,
+                "revision_join": 97
+              },
+              "paired_ttfb_minus_app_p95_ms": 422.69,
+              "paired_residual_scope": "Proxy and queues, transport, client reception and scheduling; not a pure network measurement"
+            },
+            "warm1": {
+              "requests": 100,
+              "header_dates_utc": [
+                "Sun, 11 Oct 2026 13:25:31 GMT"
+              ],
+              "observed_p95_ms": 506.73,
+              "origin_cache": {
+                "EXPIRED": 90,
+                "HIT": 10
+              },
+              "current_app_samples": 90,
+              "stages_ms": {
+                "app": {
+                  "samples": 90,
+                  "p95": 163.19
+                },
+                "executor_wait": {
+                  "samples": 15,
+                  "p95": 9.71
+                },
+                "flight_wait": {
+                  "samples": 90,
+                  "p95": 71.38
+                },
+                "response_lock": {
+                  "samples": 13,
+                  "p95": 0
+                },
+                "revision_db": {
+                  "samples": 4,
+                  "p95": 58.47
+                },
+                "revision_wait": {
+                  "samples": 90,
+                  "p95": 106.07
+                }
+              },
+              "work_count_totals": {
+                "revision_wait": 90,
+                "executor_wait": 17,
+                "response_lock": 13,
+                "flight_wait": 90,
+                "response_hit": 13,
+                "revision_join": 86,
+                "revision_db": 4,
+                "flight_join": 77
+              },
+              "paired_ttfb_minus_app_p95_ms": 394.2,
+              "paired_residual_scope": "Proxy and queues, transport, client reception and scheduling; not a pure network measurement"
+            },
+            "warm2": {
+              "requests": 100,
+              "header_dates_utc": [
+                "Sun, 11 Oct 2026 13:25:31 GMT"
+              ],
+              "observed_p95_ms": 329.14,
+              "origin_cache": {
+                "HIT": 90,
+                "MISS": 10
+              },
+              "current_app_samples": 10,
+              "stages_ms": {
+                "app": {
+                  "samples": 10,
+                  "p95": 36.98
+                },
+                "executor_wait": {
+                  "samples": 4,
+                  "p95": 12.56
+                },
+                "flight_wait": {
+                  "samples": 10,
+                  "p95": 5.2
+                },
+                "response_lock": {
+                  "samples": 2,
+                  "p95": 0
+                },
+                "revision_db": {
+                  "samples": 4,
+                  "p95": 13.8
+                },
+                "revision_wait": {
+                  "samples": 10,
+                  "p95": 28.01
+                }
+              },
+              "work_count_totals": {
+                "revision_wait": 10,
+                "flight_wait": 10,
+                "flight_join": 8,
+                "revision_join": 6,
+                "revision_db": 4,
+                "executor_wait": 6,
+                "response_lock": 2,
+                "response_hit": 2
+              },
+              "paired_ttfb_minus_app_p95_ms": 308.18,
+              "paired_residual_scope": "Proxy and queues, transport, client reception and scheduling; not a pure network measurement"
+            },
+            "warm3": {
+              "requests": 100,
+              "header_dates_utc": [
+                "Sun, 11 Oct 2026 13:25:32 GMT"
+              ],
+              "observed_p95_ms": 488.81,
+              "origin_cache": {
+                "EXPIRED": 100
+              },
+              "current_app_samples": 100,
+              "stages_ms": {
+                "app": {
+                  "samples": 100,
+                  "p95": 151.9
+                },
+                "executor_wait": {
+                  "samples": 16,
+                  "p95": 12.37
+                },
+                "flight_wait": {
+                  "samples": 100,
+                  "p95": 13.24
+                },
+                "response_lock": {
+                  "samples": 15,
+                  "p95": 0
+                },
+                "revision_db": {
+                  "samples": 5,
+                  "p95": 76.93
+                },
+                "revision_wait": {
+                  "samples": 100,
+                  "p95": 85.63
+                }
+              },
+              "work_count_totals": {
+                "revision_wait": 100,
+                "revision_db": 5,
+                "executor_wait": 20,
+                "response_lock": 15,
+                "flight_wait": 100,
+                "response_hit": 15,
+                "flight_join": 85,
+                "revision_join": 95
+              },
+              "paired_ttfb_minus_app_p95_ms": 382.16,
+              "paired_residual_scope": "Proxy and queues, transport, client reception and scheduling; not a pure network measurement"
+            },
+            "expired": {
+              "requests": 100,
+              "header_dates_utc": [
+                "Sun, 11 Oct 2026 13:25:34 GMT"
+              ],
+              "observed_p95_ms": 502.02,
+              "origin_cache": {
+                "EXPIRED": 100
+              },
+              "current_app_samples": 100,
+              "stages_ms": {
+                "app": {
+                  "samples": 100,
+                  "p95": 170.13
+                },
+                "executor_wait": {
+                  "samples": 17,
+                  "p95": 12.65
+                },
+                "flight_wait": {
+                  "samples": 100,
+                  "p95": 45.17
+                },
+                "response_lock": {
+                  "samples": 15,
+                  "p95": 0
+                },
+                "revision_db": {
+                  "samples": 5,
+                  "p95": 42.81
+                },
+                "revision_wait": {
+                  "samples": 100,
+                  "p95": 107.01
+                }
+              },
+              "work_count_totals": {
+                "revision_wait": 100,
+                "revision_db": 5,
+                "executor_wait": 20,
+                "response_lock": 15,
+                "flight_wait": 100,
+                "response_hit": 15,
+                "revision_join": 95,
+                "flight_join": 85
+              },
+              "paired_ttfb_minus_app_p95_ms": 392.94,
+              "paired_residual_scope": "Proxy and queues, transport, client reception and scheduling; not a pure network measurement"
+            }
+          },
+          "cache_breakdown": {
+            "first": [
+              {
+                "states": {
+                  "origin_cache": "MISS"
+                },
+                "requests": 100,
+                "ttfb_p95_ms": 1334.02,
+                "body_p95_ms": 3.82,
+                "wire_bytes": 183680,
+                "origin_cache": {
+                  "MISS": 100
+                },
+                "p50_ms": 1108.65,
+                "p95_ms": 1334.43,
+                "app_timing_samples": 100,
+                "app_p95_ms": 946.14,
+                "errors": 0,
+                "cache": {
+                  "ORIGIN": 100
+                }
+              }
+            ],
+            "warm": [
+              {
+                "states": {
+                  "origin_cache": "EXPIRED"
+                },
+                "requests": 190,
+                "ttfb_p95_ms": 503.03,
+                "body_p95_ms": 2.93,
+                "wire_bytes": 339630,
+                "origin_cache": {
+                  "EXPIRED": 190
+                },
+                "p50_ms": 475.27,
+                "p95_ms": 503.75,
+                "app_timing_samples": 190,
+                "app_p95_ms": 155.27,
+                "errors": 0,
+                "cache": {
+                  "ORIGIN": 190
+                }
+              },
+              {
+                "states": {
+                  "origin_cache": "HIT"
+                },
+                "requests": 100,
+                "ttfb_p95_ms": 298.72,
+                "body_p95_ms": 0.1,
+                "wire_bytes": 198450,
+                "origin_cache": {
+                  "HIT": 100
+                },
+                "p50_ms": 290.1,
+                "p95_ms": 298.73,
+                "app_timing_samples": 0,
+                "app_p95_ms": null,
+                "errors": 0,
+                "cache": {
+                  "ORIGIN": 100
+                }
+              },
+              {
+                "states": {
+                  "origin_cache": "MISS"
+                },
+                "requests": 10,
+                "ttfb_p95_ms": 339.16,
+                "body_p95_ms": 2.12,
+                "wire_bytes": 12960,
+                "origin_cache": {
+                  "MISS": 10
+                },
+                "p50_ms": 329.47,
+                "p95_ms": 339.38,
+                "app_timing_samples": 10,
+                "app_p95_ms": 36.98,
+                "errors": 0,
+                "cache": {
+                  "ORIGIN": 10
+                }
+              }
+            ],
+            "after_1600ms": [
+              {
+                "states": {
+                  "origin_cache": "EXPIRED"
+                },
+                "requests": 100,
+                "ttfb_p95_ms": 501.81,
+                "body_p95_ms": 2.1,
+                "wire_bytes": 183680,
+                "origin_cache": {
+                  "EXPIRED": 100
+                },
+                "p50_ms": 490.54,
+                "p95_ms": 502.02,
+                "app_timing_samples": 100,
+                "app_p95_ms": 170.13,
+                "errors": 0,
+                "cache": {
+                  "ORIGIN": 100
+                }
+              }
+            ]
+          }
+        },
+        "summary": {
+          "summary": {
+            "first": {
+              "requests": 100,
+              "ttfb_p95_ms": 822.28,
+              "body_p95_ms": 3.45,
+              "wire_bytes": 99260,
+              "origin_cache": {
+                "MISS": 100
+              },
+              "p50_ms": 801.12,
+              "p95_ms": 822.57,
+              "app_timing_samples": 100,
+              "app_p95_ms": 496.16,
+              "errors": 0,
+              "cache": {
+                "ORIGIN": 100
+              }
+            },
+            "warm": {
+              "requests": 300,
+              "ttfb_p95_ms": 1223.79,
+              "body_p95_ms": 1.89,
+              "wire_bytes": 297780,
+              "origin_cache": {
+                "EXPIRED": 180,
+                "HIT": 120
+              },
+              "p50_ms": 435.26,
+              "p95_ms": 1225.01,
+              "app_timing_samples": 180,
+              "app_p95_ms": 867.98,
+              "errors": 0,
+              "cache": {
+                "ORIGIN": 300
+              }
+            },
+            "after_1600ms": {
+              "requests": 100,
+              "ttfb_p95_ms": 544.25,
+              "body_p95_ms": 3.91,
+              "wire_bytes": 99260,
+              "origin_cache": {
+                "EXPIRED": 100
+              },
+              "p50_ms": 462.24,
+              "p95_ms": 546.01,
+              "app_timing_samples": 100,
+              "app_p95_ms": 184.11,
+              "errors": 0,
+              "cache": {
+                "ORIGIN": 100
+              }
+            }
+          },
+          "batches": {
+            "first": {
+              "requests": 100,
+              "header_dates_utc": [
+                "Sun, 11 Oct 2026 13:25:35 GMT"
+              ],
+              "observed_p95_ms": 822.57,
+              "origin_cache": {
+                "MISS": 100
+              },
+              "current_app_samples": 100,
+              "stages_ms": {
+                "app": {
+                  "samples": 100,
+                  "p95": 496.16
+                },
+                "executor_wait": {
+                  "samples": 13,
+                  "p95": 61.76
+                },
+                "flight_wait": {
+                  "samples": 100,
+                  "p95": 362.96
+                },
+                "response_build": {
+                  "samples": 9,
+                  "p95": 74.26
+                },
+                "response_encode": {
+                  "samples": 9,
+                  "p95": 9.79
+                },
+                "response_lock": {
+                  "samples": 11,
+                  "p95": 176.05
+                },
+                "revision_db": {
+                  "samples": 11,
+                  "p95": 78.84
+                },
+                "revision_wait": {
+                  "samples": 100,
+                  "p95": 88.9
+                },
+                "rows_build": {
+                  "samples": 9,
+                  "p95": 2.59
+                },
+                "selected_read": {
+                  "samples": 11,
+                  "p95": 87.09
+                }
+              },
+              "work_count_totals": {
+                "revision_wait": 100,
+                "executor_wait": 15,
+                "selected_read": 20,
+                "response_lock": 11,
+                "flight_wait": 100,
+                "response_hit": 2,
+                "revision_join": 96,
+                "revision_db": 13,
+                "rows_build": 9,
+                "response_build": 9,
+                "response_encode": 9,
+                "rows_built": 9,
+                "rows_reused": 0,
+                "flight_join": 89
+              },
+              "paired_ttfb_minus_app_p95_ms": 441.75,
+              "paired_residual_scope": "Proxy and queues, transport, client reception and scheduling; not a pure network measurement"
+            },
+            "warm1": {
+              "requests": 100,
+              "header_dates_utc": [
+                "Sun, 11 Oct 2026 13:25:35 GMT"
+              ],
+              "observed_p95_ms": 294.29,
+              "origin_cache": {
+                "HIT": 100
+              },
+              "current_app_samples": 0,
+              "stages_ms": {},
+              "work_count_totals": {},
+              "paired_ttfb_minus_app_p95_ms": null,
+              "paired_residual_scope": "Proxy and queues, transport, client reception and scheduling; not a pure network measurement"
+            },
+            "warm2": {
+              "requests": 100,
+              "header_dates_utc": [
+                "Sun, 11 Oct 2026 13:25:36 GMT",
+                "Sun, 11 Oct 2026 13:25:37 GMT"
+              ],
+              "observed_p95_ms": 1227.3,
+              "origin_cache": {
+                "EXPIRED": 100
+              },
+              "current_app_samples": 100,
+              "stages_ms": {
+                "app": {
+                  "samples": 100,
+                  "p95": 882.52
+                },
+                "executor_wait": {
+                  "samples": 25,
+                  "p95": 15.9
+                },
+                "flight_wait": {
+                  "samples": 100,
+                  "p95": 44.43
+                },
+                "response_lock": {
+                  "samples": 24,
+                  "p95": 0
+                },
+                "revision_db": {
+                  "samples": 6,
+                  "p95": 707.75
+                },
+                "revision_wait": {
+                  "samples": 100,
+                  "p95": 771.04
+                },
+                "selected_read": {
+                  "samples": 24,
+                  "p95": 0.05
+                }
+              },
+              "work_count_totals": {
+                "revision_wait": 100,
+                "executor_wait": 30,
+                "selected_read": 24,
+                "response_lock": 24,
+                "flight_wait": 100,
+                "response_hit": 24,
+                "revision_join": 94,
+                "revision_db": 6,
+                "flight_join": 76
+              },
+              "paired_ttfb_minus_app_p95_ms": 402.5,
+              "paired_residual_scope": "Proxy and queues, transport, client reception and scheduling; not a pure network measurement"
+            },
+            "warm3": {
+              "requests": 100,
+              "header_dates_utc": [
+                "Sun, 11 Oct 2026 13:25:37 GMT"
+              ],
+              "observed_p95_ms": 472.99,
+              "origin_cache": {
+                "EXPIRED": 80,
+                "HIT": 20
+              },
+              "current_app_samples": 80,
+              "stages_ms": {
+                "app": {
+                  "samples": 80,
+                  "p95": 160.22
+                },
+                "executor_wait": {
+                  "samples": 21,
+                  "p95": 9.26
+                },
+                "flight_wait": {
+                  "samples": 80,
+                  "p95": 52.77
+                },
+                "response_lock": {
+                  "samples": 20,
+                  "p95": 0
+                },
+                "revision_db": {
+                  "samples": 4,
+                  "p95": 35.88
+                },
+                "revision_wait": {
+                  "samples": 80,
+                  "p95": 78.42
+                },
+                "selected_read": {
+                  "samples": 20,
+                  "p95": 0.04
+                }
+              },
+              "work_count_totals": {
+                "revision_wait": 80,
+                "revision_db": 4,
+                "executor_wait": 24,
+                "selected_read": 20,
+                "response_lock": 20,
+                "flight_wait": 80,
+                "response_hit": 20,
+                "revision_join": 76,
+                "flight_join": 60
+              },
+              "paired_ttfb_minus_app_p95_ms": 355.25,
+              "paired_residual_scope": "Proxy and queues, transport, client reception and scheduling; not a pure network measurement"
+            },
+            "expired": {
+              "requests": 100,
+              "header_dates_utc": [
+                "Sun, 11 Oct 2026 13:25:39 GMT"
+              ],
+              "observed_p95_ms": 546.01,
+              "origin_cache": {
+                "EXPIRED": 100
+              },
+              "current_app_samples": 100,
+              "stages_ms": {
+                "app": {
+                  "samples": 100,
+                  "p95": 184.11
+                },
+                "executor_wait": {
+                  "samples": 23,
+                  "p95": 9.94
+                },
+                "flight_wait": {
+                  "samples": 100,
+                  "p95": 82.84
+                },
+                "response_lock": {
+                  "samples": 22,
+                  "p95": 0
+                },
+                "revision_db": {
+                  "samples": 4,
+                  "p95": 33.6
+                },
+                "revision_wait": {
+                  "samples": 100,
+                  "p95": 103.74
+                },
+                "selected_read": {
+                  "samples": 22,
+                  "p95": 0.03
+                }
+              },
+              "work_count_totals": {
+                "revision_wait": 100,
+                "revision_db": 4,
+                "executor_wait": 26,
+                "selected_read": 22,
+                "response_lock": 22,
+                "flight_wait": 100,
+                "response_hit": 22,
+                "revision_join": 96,
+                "flight_join": 78
+              },
+              "paired_ttfb_minus_app_p95_ms": 370.99,
+              "paired_residual_scope": "Proxy and queues, transport, client reception and scheduling; not a pure network measurement"
+            }
+          },
+          "cache_breakdown": {
+            "first": [
+              {
+                "states": {
+                  "origin_cache": "MISS"
+                },
+                "requests": 100,
+                "ttfb_p95_ms": 822.28,
+                "body_p95_ms": 3.45,
+                "wire_bytes": 99260,
+                "origin_cache": {
+                  "MISS": 100
+                },
+                "p50_ms": 801.12,
+                "p95_ms": 822.57,
+                "app_timing_samples": 100,
+                "app_p95_ms": 496.16,
+                "errors": 0,
+                "cache": {
+                  "ORIGIN": 100
+                }
+              }
+            ],
+            "warm": [
+              {
+                "states": {
+                  "origin_cache": "EXPIRED"
+                },
+                "requests": 180,
+                "ttfb_p95_ms": 1225.75,
+                "body_p95_ms": 3.15,
+                "wire_bytes": 178870,
+                "origin_cache": {
+                  "EXPIRED": 180
+                },
+                "p50_ms": 1126.08,
+                "p95_ms": 1225.79,
+                "app_timing_samples": 180,
+                "app_p95_ms": 867.98,
+                "errors": 0,
+                "cache": {
+                  "ORIGIN": 180
+                }
+              },
+              {
+                "states": {
+                  "origin_cache": "HIT"
+                },
+                "requests": 120,
+                "ttfb_p95_ms": 294.27,
+                "body_p95_ms": 0.06,
+                "wire_bytes": 118910,
+                "origin_cache": {
+                  "HIT": 120
+                },
+                "p50_ms": 286.51,
+                "p95_ms": 294.29,
+                "app_timing_samples": 0,
+                "app_p95_ms": null,
+                "errors": 0,
+                "cache": {
+                  "ORIGIN": 120
+                }
+              }
+            ],
+            "after_1600ms": [
+              {
+                "states": {
+                  "origin_cache": "EXPIRED"
+                },
+                "requests": 100,
+                "ttfb_p95_ms": 544.25,
+                "body_p95_ms": 3.91,
+                "wire_bytes": 99260,
+                "origin_cache": {
+                  "EXPIRED": 100
+                },
+                "p50_ms": 462.24,
+                "p95_ms": 546.01,
+                "app_timing_samples": 100,
+                "app_p95_ms": 184.11,
+                "errors": 0,
+                "cache": {
+                  "ORIGIN": 100
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "source": "public-100connections-worker-off.json",
+      "sha256": "3b02807526383a78b0fd8796f35f6679f25e4bfa8a14939e65b12cfb44eaefbb",
+      "condition": "worker_off",
+      "condition_evidence": "Run owner supplied worker state; benchmark JSON does not independently attest worker status",
+      "at": "2026-10-11T13:31:16.887Z",
+      "complete": true,
+      "cache_probe": "v132-worker-off",
+      "concurrency": 100,
+      "connections": 100,
+      "transport": "HTTP/2 100 independent TLS sessions, one concurrent request per session, Windows PC public internet",
+      "measurement_contract": {
+        "version": "http2-receive-end-v2",
+        "scope": "API endpoint load; not the browser search/detail user flow",
+        "phases": {
+          "first": "First batch; not guaranteed cold",
+          "warm": "Three subsequent batches; not guaranteed cache hits",
+          "after_1600ms": "Batch after a 1600ms pause; classify expiry from response headers"
+        },
+        "request_headers": {
+          "accept-encoding": "gzip",
+          "origin": null,
+          "if-none-match": null,
+          "cache-control": null
+        },
+        "browser_behaviour_included": false,
+        "connection_setup_in_request_timing": false,
+        "request_model": "100 independent TLS sessions; one offered concurrent request per session; sessions reused across phases and endpoints",
+        "body_validation": "ms/body_ms end at the readable end event; JSON/gzip validation runs only after the entire batch has received or failed",
+        "stream_readiness": "stream_ready_ms records Node stream readiness, not proven network-only or server queue time; peer_max_concurrent_streams is the observed peer limit",
+        "timing": "TTFB includes proxy/queue/transit; app_ms is current uncached application-header time. Do not subtract independent percentiles.",
+        "origin_header": "On edge HIT the origin cache header is historical, not a new origin lookup",
+        "connection_setup": "DNS/TCP/TLS/connect and peer-settings readiness recorded separately; all attempts settle before the first batch; no automatic reconnect"
+      },
+      "endpoints": {
+        "search": {
+          "summary": {
+            "first": {
+              "requests": 100,
+              "ttfb_p95_ms": 3134.17,
+              "body_p95_ms": 7.36,
+              "wire_bytes": 183680,
+              "origin_cache": {
+                "MISS": 100
+              },
+              "p50_ms": 2838.66,
+              "p95_ms": 3135.16,
+              "app_timing_samples": 100,
+              "app_p95_ms": 2769.02,
+              "errors": 0,
+              "cache": {
+                "ORIGIN": 100
+              }
+            },
+            "warm": {
+              "requests": 300,
+              "ttfb_p95_ms": 1518.74,
+              "body_p95_ms": 10.11,
+              "wire_bytes": 551040,
+              "origin_cache": {
+                "EXPIRED": 200,
+                "HIT": 100
+              },
+              "p50_ms": 506.42,
+              "p95_ms": 1573.7,
+              "app_timing_samples": 200,
+              "app_p95_ms": 848.33,
+              "errors": 0,
+              "cache": {
+                "ORIGIN": 300
+              }
+            },
+            "after_1600ms": {
+              "requests": 100,
+              "ttfb_p95_ms": 1730.96,
+              "body_p95_ms": 962.91,
+              "wire_bytes": 183680,
+              "origin_cache": {
+                "EXPIRED": 100
+              },
+              "p50_ms": 790.29,
+              "p95_ms": 1730.99,
+              "app_timing_samples": 100,
+              "app_p95_ms": 166.07,
+              "errors": 0,
+              "cache": {
+                "ORIGIN": 100
+              }
+            }
+          },
+          "batches": {
+            "first": {
+              "requests": 100,
+              "header_dates_utc": [
+                "Sun, 11 Oct 2026 13:31:22 GMT",
+                "Sun, 11 Oct 2026 13:31:23 GMT"
+              ],
+              "observed_p95_ms": 3135.16,
+              "origin_cache": {
+                "MISS": 100
+              },
+              "current_app_samples": 100,
+              "stages_ms": {
+                "app": {
+                  "samples": 100,
+                  "p95": 2769.02
+                },
+                "executor_wait": {
+                  "samples": 12,
+                  "p95": 2128.68
+                },
+                "flight_wait": {
+                  "samples": 100,
+                  "p95": 2610.47
+                },
+                "response_build": {
+                  "samples": 10,
+                  "p95": 2534.85
+                },
+                "response_encode": {
+                  "samples": 10,
+                  "p95": 14.76
+                },
+                "response_lock": {
+                  "samples": 10,
+                  "p95": 0.01
+                },
+                "revision_db": {
+                  "samples": 12,
+                  "p95": 191.47
+                },
+                "revision_wait": {
+                  "samples": 100,
+                  "p95": 141.9
+                },
+                "rows_build": {
+                  "samples": 10,
+                  "p95": 1.14
+                }
+              },
+              "work_count_totals": {
+                "revision_wait": 100,
+                "flight_wait": 100,
+                "flight_join": 90,
+                "revision_join": 97,
+                "revision_db": 13,
+                "executor_wait": 13,
+                "rows_build": 10,
+                "response_lock": 10,
+                "response_build": 10,
+                "response_encode": 10,
+                "rows_built": 61,
+                "rows_reused": 0
+              },
+              "paired_ttfb_minus_app_p95_ms": 433.2,
+              "paired_residual_scope": "Proxy and queues, transport, client reception and scheduling; not a pure network measurement"
+            },
+            "warm1": {
+              "requests": 100,
+              "header_dates_utc": [
+                "Sun, 11 Oct 2026 13:31:24 GMT"
+              ],
+              "observed_p95_ms": 1576.76,
+              "origin_cache": {
+                "EXPIRED": 100
+              },
+              "current_app_samples": 100,
+              "stages_ms": {
+                "app": {
+                  "samples": 100,
+                  "p95": 144.07
+                },
+                "executor_wait": {
+                  "samples": 17,
+                  "p95": 17.46
+                },
+                "flight_wait": {
+                  "samples": 100,
+                  "p95": 72.97
+                },
+                "response_lock": {
+                  "samples": 15,
+                  "p95": 0
+                },
+                "revision_db": {
+                  "samples": 5,
+                  "p95": 68.96
+                },
+                "revision_wait": {
+                  "samples": 100,
+                  "p95": 99.82
+                }
+              },
+              "work_count_totals": {
+                "revision_wait": 100,
+                "revision_db": 5,
+                "executor_wait": 20,
+                "flight_wait": 100,
+                "flight_join": 85,
+                "response_lock": 15,
+                "response_hit": 15,
+                "revision_join": 95
+              },
+              "paired_ttfb_minus_app_p95_ms": 1352.01,
+              "paired_residual_scope": "Proxy and queues, transport, client reception and scheduling; not a pure network measurement"
+            },
+            "warm2": {
+              "requests": 100,
+              "header_dates_utc": [
+                "Sun, 11 Oct 2026 13:31:27 GMT"
+              ],
+              "observed_p95_ms": 1207.15,
+              "origin_cache": {
+                "EXPIRED": 100
+              },
+              "current_app_samples": 100,
+              "stages_ms": {
+                "app": {
+                  "samples": 100,
+                  "p95": 858.99
+                },
+                "executor_wait": {
+                  "samples": 20,
+                  "p95": 8.99
+                },
+                "flight_wait": {
+                  "samples": 100,
+                  "p95": 65.6
+                },
+                "response_lock": {
+                  "samples": 17,
+                  "p95": 0
+                },
+                "revision_db": {
+                  "samples": 6,
+                  "p95": 755.67
+                },
+                "revision_wait": {
+                  "samples": 100,
+                  "p95": 797.39
+                }
+              },
+              "work_count_totals": {
+                "revision_wait": 100,
+                "executor_wait": 23,
+                "response_lock": 17,
+                "flight_wait": 100,
+                "response_hit": 17,
+                "revision_join": 94,
+                "flight_join": 83,
+                "revision_db": 6
+              },
+              "paired_ttfb_minus_app_p95_ms": 388.63,
+              "paired_residual_scope": "Proxy and queues, transport, client reception and scheduling; not a pure network measurement"
+            },
+            "warm3": {
+              "requests": 100,
+              "header_dates_utc": [
+                "Sun, 11 Oct 2026 13:31:27 GMT"
+              ],
+              "observed_p95_ms": 1641.63,
+              "origin_cache": {
+                "HIT": 100
+              },
+              "current_app_samples": 0,
+              "stages_ms": {},
+              "work_count_totals": {},
+              "paired_ttfb_minus_app_p95_ms": null,
+              "paired_residual_scope": "Proxy and queues, transport, client reception and scheduling; not a pure network measurement"
+            },
+            "expired": {
+              "requests": 100,
+              "header_dates_utc": [
+                "Sun, 11 Oct 2026 13:31:31 GMT"
+              ],
+              "observed_p95_ms": 1730.99,
+              "origin_cache": {
+                "EXPIRED": 100
+              },
+              "current_app_samples": 100,
+              "stages_ms": {
+                "app": {
+                  "samples": 100,
+                  "p95": 166.07
+                },
+                "executor_wait": {
+                  "samples": 20,
+                  "p95": 10.01
+                },
+                "flight_wait": {
+                  "samples": 100,
+                  "p95": 27.79
+                },
+                "response_lock": {
+                  "samples": 17,
+                  "p95": 0
+                },
+                "revision_db": {
+                  "samples": 6,
+                  "p95": 54.33
+                },
+                "revision_wait": {
+                  "samples": 100,
+                  "p95": 97.77
+                }
+              },
+              "work_count_totals": {
+                "revision_wait": 100,
+                "revision_db": 6,
+                "executor_wait": 23,
+                "response_lock": 17,
+                "flight_wait": 100,
+                "response_hit": 17,
+                "revision_join": 94,
+                "flight_join": 83
+              },
+              "paired_ttfb_minus_app_p95_ms": 1639.47,
+              "paired_residual_scope": "Proxy and queues, transport, client reception and scheduling; not a pure network measurement"
+            }
+          },
+          "cache_breakdown": {
+            "first": [
+              {
+                "states": {
+                  "origin_cache": "MISS"
+                },
+                "requests": 100,
+                "ttfb_p95_ms": 3134.17,
+                "body_p95_ms": 7.36,
+                "wire_bytes": 183680,
+                "origin_cache": {
+                  "MISS": 100
+                },
+                "p50_ms": 2838.66,
+                "p95_ms": 3135.16,
+                "app_timing_samples": 100,
+                "app_p95_ms": 2769.02,
+                "errors": 0,
+                "cache": {
+                  "ORIGIN": 100
+                }
+              }
+            ],
+            "warm": [
+              {
+                "states": {
+                  "origin_cache": "EXPIRED"
+                },
+                "requests": 200,
+                "ttfb_p95_ms": 1208.03,
+                "body_p95_ms": 15.29,
+                "wire_bytes": 367360,
+                "origin_cache": {
+                  "EXPIRED": 200
+                },
+                "p50_ms": 1162.3,
+                "p95_ms": 1508.81,
+                "app_timing_samples": 200,
+                "app_p95_ms": 848.33,
+                "errors": 0,
+                "cache": {
+                  "ORIGIN": 200
+                }
+              },
+              {
+                "states": {
+                  "origin_cache": "HIT"
+                },
+                "requests": 100,
+                "ttfb_p95_ms": 1641.61,
+                "body_p95_ms": 0.08,
+                "wire_bytes": 183680,
+                "origin_cache": {
+                  "HIT": 100
+                },
+                "p50_ms": 308.54,
+                "p95_ms": 1641.63,
+                "app_timing_samples": 0,
+                "app_p95_ms": null,
+                "errors": 0,
+                "cache": {
+                  "ORIGIN": 100
+                }
+              }
+            ],
+            "after_1600ms": [
+              {
+                "states": {
+                  "origin_cache": "EXPIRED"
+                },
+                "requests": 100,
+                "ttfb_p95_ms": 1730.96,
+                "body_p95_ms": 962.91,
+                "wire_bytes": 183680,
+                "origin_cache": {
+                  "EXPIRED": 100
+                },
+                "p50_ms": 790.29,
+                "p95_ms": 1730.99,
+                "app_timing_samples": 100,
+                "app_p95_ms": 166.07,
+                "errors": 0,
+                "cache": {
+                  "ORIGIN": 100
+                }
+              }
+            ]
+          }
+        },
+        "summary": {
+          "summary": {
+            "first": {
+              "requests": 100,
+              "ttfb_p95_ms": 748.77,
+              "body_p95_ms": 1.49,
+              "wire_bytes": 99260,
+              "origin_cache": {
+                "MISS": 100
+              },
+              "p50_ms": 670.6,
+              "p95_ms": 750.35,
+              "app_timing_samples": 100,
+              "app_p95_ms": 380.97,
+              "errors": 0,
+              "cache": {
+                "ORIGIN": 100
+              }
+            },
+            "warm": {
+              "requests": 300,
+              "ttfb_p95_ms": 575.05,
+              "body_p95_ms": 2.12,
+              "wire_bytes": 297780,
+              "origin_cache": {
+                "EXPIRED": 200,
+                "HIT": 100
+              },
+              "p50_ms": 486.46,
+              "p95_ms": 575.69,
+              "app_timing_samples": 200,
+              "app_p95_ms": 234.94,
+              "errors": 0,
+              "cache": {
+                "ORIGIN": 300
+              }
+            },
+            "after_1600ms": {
+              "requests": 100,
+              "ttfb_p95_ms": 860.27,
+              "body_p95_ms": 919.23,
+              "wire_bytes": 99260,
+              "origin_cache": {
+                "EXPIRED": 100
+              },
+              "p50_ms": 498.96,
+              "p95_ms": 1363.56,
+              "app_timing_samples": 100,
+              "app_p95_ms": 184.39,
+              "errors": 0,
+              "cache": {
+                "ORIGIN": 100
+              }
+            }
+          },
+          "batches": {
+            "first": {
+              "requests": 100,
+              "header_dates_utc": [
+                "Sun, 11 Oct 2026 13:31:34 GMT"
+              ],
+              "observed_p95_ms": 750.35,
+              "origin_cache": {
+                "MISS": 100
+              },
+              "current_app_samples": 100,
+              "stages_ms": {
+                "app": {
+                  "samples": 100,
+                  "p95": 380.97
+                },
+                "executor_wait": {
+                  "samples": 14,
+                  "p95": 18.61
+                },
+                "flight_wait": {
+                  "samples": 100,
+                  "p95": 278.35
+                },
+                "response_lock": {
+                  "samples": 11,
+                  "p95": 134.26
+                },
+                "revision_db": {
+                  "samples": 4,
+                  "p95": 50.64
+                },
+                "revision_wait": {
+                  "samples": 100,
+                  "p95": 100.82
+                },
+                "rows_build": {
+                  "samples": 9,
+                  "p95": 0.5
+                },
+                "selected_read": {
+                  "samples": 11,
+                  "p95": 134.27
+                }
+              },
+              "work_count_totals": {
+                "revision_wait": 100,
+                "flight_wait": 100,
+                "flight_join": 89,
+                "revision_join": 96,
+                "revision_db": 4,
+                "executor_wait": 15,
+                "rows_build": 9,
+                "selected_read": 11,
+                "response_lock": 11,
+                "rows_built": 9,
+                "rows_reused": 0,
+                "response_hit": 11
+              },
+              "paired_ttfb_minus_app_p95_ms": 415.08,
+              "paired_residual_scope": "Proxy and queues, transport, client reception and scheduling; not a pure network measurement"
+            },
+            "warm1": {
+              "requests": 100,
+              "header_dates_utc": [
+                "Sun, 11 Oct 2026 13:31:35 GMT"
+              ],
+              "observed_p95_ms": 580.71,
+              "origin_cache": {
+                "EXPIRED": 100
+              },
+              "current_app_samples": 100,
+              "stages_ms": {
+                "app": {
+                  "samples": 100,
+                  "p95": 241.51
+                },
+                "executor_wait": {
+                  "samples": 15,
+                  "p95": 17.77
+                },
+                "flight_wait": {
+                  "samples": 100,
+                  "p95": 55.28
+                },
+                "response_lock": {
+                  "samples": 12,
+                  "p95": 0
+                },
+                "revision_db": {
+                  "samples": 5,
+                  "p95": 55.91
+                },
+                "revision_wait": {
+                  "samples": 100,
+                  "p95": 134.88
+                },
+                "selected_read": {
+                  "samples": 12,
+                  "p95": 0.08
+                }
+              },
+              "work_count_totals": {
+                "revision_wait": 100,
+                "flight_wait": 100,
+                "flight_join": 88,
+                "revision_join": 95,
+                "executor_wait": 17,
+                "selected_read": 12,
+                "response_lock": 12,
+                "response_hit": 12,
+                "revision_db": 5
+              },
+              "paired_ttfb_minus_app_p95_ms": 392.88,
+              "paired_residual_scope": "Proxy and queues, transport, client reception and scheduling; not a pure network measurement"
+            },
+            "warm2": {
+              "requests": 100,
+              "header_dates_utc": [
+                "Sun, 11 Oct 2026 13:31:35 GMT"
+              ],
+              "observed_p95_ms": 298.5,
+              "origin_cache": {
+                "HIT": 100
+              },
+              "current_app_samples": 0,
+              "stages_ms": {},
+              "work_count_totals": {},
+              "paired_ttfb_minus_app_p95_ms": null,
+              "paired_residual_scope": "Proxy and queues, transport, client reception and scheduling; not a pure network measurement"
+            },
+            "warm3": {
+              "requests": 100,
+              "header_dates_utc": [
+                "Sun, 11 Oct 2026 13:31:36 GMT"
+              ],
+              "observed_p95_ms": 555.97,
+              "origin_cache": {
+                "EXPIRED": 100
+              },
+              "current_app_samples": 100,
+              "stages_ms": {
+                "app": {
+                  "samples": 100,
+                  "p95": 193.68
+                },
+                "executor_wait": {
+                  "samples": 26,
+                  "p95": 7.84
+                },
+                "flight_wait": {
+                  "samples": 100,
+                  "p95": 60.61
+                },
+                "response_lock": {
+                  "samples": 25,
+                  "p95": 0
+                },
+                "revision_db": {
+                  "samples": 4,
+                  "p95": 33.22
+                },
+                "revision_wait": {
+                  "samples": 100,
+                  "p95": 116.89
+                },
+                "selected_read": {
+                  "samples": 25,
+                  "p95": 0.08
+                }
+              },
+              "work_count_totals": {
+                "revision_wait": 100,
+                "flight_wait": 100,
+                "flight_join": 75,
+                "revision_join": 96,
+                "executor_wait": 29,
+                "selected_read": 25,
+                "response_lock": 25,
+                "response_hit": 25,
+                "revision_db": 4
+              },
+              "paired_ttfb_minus_app_p95_ms": 393.01,
+              "paired_residual_scope": "Proxy and queues, transport, client reception and scheduling; not a pure network measurement"
+            },
+            "expired": {
+              "requests": 100,
+              "header_dates_utc": [
+                "Sun, 11 Oct 2026 13:31:38 GMT"
+              ],
+              "observed_p95_ms": 1363.56,
+              "origin_cache": {
+                "EXPIRED": 100
+              },
+              "current_app_samples": 100,
+              "stages_ms": {
+                "app": {
+                  "samples": 100,
+                  "p95": 184.39
+                },
+                "executor_wait": {
+                  "samples": 28,
+                  "p95": 17.57
+                },
+                "flight_wait": {
+                  "samples": 100,
+                  "p95": 28.84
+                },
+                "response_lock": {
+                  "samples": 26,
+                  "p95": 0
+                },
+                "revision_db": {
+                  "samples": 6,
+                  "p95": 54.37
+                },
+                "revision_wait": {
+                  "samples": 100,
+                  "p95": 117.61
+                },
+                "selected_read": {
+                  "samples": 26,
+                  "p95": 0.06
+                }
+              },
+              "work_count_totals": {
+                "revision_wait": 100,
+                "revision_db": 6,
+                "executor_wait": 32,
+                "selected_read": 26,
+                "response_lock": 26,
+                "flight_wait": 100,
+                "response_hit": 26,
+                "revision_join": 94,
+                "flight_join": 74
+              },
+              "paired_ttfb_minus_app_p95_ms": 718.86,
+              "paired_residual_scope": "Proxy and queues, transport, client reception and scheduling; not a pure network measurement"
+            }
+          },
+          "cache_breakdown": {
+            "first": [
+              {
+                "states": {
+                  "origin_cache": "MISS"
+                },
+                "requests": 100,
+                "ttfb_p95_ms": 748.77,
+                "body_p95_ms": 1.49,
+                "wire_bytes": 99260,
+                "origin_cache": {
+                  "MISS": 100
+                },
+                "p50_ms": 670.6,
+                "p95_ms": 750.35,
+                "app_timing_samples": 100,
+                "app_p95_ms": 380.97,
+                "errors": 0,
+                "cache": {
+                  "ORIGIN": 100
+                }
+              }
+            ],
+            "warm": [
+              {
+                "states": {
+                  "origin_cache": "EXPIRED"
+                },
+                "requests": 200,
+                "ttfb_p95_ms": 576.47,
+                "body_p95_ms": 2.74,
+                "wire_bytes": 198520,
+                "origin_cache": {
+                  "EXPIRED": 200
+                },
+                "p50_ms": 507.47,
+                "p95_ms": 577.58,
+                "app_timing_samples": 200,
+                "app_p95_ms": 234.94,
+                "errors": 0,
+                "cache": {
+                  "ORIGIN": 200
+                }
+              },
+              {
+                "states": {
+                  "origin_cache": "HIT"
+                },
+                "requests": 100,
+                "ttfb_p95_ms": 298.49,
+                "body_p95_ms": 0.04,
+                "wire_bytes": 99260,
+                "origin_cache": {
+                  "HIT": 100
+                },
+                "p50_ms": 284.17,
+                "p95_ms": 298.5,
+                "app_timing_samples": 0,
+                "app_p95_ms": null,
+                "errors": 0,
+                "cache": {
+                  "ORIGIN": 100
+                }
+              }
+            ],
+            "after_1600ms": [
+              {
+                "states": {
+                  "origin_cache": "EXPIRED"
+                },
+                "requests": 100,
+                "ttfb_p95_ms": 860.27,
+                "body_p95_ms": 919.23,
+                "wire_bytes": 99260,
+                "origin_cache": {
+                  "EXPIRED": 100
+                },
+                "p50_ms": 498.96,
+                "p95_ms": 1363.56,
+                "app_timing_samples": 100,
+                "app_p95_ms": 184.39,
+                "errors": 0,
+                "cache": {
+                  "ORIGIN": 100
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "outcome": {
+    "search_target_met": false,
+    "summary_target_met": false,
+    "whole_service_complete": false,
+    "worker_shutdown_improvement_proven": false,
+    "recommendation": "Keep working code. Separate revision connection checkout from SQL in the next profiling task and obtain a quiet controlled baseline before a performance fix. No infrastructure migration or wider cache freshness is justified by this comparison."
+  }
+}

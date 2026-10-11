@@ -1,0 +1,59 @@
+{
+  "at": "2026-10-11T13:45:24.368332+00:00",
+  "hosts": [
+    {
+      "host": "stocks.62-171-141-206.sslip.io",
+      "assets": [
+        {
+          "path": "stocks.html",
+          "status": 200,
+          "sha256": "fc1e2c0906226de2fc1463dcbb9860b00b968b870ad9df14bd0313897e1860e5",
+          "matches_local": true,
+          "cache_control": "no-cache"
+        },
+        {
+          "path": "stocks/version.json",
+          "status": 200,
+          "sha256": "52edf6e5298b47f033dc92d4e2b60db09dca6aed25cbc831e1e06f1d80289049",
+          "matches_local": true,
+          "cache_control": null
+        },
+        {
+          "path": "_next/static/css/56d4c3297aff6eef.css",
+          "status": 200,
+          "sha256": "bfa719c1a38d040e116184ef6b4b2033a0f49b220fc68c7ad0e7ab724e90f802",
+          "matches_local": true,
+          "cache_control": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "host": "korea-stocks-edge.lch68-workers.workers.dev",
+      "assets": [
+        {
+          "path": "stocks.html",
+          "status": 200,
+          "matches_local": true,
+          "sha256": "fc1e2c0906226de2fc1463dcbb9860b00b968b870ad9df14bd0313897e1860e5",
+          "cache_control": "no-cache"
+        },
+        {
+          "path": "stocks/version.json",
+          "status": 200,
+          "matches_local": true,
+          "sha256": "52edf6e5298b47f033dc92d4e2b60db09dca6aed25cbc831e1e06f1d80289049",
+          "cache_control": "no-store"
+        },
+        {
+          "path": "_next/static/css/56d4c3297aff6eef.css",
+          "status": 200,
+          "matches_local": true,
+          "sha256": "bfa719c1a38d040e116184ef6b4b2033a0f49b220fc68c7ad0e7ab724e90f802",
+          "cache_control": "public, max-age=31536000, immutable"
+        }
+      ],
+      "initial_probe": "urllib default user agent received HTTP errors; retried with browser-like user agent"
+    }
+  ],
+  "rechecked_at": "2026-10-11T13:49:43.616298+00:00"
+}
