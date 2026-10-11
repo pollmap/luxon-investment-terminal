@@ -5,11 +5,14 @@ async function fixture(page:Page,{indexCacheHeaders=true,indexFailure=false}:{in
   // The CI namespace has loopback only. Its OS network state can be offline even
   // though every endpoint below is fulfilled locally; model that fixture state.
   await page.addInitScript(()=>Object.defineProperty(navigator,'onLine',{configurable:true,get:()=>true}));
-  const calls:string[]=[];const subscriptions=new Map<number,string[]>();let socketId=0;
+  const calls:string[]=[];const subscriptions=new Map<number,{codes:string[];channels:string[]}>();let socketId=0;
   const stock={code:'005930',name:'삼성전자',market:'KOSPI',price:100,change:1,volume:10,value:1000,cap:10000,foreign:null,per:null,pbr:null,roe:null,dividend:null,foreign_net:null,institution_net:null,revenue:null,operating_profit:null,as_of:'2026-10-08T15:30:00+09:00',received_at:'2026-10-08T15:30:00+09:00',market_status:'CLOSE',facts:{}};
   await page.routeWebSocket('**/api/market/v1/stream',ws=>{
     const id=++socketId;
-    ws.onMessage(message=>{subscriptions.set(id,JSON.parse(String(message)).codes);});
+    ws.onMessage(message=>{
+      const subscription=JSON.parse(String(message));
+      subscriptions.set(id,{codes:subscription.codes,channels:subscription.channels??['snapshot']});
+    });
     ws.onClose(()=>subscriptions.delete(id));
   });
   await page.route('**/api/market/v1/**',async route=>{
@@ -27,6 +30,7 @@ async function fixture(page:Page,{indexCacheHeaders=true,indexFailure=false}:{in
     else if(path==='/overview')data={indices:['KOSPI','KOSDAQ','KPI200'].map(code=>({code,price:100,change:1,market_status:'CLOSE'})),breadth:{up:1,down:0,flat:0},total:1,value:1000,sectors:[],filings:{rows:[],status:'ready'}};
     else if(path==='/securities/005930')data={security:stock,detail:{financials:[],flows:[]},prices:{rows:[]},filings:{rows:[]},official:{company:{},statements:[]}};
     else if(path==='/securities/005930/quote')data=stock;
+    else if(path==='/securities/005930/depth')data={book:[],trades:[],book_status:'no_data',trades_status:'no_data',venue:'KRX'};
     else if(path.endsWith('/chart'))data={status:'ready',return_pct:1,points:[{time:'20261008090000',value:100},{time:'20261008150000',value:101}]};
     // Playwright fulfill does not add the upstream Date/Age headers. Use the
     // page clock so simulated time and the cache freshness contract agree.
@@ -112,15 +116,28 @@ test('detail pauses the hidden market stream and restores the original list on r
   await page.evaluate(()=>{Object.defineProperty(navigator,'onLine',{configurable:true,get:()=>true});window.dispatchEvent(new Event('online'));});
   await expect.poll(()=>state.subscriptions.size).toBe(1);
   const overviewCount=state.count('/overview');
+  const marketSockets=[...state.subscriptions.keys()];
   await page.locator('.mk-stock-link').first().click();
   await expect(page.getByRole('heading',{name:'삼성전자',exact:true})).toBeVisible();
-  await expect.poll(()=>state.subscriptions.size).toBe(1);
-  expect([...state.subscriptions.values()]).toEqual([['005930']]);
+  // Desktop detail owns one quote and one visible depth subscription. Check
+  // channel identities and the old market socket, not only their total count.
+  const activeSubscriptions=()=>[...state.subscriptions.values()].sort((a,b)=>a.channels.join().localeCompare(b.channels.join()));
+  await expect.poll(()=>marketSockets.every(id=>!state.subscriptions.has(id))).toBe(true);
+  await expect.poll(activeSubscriptions).toEqual([
+    {codes:['005930'],channels:['depth']},
+    {codes:['005930'],channels:['snapshot']},
+  ]);
   await page.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
+  await expect.poll(activeSubscriptions).toEqual([
+    {codes:['005930'],channels:['depth']},
+    {codes:['005930'],channels:['snapshot']},
+  ]);
   expect(state.count('/overview')).toBe(overviewCount);
+  const detailSockets=[...state.subscriptions.keys()];
   await page.getByRole('button',{name:'목록으로 돌아가기'}).click();
   await expect(page.locator('.mk-stock-link').first()).toContainText('삼성전자');
-  await expect.poll(()=>state.subscriptions.size).toBe(1);
+  await expect.poll(()=>detailSockets.every(id=>!state.subscriptions.has(id))).toBe(true);
+  await expect.poll(activeSubscriptions).toEqual([{codes:['005930'],channels:['snapshot']}]);
 });
 
 test('search intent loads one identity index and header and keyboard search reuse it',async({page})=>{

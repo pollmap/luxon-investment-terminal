@@ -70,9 +70,17 @@ async def test_hundred_requests_for_ten_keys_share_one_revision_query(tmp_path, 
             results = await asyncio.gather(*(client.get(paths[index % 10]) for index in range(100)))
             assert all(response.status_code == 200 for response in results)
             assert len(calls) == 1
-            assert set(calls[0]) == {"universe", "enriched", "quotes"} | (
-                {"detail-summary:" + code for code in codes} if kind == "summary" else set()
-            )
+            if kind == "summary":
+                # Summary caches follow only each requested security's facts and
+                # quote; an unrelated security must not invalidate all summaries.
+                expected_keys = {"universe"} | {
+                    prefix + code
+                    for code in codes
+                    for prefix in ("detail-summary:", "enriched-item:", "quote:")
+                }
+            else:
+                expected_keys = {"universe", "enriched", "quotes"}
+            assert set(calls[0]) == expected_keys
             for index, result in enumerate(results):
                 row = selected(result)
                 assert (row["code"], row["price"], row["as_of"]) == (
