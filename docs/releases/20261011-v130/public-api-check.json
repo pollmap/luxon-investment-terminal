@@ -1,0 +1,445 @@
+{
+  "at": "2026-10-10T17:28:54.574116+00:00",
+  "origin": "https://stocks.62-171-141-206.sslip.io",
+  "checks": {
+    "summary": {
+      "status": 200,
+      "ms": 860.0641000084579,
+      "bytes": 1868,
+      "keys": [
+        "security",
+        "detail",
+        "prices",
+        "status",
+        "company",
+        "official",
+        "filings"
+      ],
+      "rows": 0,
+      "security": "005930",
+      "mode": null,
+      "coverage": null,
+      "fallback_reason": null
+    },
+    "jyp_summary": {
+      "status": 200,
+      "ms": 871.5030999737792,
+      "bytes": 1720,
+      "keys": [
+        "security",
+        "detail",
+        "prices",
+        "status",
+        "company",
+        "official",
+        "filings"
+      ],
+      "rows": 0,
+      "security": "035900",
+      "mode": null,
+      "coverage": null,
+      "fallback_reason": null
+    },
+    "jyp_financials": {
+      "status": 200,
+      "ms": 1141.7217999696732,
+      "bytes": 17923,
+      "keys": [
+        "available_periods",
+        "reports",
+        "indicators"
+      ],
+      "rows": 0,
+      "security": null,
+      "mode": null,
+      "coverage": null,
+      "fallback_reason": null
+    },
+    "valuation": {
+      "status": 200,
+      "ms": 2164.8488999926485,
+      "bytes": 157946,
+      "keys": [
+        "code",
+        "metric",
+        "metric_definition",
+        "basis",
+        "frequency",
+        "mode",
+        "venue",
+        "share_basis",
+        "unit",
+        "multiple",
+        "multiple_source",
+        "interval",
+        "series",
+        "periods",
+        "summary"
+      ],
+      "rows": 0,
+      "security": null,
+      "mode": "as_known",
+      "coverage": null,
+      "fallback_reason": null
+    },
+    "news": {
+      "status": 200,
+      "ms": 3786.3996000378393,
+      "bytes": 7765,
+      "keys": [
+        "rows",
+        "status",
+        "has_more",
+        "date",
+        "offset",
+        "history_mode",
+        "coverage",
+        "revision"
+      ],
+      "rows": 10,
+      "security": null,
+      "mode": null,
+      "coverage": "collected_stock_headlines",
+      "fallback_reason": null
+    },
+    "research": {
+      "status": 200,
+      "ms": 1042.1332000405528,
+      "bytes": 10513,
+      "keys": [
+        "status",
+        "mode",
+        "fallback_reason",
+        "available_documents",
+        "items",
+        "coverage",
+        "revision",
+        "elapsed_ms",
+        "version"
+      ],
+      "rows": 10,
+      "security": null,
+      "mode": "lexical_only",
+      "coverage": {
+        "index": "context_titles_only",
+        "candidate_limit": 1000,
+        "truncated": false,
+        "ranking_scope": "bounded_collected_documents",
+        "candidate_filter": "sql_keyword_trigram_or_vector_before_limit",
+        "lexical_candidates_scored": 179
+      },
+      "fallback_reason": "embedding_not_configured"
+    },
+    "document": {
+      "status": 200,
+      "ms": 872.7644999744371,
+      "bytes": 2037,
+      "keys": [
+        "id",
+        "title",
+        "source_url",
+        "published_at",
+        "revision",
+        "source_hash",
+        "source_hash_status",
+        "kind",
+        "issuer",
+        "review_status",
+        "section",
+        "page",
+        "table",
+        "row",
+        "token_start",
+        "token_end",
+        "char_start",
+        "char_end",
+        "header_char_start",
+        "header_char_end"
+      ]
+    },
+    "/research/search?q=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx": {
+      "status": 422
+    },
+    "/research/search?q=삼성&limit=21": {
+      "status": 422
+    },
+    "/research/index": {
+      "status": 404
+    }
+  },
+  "release": "20261011-candle-research-v130",
+  "research_scope": {
+    "index": "context_titles_only",
+    "candidate_limit": 1000,
+    "truncated": false,
+    "ranking_scope": "bounded_collected_documents",
+    "candidate_filter": "sql_keyword_trigram_or_vector_before_limit",
+    "lexical_candidates_scored": 179
+  },
+  "document_source_check": {
+    "code": "000660",
+    "kind": "news",
+    "published_at": "2026-10-09T17:04:00+09:00",
+    "section": "제목",
+    "page": null,
+    "revision": "74bd484c06370405194d01d4b73f72c11f1bc7794276421ff0c1a0eb95e7dcf9",
+    "source_hash": "3251b9f0be3d9d14c42e661f8a05ef6b819ba0b1204bc818a731f998a1778346"
+  },
+  "research_20": {
+    "model": "20 independent HTTPS requests (DNS/TLS included)",
+    "results": [
+      {
+        "status": 200,
+        "ms": 1424.4269999908283,
+        "bytes": 5540,
+        "mode": "lexical_only"
+      },
+      {
+        "status": 200,
+        "ms": 1018.0458999820985,
+        "bytes": 5403,
+        "mode": "lexical_only"
+      },
+      {
+        "status": 200,
+        "ms": 1155.6433000368997,
+        "bytes": 5655,
+        "mode": "lexical_only"
+      },
+      {
+        "status": 200,
+        "ms": 1382.5235000113025,
+        "bytes": 5446,
+        "mode": "lexical_only"
+      },
+      {
+        "status": 200,
+        "ms": 1289.9085999815725,
+        "bytes": 5063,
+        "mode": "lexical_only"
+      },
+      {
+        "status": 200,
+        "ms": 1141.6107999975793,
+        "bytes": 5540,
+        "mode": "lexical_only"
+      },
+      {
+        "status": 200,
+        "ms": 1237.3694999841973,
+        "bytes": 5403,
+        "mode": "lexical_only"
+      },
+      {
+        "status": 200,
+        "ms": 1013.1133000249974,
+        "bytes": 5655,
+        "mode": "lexical_only"
+      },
+      {
+        "status": 200,
+        "ms": 1071.057999972254,
+        "bytes": 5446,
+        "mode": "lexical_only"
+      },
+      {
+        "status": 200,
+        "ms": 1348.9682000363246,
+        "bytes": 5063,
+        "mode": "lexical_only"
+      },
+      {
+        "status": 200,
+        "ms": 1081.5941999899223,
+        "bytes": 5540,
+        "mode": "lexical_only"
+      },
+      {
+        "status": 200,
+        "ms": 1277.8690999839455,
+        "bytes": 5403,
+        "mode": "lexical_only"
+      },
+      {
+        "status": 200,
+        "ms": 1438.0308000254445,
+        "bytes": 5654,
+        "mode": "lexical_only"
+      },
+      {
+        "status": 200,
+        "ms": 1569.8828999884427,
+        "bytes": 5446,
+        "mode": "lexical_only"
+      },
+      {
+        "status": 200,
+        "ms": 1486.7530000046827,
+        "bytes": 5063,
+        "mode": "lexical_only"
+      },
+      {
+        "status": 200,
+        "ms": 1667.4710999941453,
+        "bytes": 5540,
+        "mode": "lexical_only"
+      },
+      {
+        "status": 200,
+        "ms": 1653.8273000041954,
+        "bytes": 5403,
+        "mode": "lexical_only"
+      },
+      {
+        "status": 200,
+        "ms": 1658.6270999978296,
+        "bytes": 5655,
+        "mode": "lexical_only"
+      },
+      {
+        "status": 200,
+        "ms": 1439.3508000066504,
+        "bytes": 5446,
+        "mode": "lexical_only"
+      },
+      {
+        "status": 200,
+        "ms": 1295.3224999946542,
+        "bytes": 5063,
+        "mode": "lexical_only"
+      }
+    ],
+    "p95_success_ms": 1658.6270999978296,
+    "all_requests_succeeded": true,
+    "semantic_verified": false
+  },
+  "static_release": "20261011-candle-research-v130",
+  "toss_schema": {
+    "version": "1.2.24",
+    "in_scope": 24,
+    "all_paths_present": true,
+    "live_provider_calls_this_check": 0,
+    "items": [
+      {
+        "path": "/api/v1/prices",
+        "official_present": true,
+        "operation": "getPrices"
+      },
+      {
+        "path": "/api/v1/orderbook",
+        "official_present": true,
+        "operation": "getOrderbook"
+      },
+      {
+        "path": "/api/v1/trades",
+        "official_present": true,
+        "operation": "getTrades"
+      },
+      {
+        "path": "/api/v1/price-limits",
+        "official_present": true,
+        "operation": "getPriceLimit"
+      },
+      {
+        "path": "/api/v1/candles",
+        "official_present": true,
+        "operation": "getCandles"
+      },
+      {
+        "path": "/api/v1/stocks",
+        "official_present": true,
+        "operation": "getStocks"
+      },
+      {
+        "path": "/api/v1/stocks/all",
+        "official_present": true,
+        "operation": "listStocks"
+      },
+      {
+        "path": "/api/v1/stocks/{symbol}/warnings",
+        "official_present": true,
+        "operation": "getStockWarnings"
+      },
+      {
+        "path": "/api/v1/stocks/{symbol}/investor-trading",
+        "official_present": true,
+        "operation": "getStockInvestorTrading"
+      },
+      {
+        "path": "/api/v1/stocks/{symbol}/program-trades",
+        "official_present": true,
+        "operation": "getStockProgramTrades"
+      },
+      {
+        "path": "/api/v1/stocks/{symbol}/short-selling",
+        "official_present": true,
+        "operation": "getStockShortSelling"
+      },
+      {
+        "path": "/api/v1/stocks/{symbol}/credit-trades",
+        "official_present": true,
+        "operation": "getStockCreditTrades"
+      },
+      {
+        "path": "/api/v1/stocks/{symbol}/securities-lending",
+        "official_present": true,
+        "operation": "getStockSecuritiesLending"
+      },
+      {
+        "path": "/api/v1/exchange-rate",
+        "official_present": true,
+        "operation": "getExchangeRate"
+      },
+      {
+        "path": "/api/v1/market-calendar/KR",
+        "official_present": true,
+        "operation": "getKrMarketCalendar"
+      },
+      {
+        "path": "/api/v1/market-calendar/US",
+        "official_present": true,
+        "operation": "getUsMarketCalendar"
+      },
+      {
+        "path": "/api/v1/rankings",
+        "official_present": true,
+        "operation": "getRankings"
+      },
+      {
+        "path": "/api/v1/market-indicators/prices",
+        "official_present": true,
+        "operation": "getMarketIndicatorPrices"
+      },
+      {
+        "path": "/api/v1/market-indicators/{symbol}/candles",
+        "official_present": true,
+        "operation": "getMarketIndicatorCandles"
+      },
+      {
+        "path": "/api/v1/market-indicators/{symbol}/investor-trading",
+        "official_present": true,
+        "operation": "getMarketIndicatorInvestorTrading"
+      },
+      {
+        "path": "/api/v1/sectors",
+        "official_present": true,
+        "operation": "listSectors"
+      },
+      {
+        "path": "/api/v1/sectors/rankings",
+        "official_present": true,
+        "operation": "getSectorRankings"
+      },
+      {
+        "path": "/api/v1/sectors/{sectorId}",
+        "official_present": true,
+        "operation": "getSector"
+      },
+      {
+        "path": "/api/v1/sectors/{sectorId}/stocks",
+        "official_present": true,
+        "operation": "getSectorStocks"
+      }
+    ]
+  }
+}

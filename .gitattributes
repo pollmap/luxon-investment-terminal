@@ -1,0 +1,2 @@
+# This reviewed binding is byte-sealed. Preserve its exact SHA on every OS.
+ops/market/reviews/jyp_2026h1_v1.json -text whitespace=cr-at-eol

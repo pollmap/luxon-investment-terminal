@@ -1,0 +1,215 @@
+{
+  "recorded_at": "2026-10-10T10:50:48.507606+00:00",
+  "release": "20261010-ttm-queue-v127",
+  "whole_product_complete": false,
+  "deployed_application_commit": "6e771f251dd0fefacf0f01cd38e248d6da57de55",
+  "public_asset_api_checks": 20,
+  "target_securities": 2765,
+  "jyp_ttm_periods": 2,
+  "jyp_new_financial_facts": 12,
+  "jyp_share_unit_window": [
+    "2025-01-01",
+    "2026-10-08"
+  ],
+  "jyp_price_overlay_rows": 8,
+  "jyp_pre_publication_overlay_rows": 0,
+  "dividend_reconciliation": {
+    "checked_at": "2026-10-10T10:50:48.437839+00:00",
+    "operating_read_at": "2026-10-10T10:47:04.656325+00:00",
+    "release": "20261010-ttm-queue-v127",
+    "source_decisions": 3,
+    "matched_existing_events": 6,
+    "new_confirmed_payment_dates": 0,
+    "new_ex_dates": 0,
+    "new_events": 0,
+    "operating_writes": 0,
+    "matches": [
+      {
+        "code": "005930",
+        "record_date": "2025-03-31",
+        "amount": "365",
+        "scheduled_payment_date": "2025-05-20",
+        "existing_event_id": "b474e8a6e783f78aa63a36e0cd8995582d90fbf91fb58170b033644fbc4239f4",
+        "existing_filing_id": "20250430800094",
+        "payment_status": "announced",
+        "new_events": 0
+      },
+      {
+        "code": "005935",
+        "record_date": "2025-03-31",
+        "amount": "365",
+        "scheduled_payment_date": "2025-05-20",
+        "existing_event_id": "dc0e09cd5816f1357c0c56a8b66197eeb2e5f81f1dc4ab1571a82d91252f8888",
+        "existing_filing_id": "20250430800094",
+        "payment_status": "announced",
+        "new_events": 0
+      },
+      {
+        "code": "005930",
+        "record_date": "2025-06-30",
+        "amount": "367",
+        "scheduled_payment_date": "2025-08-20",
+        "existing_event_id": "0001f385bdf4985cb8b594377bcb60c8e866fdeeaabee21a045dc812b584ce81",
+        "existing_filing_id": "20250731800035",
+        "payment_status": "announced",
+        "new_events": 0
+      },
+      {
+        "code": "005935",
+        "record_date": "2025-06-30",
+        "amount": "367",
+        "scheduled_payment_date": "2025-08-20",
+        "existing_event_id": "183f7b44ea228af730f036a522a1389158924fab907a6a633fdcac55e589b499",
+        "existing_filing_id": "20250731800035",
+        "payment_status": "announced",
+        "new_events": 0
+      },
+      {
+        "code": "005930",
+        "record_date": "2026-06-30",
+        "amount": "374",
+        "scheduled_payment_date": "2026-08-28",
+        "existing_event_id": "bde8d81d723db9404729c85dadffcabcb4c08b2a8a351b3a0667ce145c815faa",
+        "existing_filing_id": "20260730800137",
+        "payment_status": "announced",
+        "new_events": 0
+      },
+      {
+        "code": "005935",
+        "record_date": "2026-06-30",
+        "amount": "374",
+        "scheduled_payment_date": "2026-08-28",
+        "existing_event_id": "b3dadb086d65064c6efedf3585e5ee844358f36ae23e72b56a0a9b22a41d56a6",
+        "existing_filing_id": "20260730800137",
+        "payment_status": "announced",
+        "new_events": 0
+      }
+    ]
+  },
+  "performance": {
+    "transport": "100 independent TLS HTTP2 sessions per host",
+    "requests": 2000,
+    "transport_errors": 1,
+    "targets_passed": false,
+    "local_fast_path_candidate_deployed": false
+  },
+  "future_validation": [
+    {
+      "date_kst": "2026-10-10 23:10",
+      "automation_id": "automation-3",
+      "task": "existing independent full restore result read only",
+      "runs": 1
+    },
+    {
+      "date_kst": "2026-10-12 09:10",
+      "automation_id": "automation-2",
+      "task": "actual shared-worker intraday trade/depth and recovery",
+      "runs": 1
+    }
+  ],
+  "artifacts": [
+    {
+      "local_path": "work/storage-v117/v127-runtime-and-eps-jobs.json",
+      "sha256": "369b9779bef45512c4389dd152259a9fa4e47bb3c22d0ad69aef0e73c5da6a3c",
+      "bytes": 2211
+    },
+    {
+      "local_path": "work/storage-v117/v127-static-reuse.json",
+      "sha256": "92415ed698cb92a42f5be590749f9ca69682b0bfe092cb7fb46dc03f5e9bf37f",
+      "bytes": 504
+    },
+    {
+      "local_path": "work/storage-v117/v127-rank-status-static-deployment.json",
+      "sha256": "b2a2c8cd390c92ec5b91a0ec3ad0948ff8935dcc5fab76bef867c903ce58d120",
+      "bytes": 1063
+    },
+    {
+      "local_path": "work/storage-v117/v127-cloudflare-deployment.json",
+      "sha256": "88d328b0f9a0b04147fcce9c56dc1b9634812eea3df91f6e134bf47cdf26503b",
+      "bytes": 328
+    },
+    {
+      "local_path": "work/storage-v117/v127-public-verification.json",
+      "sha256": "d91af74ac795012962a9512a3e5f327278f705698cb892bcd2cf355fd1619326",
+      "bytes": 4496
+    },
+    {
+      "local_path": "work/storage-v117/v127-current-coverage.json",
+      "sha256": "bad70ce0a3902543538e6f5e8b4355a612f1304548b16107169fe9efb389e6b9",
+      "bytes": 13142
+    },
+    {
+      "local_path": "work/storage-v117/jyp-import-v127-apply.json",
+      "sha256": "065bc922e88df683c13c375bf57fc671481d3bbf5cc4403c0c182342d6f0bf37",
+      "bytes": 18536
+    },
+    {
+      "local_path": "work/storage-v117/jyp-unit-window-v127.json",
+      "sha256": "b7016588500be6333d56712f27f9a26fe3ca7b6ef911d846189221eb92851de5",
+      "bytes": 1319
+    },
+    {
+      "local_path": "work/storage-v117/jyp-public-v127.json",
+      "sha256": "d2194dd5b99a32d8b31235cae2dfd24067fe93a262e2f037783ba661f50f98e6",
+      "bytes": 1339749
+    },
+    {
+      "local_path": "work/storage-v117/jyp-overlay-values-v127.json",
+      "sha256": "8be246ae0f53db7a2590b54c7195b50b41d2abdd4393b9718fa991dbc5c2b791",
+      "bytes": 1099
+    },
+    {
+      "local_path": "work/storage-v117/samsung-ir-dart-reconciliation-v127.json",
+      "sha256": "673fa0d095975d405ae742866bf893ab5134c6c128800836dc28dd4c50aec0cc",
+      "bytes": 2448
+    },
+    {
+      "local_path": "work/performance-v127/public-100connections.json",
+      "sha256": "9264c1685a0bdeebcf33f49be78868dd10789d213816ed2c303b75846ded86d0",
+      "bytes": 4345627
+    },
+    {
+      "local_path": "work/performance-v127/passive-runtime.json",
+      "sha256": "2e9a21e80634c0803156b7b0aaabb169deb75e6de503320f98215ab20a70a867",
+      "bytes": 1562
+    },
+    {
+      "local_path": "work/performance-v127/local-cache-peek/comparison.json",
+      "sha256": "ecc0e8347a0ca542bec89a28daada5d548a8e94aefc644afe10e3b824dfa1fb1",
+      "bytes": 6792
+    },
+    {
+      "local_path": "work/performance-v127/local-cache-peek/RESULT.md",
+      "sha256": "ebc3e13ecce2f98493b6f4d913d59b087d9acca07c5f28343b098812258cdf05",
+      "bytes": 4696
+    },
+    {
+      "local_path": "work/dividend-source-v127/candidate.json",
+      "sha256": "9989694ad74c55562d4cf8e51f4ecd126be86379e64ae714f8f705105c0b1e00",
+      "bytes": 12256
+    },
+    {
+      "local_path": "work/dividend-source-v127/other-issuer/audit.json",
+      "sha256": "cea56ded5f2ba54aae7567a385ffc411344e580b4314006e41c0df858ea22b66",
+      "bytes": 33784
+    },
+    {
+      "local_path": "work/dividend-source-v127/other-issuer/RESULT.md",
+      "sha256": "dc94c3a6a50ccfc9ec7d610f4c3a188e4f37925ea9bc34de9a018ad864222eda",
+      "bytes": 1848
+    }
+  ],
+  "browser_screenshot": {
+    "path": "jyp-ttm-public-v127.png",
+    "sha256": "a3ebec01184c162217e0a4b81c91bab9dfde3aaf78bfc5482e356516790eea96",
+    "actual_public_ui": true,
+    "scope": "JYP EPS CFS TTM 5 years x15; not mobile/father task validation"
+  },
+  "additional_dividend_review": {
+    "issuer_code": "000270",
+    "official_originals": 5,
+    "new_confirmed_payment_dates": 0,
+    "new_ex_dates": 0,
+    "operating_writes": 0
+  }
+}

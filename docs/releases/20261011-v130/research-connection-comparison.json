@@ -1,0 +1,30 @@
+{
+  "fixture_non_production": true,
+  "requests_per_phase": 20,
+  "baseline_sha256": "b4df3adb9c7582c4adf6c25e921c88c1a8116e54ab81bee7f6499a912536debd",
+  "candidate_sha256": "a8cc4ec285f73daa20cc3e48a271c8583e38680261a8928cbf484934f0321d2b",
+  "wall_time_claim": false,
+  "public_latency_claim": false,
+  "existing_titles": {
+    "baseline": {
+      "connections": 100,
+      "statements": 140
+    },
+    "candidate": {
+      "connections": 20,
+      "statements": 140
+    },
+    "same_public_content_excluding_elapsed_ms": true
+  },
+  "indexed": {
+    "baseline": {
+      "connections": 120,
+      "statements": 160
+    },
+    "candidate": {
+      "connections": 20,
+      "statements": 160
+    },
+    "same_public_content_excluding_elapsed_ms": true
+  }
+}

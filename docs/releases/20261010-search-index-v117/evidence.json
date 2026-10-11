@@ -1,0 +1,247 @@
+{
+  "recorded_at": "2026-10-10T02:19:48.237509+00:00",
+  "change": "identity-only edge index hotfix",
+  "backend_release": "20261010-history-contract-v116",
+  "backend_source_commit": "4fb1b82a0a8dc3ebec2b09403e2d5a9310f9b5f9",
+  "frontend_source_commit": "4ee05bdbf2b71ac335baf148939ec7b796c84af7",
+  "maintenance_commit": "12760ab334ec5b4ada4f6e78e381aedc491d184b",
+  "cloudflare_version": "da8f6b2e-e390-4a98-8b9f-7406777abe43",
+  "static_deployment": {
+    "status": "promoted",
+    "release": "20261010-history-contract-v116",
+    "files": 73,
+    "bytes": 24335231,
+    "nginx_backup": "/srv/services/korea-stocks/backups/nginx/hannun-20261010T021508428855Z-static-20261010-history-contract-v116.conf",
+    "web": "stopped",
+    "static_root": "/srv/services/korea-stocks/releases/20261010-history-contract-v116/static-web",
+    "previous_static": "/srv/services/korea-stocks/releases/20261010-history-contract-v116/static-web.previous-20261010T021508428855Z",
+    "marker": "/srv/services/korea-stocks/releases/20261010-history-contract-v116/static-web-deployment.json",
+    "public_root": "/var/www/korea-stocks/releases/20261010-history-contract-v116-20261010T021508428855Z",
+    "previous_public": "/var/www/korea-stocks/releases/20261010-history-contract-v116-20261010T011217648138Z",
+    "archive_sha256": "279d74dfeff7c9ea5896b8c2893b1e4776b6556545c5eaefe330d34e5e0ed195",
+    "nginx_before_sha256": "5f0b84a690b2635422ecca8d427657cba490dcb946d0ac60d9337014965c10ab",
+    "nginx_after_sha256": "5f0b84a690b2635422ecca8d427657cba490dcb946d0ac60d9337014965c10ab"
+  },
+  "public_checks": {
+    "at": "2026-10-10T02:16:08.568363+00:00",
+    "release": "20261010-history-contract-v116",
+    "verification_commit": "12760ab334ec5b4ada4f6e78e381aedc491d184b",
+    "manifest_sha256": "cbbdc77c4d476564515014f07f253588a233df721df762bd6a9fb031a0e79137",
+    "checks": [
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/build-manifest.json",
+        "status": 200,
+        "exact_bytes": true
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/stocks",
+        "status": 200,
+        "sha256": "72955946b15a5a069d76520e068bbe643df8492f79dd8b6c51d748502b04aac0"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/_next/static/css/56d4c3297aff6eef.css",
+        "status": 200,
+        "sha256": "bfa719c1a38d040e116184ef6b4b2033a0f49b220fc68c7ad0e7ab724e90f802"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/_next/static/chunks/109-cd416cfa67cdaeb5.js",
+        "status": 200,
+        "sha256": "0dde0e8e13e84b5cc95be5132fa9322dbf5a645c6bac31c15feb94992cfe738a"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/stocks/fonts/PretendardVariable.woff2",
+        "status": 200,
+        "sha256": "9599f12fd42fc0bce1cd50b47a0c022e108d7aa64dd0d1bb0ed44f3282d900b4"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/health",
+        "status": 200,
+        "bytes": 609
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/search?q=005930",
+        "status": 200,
+        "bytes": 3715
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/securities/005930?view=summary",
+        "status": 200,
+        "bytes": 1868
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/securities/094800?view=summary",
+        "status": 200,
+        "bytes": 1102
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/build-manifest.json",
+        "status": 200,
+        "exact_bytes": true
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/stocks",
+        "status": 200,
+        "sha256": "72955946b15a5a069d76520e068bbe643df8492f79dd8b6c51d748502b04aac0"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/_next/static/css/56d4c3297aff6eef.css",
+        "status": 200,
+        "sha256": "bfa719c1a38d040e116184ef6b4b2033a0f49b220fc68c7ad0e7ab724e90f802"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/_next/static/chunks/109-cd416cfa67cdaeb5.js",
+        "status": 200,
+        "sha256": "0dde0e8e13e84b5cc95be5132fa9322dbf5a645c6bac31c15feb94992cfe738a"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/stocks/fonts/PretendardVariable.woff2",
+        "status": 200,
+        "sha256": "9599f12fd42fc0bce1cd50b47a0c022e108d7aa64dd0d1bb0ed44f3282d900b4"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/health",
+        "status": 200,
+        "bytes": 609
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/search?q=005930",
+        "status": 200,
+        "bytes": 3715
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/securities/005930?view=summary",
+        "status": 200,
+        "bytes": 1868
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/securities/094800?view=summary",
+        "status": 200,
+        "bytes": 1102
+      }
+    ],
+    "load_test": false,
+    "fresh_stream_test": false,
+    "passed": true
+  },
+  "ui_observations": {
+    "browser": "Codex in-app Chromium",
+    "initial_query": "ㅅㅅㅈㅈ",
+    "results": [
+      "005930",
+      "005935",
+      "263810"
+    ],
+    "keyboard_selection": "005930",
+    "restored_view": "기업 분석 / OCF / 5년 / 10배",
+    "screenshot_sha256": "34cac94a7608cc75cc7462623252a9a831c63fcbc7fdfd97df018015e394a2f2",
+    "real_user_evaluation": false,
+    "mobile_test": false
+  },
+  "source_verification": {
+    "second_run": "fd18f9750a28419e8a27848f360d58e7",
+    "result": "failed",
+    "error_type": "QueryCanceled",
+    "sqlstate": "57014",
+    "worker_recovered": true,
+    "current_run": "49521be9a50149bba6a66c21342c3bc1",
+    "state": "source_verification_in_progress",
+    "production_tables_replaced": false
+  },
+  "scope_notes": [
+    "100-user benchmark not rerun",
+    "No claim of full data coverage",
+    "Frontend-only hotfix; API and worker image unchanged"
+  ],
+  "local_compression_report_sha256": "2586708369de8131f3817171ebc241105678cf10e06d2a52711e0844d4dc62e6",
+  "github_ci_after_fixture_fix": {
+    "commit": "bbbc26e4e3952f94eb48355cf58fd42b6d0faf2a",
+    "runs": [
+      {
+        "conclusion": "success",
+        "databaseId": 38016620764,
+        "headSha": "bbbc26e4e3952f94eb48355cf58fd42b6d0faf2a",
+        "name": "Current market app",
+        "status": "completed",
+        "url": "https://github.com/pollmap/luxon-investment-terminal/actions/runs/38016620764"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 38016619463,
+        "headSha": "bbbc26e4e3952f94eb48355cf58fd42b6d0faf2a",
+        "name": "PR #5",
+        "status": "completed",
+        "url": "https://github.com/pollmap/luxon-investment-terminal/actions/runs/38016619463"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 38016617785,
+        "headSha": "bbbc26e4e3952f94eb48355cf58fd42b6d0faf2a",
+        "name": "Current market app",
+        "status": "completed",
+        "url": "https://github.com/pollmap/luxon-investment-terminal/actions/runs/38016617785"
+      }
+    ]
+  },
+  "market_data_state_followup": {
+    "recorded_at": "2026-10-10T03:02:38.800357+00:00",
+    "public_deployed": false,
+    "reason": "Keep the continuous backup/deploy fence until storage work ends.",
+    "files_sha256": {
+      "apps/web/components/market/market-data.tsx": "4706f21e212198d1db795ee45e478ce14c61f36ed4b00bf989730cb72a774474",
+      "apps/web/components/market/market-data-state.ts": "57350552c4111a7ac6cee9f33e3ee4fd68e2870ddc19f0a80296c6207776fe7d",
+      "apps/web/tests/market/market-data-state.node.test.mjs": "0622c11017d91967f6a8ad62c6a89b4571684a836719528f97d3f3d00fad6ba4"
+    },
+    "checks": {
+      "state_and_visible_query_cases": 13,
+      "typecheck": "passed",
+      "changed_file_eslint": "passed",
+      "static_build": "passed"
+    },
+    "static_manifest_sha256": "9f8c31c1878de08bf5928df7ad5c3a0d4216f92e5a8c269b220f0a6b508ada16",
+    "static_files": 73,
+    "static_bytes": 24335818,
+    "timestamp_display": "Reuse Korea-time conversion; do not invent a timezone for offset-free data."
+  },
+  "incoming_upload_cleanup": {
+    "at": "2026-10-10T02:55:03.150171+00:00",
+    "applied": true,
+    "free_before": 16525549568,
+    "free_after": 16777842688,
+    "eligible_allocated": 252293120,
+    "database_or_release_changes": false,
+    "archives": 11
+  },
+  "github_ci_ranking_fix": {
+    "commit": "31c11b0ccd203939b6f074818abcdc60916bc261",
+    "runs": [
+      {
+        "id": 38018496900,
+        "conclusion": "success",
+        "url": "https://github.com/pollmap/luxon-investment-terminal/actions/runs/38018496900"
+      },
+      {
+        "id": 38018493202,
+        "conclusion": "success",
+        "url": "https://github.com/pollmap/luxon-investment-terminal/actions/runs/38018493202"
+      }
+    ]
+  }
+}

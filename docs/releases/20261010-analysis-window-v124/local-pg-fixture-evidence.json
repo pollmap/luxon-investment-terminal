@@ -1,0 +1,65 @@
+{
+  "fixture_non_production": true,
+  "production_proof": false,
+  "cases": [
+    "actual_CAS_provenance_and_trace_rollback",
+    "actual_concurrent_owner_refused",
+    "actual_write_rollback_with_injected_budget_sample",
+    "actual_delta_apply_final_C_order_ALL_original_trace_hash"
+  ],
+  "port": 54435,
+  "cluster_stopped": true,
+  "data_equal": true,
+  "base_unchanged": true,
+  "result": {
+    "schema": "market-exact-pk-delta-v1",
+    "state": "independently_applied",
+    "data_equal": true,
+    "archive_sha256": "a31cf5e0f37522fa4d0480ec80c85c1cb403bd317a3e9c699f11e782671e1981",
+    "base_evidence_sha256": {
+      "base_source": "7e509733c9e3ef2fcc829dee0be833d46617767ef0ff594abe2b1c88c9da7585",
+      "current_source": "0f1581b2b9434e6c4dd7ed7c9b6f1de7e69ffea2368415d127402da5454b97c2",
+      "archive_receipt": "a2c0789085ea025865384fc7c61a5b403bb75c76b6af23f14f459483b5063034",
+      "base_result": "8d22b94b3893b1f627c2966615f02765237d607a4abc5e0eaedb64ae16576f25"
+    },
+    "current": {
+      "rows": 3,
+      "series": 3,
+      "logical_sha256": "285cc62ea44bc883ab25a6fb76cb7169c1865ea8143e9a1d84d1cdbfeb1c7eff",
+      "original_traces": 3,
+      "original_traces_sha256": "a1ed0db5511573e75ddf0f349f57e68406130e901c82eaa3ecfae9ceba649511"
+    },
+    "trace_additions": 1,
+    "inserted": 1,
+    "updated": 1,
+    "deleted": 1,
+    "production_proof": false,
+    "current_fence_valid": false,
+    "permission_to_execute": false,
+    "indexes_verified": false,
+    "fixture_non_production": true,
+    "candidate_database": "market_delta_5db6be71d55e43309ea8aee4e6dac4bb",
+    "candidate_database_oid": 16385,
+    "transaction_committed": true,
+    "transaction_state": "committed"
+  },
+  "verification": {
+    "protocol": "market-logical-c-order-v1",
+    "target": "restored",
+    "rows": 3,
+    "series": 3,
+    "logical_sha256": "285cc62ea44bc883ab25a6fb76cb7169c1865ea8143e9a1d84d1cdbfeb1c7eff",
+    "original_traces": 3,
+    "original_traces_sha256": "a1ed0db5511573e75ddf0f349f57e68406130e901c82eaa3ecfae9ceba649511",
+    "validated_total_traces": 3,
+    "indexes_valid": true,
+    "restore_verified": false
+  },
+  "port_closed": true,
+  "elapsed_seconds": 25.656,
+  "passed": true,
+  "module_sha256": "98cee8c45d8b9a9eecb03055daa2b9d12abe235ed94cc05865083eeb4a625b32",
+  "source_result_sha256": "140961fa21d51d3725a6f808bc05701336f02fabb6b9e7f0ca3ef793cf108377",
+  "pure_regressions_passed": 68,
+  "observed_date": "2026-10-10"
+}

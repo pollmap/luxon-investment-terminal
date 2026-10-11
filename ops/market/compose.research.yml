@@ -1,0 +1,30 @@
+# Explicit opt-in after disk <80%, write check and isolated restoration gates.
+# Use with the existing stock compose project. Never publish this service port.
+services:
+  research-embedder:
+    profiles: [research]
+    build:
+      context: ../..
+      dockerfile: ops/market/Dockerfile.research
+    image: korea-stocks-research:${MARKET_RELEASE:?release required}
+    restart: unless-stopped
+    cpus: 0.5
+    mem_limit: 768m
+    pids_limit: 64
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,noexec,nosuid
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    env_file:
+      - ${MARKET_RESEARCH_ENV_FILE:?private env file required}
+    volumes:
+      - ${MARKET_RESEARCH_MODEL_DIR:?verified model directory required}:/models:ro
+    environment:
+      MARKET_RESEARCH_MODEL_ONNX: /models/model-int8.onnx
+      MARKET_RESEARCH_TOKENIZER_JSON: /models/tokenizer.json
+    logging:
+      driver: json-file
+      options:
+        max-size: 5m
+        max-file: '2'

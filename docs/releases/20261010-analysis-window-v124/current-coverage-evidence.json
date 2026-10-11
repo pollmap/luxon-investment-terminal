@@ -1,0 +1,476 @@
+{
+  "observed_at": "2026-10-10T07:35:54.562441+00:00",
+  "scope_version": 2,
+  "universe_revision_at": "2026-10-10T07:24:07.780537+00:00",
+  "universe_received_at": "2026-10-10T07:24:07.019103+00:00",
+  "universe_source_bytes": 38887567,
+  "universe_projection_bytes": 264324,
+  "target_securities": 2765,
+  "controls": {
+    "financial_queue": {
+      "observed_at": "2026-10-09T17:02:30.139722+00:00",
+      "cursor": 365,
+      "visits": 10838,
+      "capacity_limited": 0,
+      "provider_maintenance_800": 0,
+      "write_verified": 0,
+      "write_verification_observed": 0,
+      "retry_at": null
+    },
+    "dart_retry": {
+      "observed_at": "2026-10-10T07:21:46.334356+00:00",
+      "capacity_limited": 0,
+      "provider_maintenance_800": 1,
+      "write_verified": 0,
+      "write_verification_observed": 0,
+      "retry_at": "2026-10-10T07:36:46.334306+00:00"
+    },
+    "price_history_queue": {
+      "observed_at": "2026-10-10T07:35:51.266180+00:00",
+      "cursor": 1671,
+      "capacity_limited": 1,
+      "provider_maintenance_800": 0,
+      "write_verified": 0,
+      "write_verification_observed": 0,
+      "retry_at": null
+    },
+    "share_basis_initial_review": {
+      "observed_at": "2026-10-09T17:02:06.108201+00:00",
+      "cursor": 112,
+      "capacity_limited": 0,
+      "provider_maintenance_800": 0,
+      "write_verified": 0,
+      "write_verification_observed": 0,
+      "retry_at": null
+    },
+    "dated_accounts_capacity": {
+      "observed_at": "2026-10-10T07:29:45.452058+00:00",
+      "used_percent": 89.85,
+      "free_bytes": 15718019072,
+      "capacity_limited": 1,
+      "provider_maintenance_800": 0,
+      "write_verified": 0,
+      "write_verification_observed": 0,
+      "retry_at": null
+    },
+    "financial_capacity": {
+      "observed_at": "2026-10-10T07:29:44.358548+00:00",
+      "used_percent": 89.85,
+      "free_bytes": 15718014976,
+      "capacity_limited": 1,
+      "provider_maintenance_800": 0,
+      "write_verified": 0,
+      "write_verification_observed": 0,
+      "retry_at": null
+    },
+    "price_history_capacity": {
+      "observed_at": "2026-10-10T07:28:54.964706+00:00",
+      "used_percent": 89.85,
+      "free_bytes": 15718293504,
+      "capacity_limited": 1,
+      "provider_maintenance_800": 0,
+      "write_verified": 0,
+      "write_verification_observed": 0,
+      "retry_at": null
+    },
+    "share_basis_capacity": {
+      "observed_at": "2026-10-10T07:29:44.373531+00:00",
+      "used_percent": 89.85,
+      "free_bytes": 15718014976,
+      "capacity_limited": 1,
+      "provider_maintenance_800": 0,
+      "write_verified": 0,
+      "write_verification_observed": 0,
+      "retry_at": null
+    },
+    "xbrl_capacity": {
+      "observed_at": "2026-10-10T07:29:44.387811+00:00",
+      "used_percent": 89.85,
+      "free_bytes": 15718014976,
+      "capacity_limited": 1,
+      "provider_maintenance_800": 0,
+      "write_verified": 0,
+      "write_verification_observed": 0,
+      "retry_at": null
+    },
+    "toss_history_queue": {
+      "observed_at": "2026-10-10T07:35:28.898704+00:00",
+      "cursor": 444,
+      "phase": 1,
+      "attempts": 56787,
+      "used_percent": 89.85,
+      "free_bytes": 15716597760,
+      "capacity_limited": 1,
+      "provider_maintenance_800": 0,
+      "write_verified": 0,
+      "write_verification_observed": 0,
+      "retry_at": null
+    },
+    "xbrl_discovery": {
+      "observed_at": "2026-10-09T17:02:30.325205+00:00",
+      "cursor": 85,
+      "capacity_limited": 0,
+      "provider_maintenance_800": 0,
+      "write_verified": 0,
+      "write_verification_observed": 0,
+      "retry_at": null
+    }
+  },
+  "collection": {
+    "quote": {
+      "total": 2765,
+      "recorded_states": {
+        "pending": 2673,
+        "ready": 92,
+        "missing": 0
+      },
+      "checked_value_receipt": 0,
+      "legacy_presence_claim": 92,
+      "not_verified": 2765
+    },
+    "fundamentals": {
+      "total": 2765,
+      "recorded_states": {
+        "error": 114,
+        "ready": 2647,
+        "stale": 4,
+        "missing": 0
+      },
+      "checked_value_receipt": 0,
+      "legacy_presence_claim": 2651,
+      "not_verified": 2765
+    },
+    "flows": {
+      "total": 2765,
+      "recorded_states": {
+        "ready": 2733,
+        "stale": 32,
+        "missing": 0
+      },
+      "checked_value_receipt": 12,
+      "legacy_presence_claim": 2753,
+      "not_verified": 2753,
+      "first_observed_period": "2019-04-01",
+      "last_observed_period": "2026-10-08"
+    },
+    "history": {
+      "total": 2765,
+      "recorded_states": {
+        "ready": 2765,
+        "missing": 0
+      },
+      "checked_value_receipt": 0,
+      "legacy_presence_claim": 2765,
+      "not_verified": 2765
+    },
+    "filings": {
+      "total": 2765,
+      "recorded_states": {
+        "unavailable": 110,
+        "stale": 1947,
+        "error": 93,
+        "ready": 614,
+        "partial": 1,
+        "missing": 0
+      },
+      "checked_value_receipt": 0,
+      "legacy_presence_claim": 2562,
+      "not_verified": 2765
+    },
+    "brokers": {
+      "total": 2765,
+      "recorded_states": {
+        "ready": 2688,
+        "no_data": 71,
+        "stale": 6,
+        "missing": 0
+      },
+      "checked_value_receipt": 0,
+      "legacy_presence_claim": 2694,
+      "not_verified": 2765
+    },
+    "official": {
+      "total": 2765,
+      "recorded_states": {
+        "unavailable": 110,
+        "stale": 1971,
+        "error": 67,
+        "ready": 616,
+        "partial": 1,
+        "missing": 0
+      },
+      "checked_value_receipt": 0,
+      "legacy_presence_claim": 2588,
+      "not_verified": 2765
+    },
+    "short_trades": {
+      "total": 2765,
+      "recorded_states": {
+        "stale": 754,
+        "error": 1985,
+        "ready": 26,
+        "missing": 0
+      },
+      "checked_value_receipt": 26,
+      "legacy_presence_claim": 754,
+      "not_verified": 2739,
+      "first_observed_period": "2019-05-08",
+      "last_observed_period": "2026-10-08"
+    },
+    "short_balance": {
+      "total": 2765,
+      "recorded_states": {
+        "error": 2765,
+        "missing": 0
+      },
+      "checked_value_receipt": 0,
+      "legacy_presence_claim": 0,
+      "not_verified": 2765
+    },
+    "lending": {
+      "total": 2765,
+      "recorded_states": {
+        "pending": 2721,
+        "ready": 12,
+        "error": 32,
+        "missing": 0
+      },
+      "checked_value_receipt": 12,
+      "legacy_presence_claim": 0,
+      "not_verified": 2753,
+      "first_observed_period": "2021-04-01",
+      "last_observed_period": "2026-10-08"
+    },
+    "credit": {
+      "total": 2765,
+      "recorded_states": {
+        "pending": 2721,
+        "ready": 11,
+        "error": 33,
+        "missing": 0
+      },
+      "checked_value_receipt": 11,
+      "legacy_presence_claim": 0,
+      "not_verified": 2754,
+      "first_observed_period": "2023-04-17",
+      "last_observed_period": "2026-10-08"
+    },
+    "stock_loan": {
+      "total": 2765,
+      "recorded_states": {
+        "pending": 2721,
+        "ready": 11,
+        "error": 33,
+        "missing": 0
+      },
+      "checked_value_receipt": 11,
+      "legacy_presence_claim": 0,
+      "not_verified": 2754,
+      "first_observed_period": "2023-04-17",
+      "last_observed_period": "2026-10-08"
+    }
+  },
+  "history_jobs": {
+    "history": {
+      "total": 2765,
+      "recorded_states": {
+        "collecting": 2162,
+        "ready": 602,
+        "not_in_provider_catalogue": 1,
+        "missing": 0
+      },
+      "rows_reported": 2231485,
+      "securities_with_reported_rows": 2764,
+      "end_of_history_receipt": 514,
+      "end_of_history_and_current_ready": 0,
+      "cursor_remaining": 2162,
+      "completion_cursor_conflict": 0,
+      "provider_404_unresolved": 0,
+      "authentication_error": 0,
+      "not_verified": 2251,
+      "first_observed_period": "1975-01-04",
+      "last_observed_period": "2026-10-08"
+    },
+    "investor-trading": {
+      "total": 2765,
+      "recorded_states": {
+        "collecting": 2420,
+        "ready": 344,
+        "not_in_provider_catalogue": 1,
+        "missing": 0
+      },
+      "rows_reported": 1238020,
+      "securities_with_reported_rows": 2764,
+      "end_of_history_receipt": 344,
+      "end_of_history_and_current_ready": 322,
+      "cursor_remaining": 2420,
+      "completion_cursor_conflict": 0,
+      "provider_404_unresolved": 0,
+      "authentication_error": 0,
+      "not_verified": 2421
+    },
+    "program-trades": {
+      "total": 2765,
+      "recorded_states": {
+        "collecting": 2054,
+        "no_data": 119,
+        "ready": 591,
+        "not_in_provider_catalogue": 1,
+        "missing": 0
+      },
+      "rows_reported": 1309492,
+      "securities_with_reported_rows": 2645,
+      "end_of_history_receipt": 710,
+      "end_of_history_and_current_ready": 545,
+      "cursor_remaining": 2054,
+      "completion_cursor_conflict": 0,
+      "provider_404_unresolved": 0,
+      "authentication_error": 0,
+      "not_verified": 2055
+    },
+    "short-selling": {
+      "total": 2765,
+      "recorded_states": {
+        "collecting": 1765,
+        "ready": 916,
+        "no_data": 83,
+        "not_in_provider_catalogue": 1,
+        "missing": 0
+      },
+      "rows_reported": 1280547,
+      "securities_with_reported_rows": 2681,
+      "end_of_history_receipt": 999,
+      "end_of_history_and_current_ready": 704,
+      "cursor_remaining": 1765,
+      "completion_cursor_conflict": 0,
+      "provider_404_unresolved": 0,
+      "authentication_error": 0,
+      "not_verified": 1766
+    },
+    "credit-trades": {
+      "total": 2765,
+      "recorded_states": {
+        "ready": 980,
+        "no_data": 62,
+        "collecting": 1722,
+        "not_in_provider_catalogue": 1,
+        "missing": 0
+      },
+      "rows_reported": 876150,
+      "securities_with_reported_rows": 2702,
+      "end_of_history_receipt": 1042,
+      "end_of_history_and_current_ready": 964,
+      "cursor_remaining": 1722,
+      "completion_cursor_conflict": 0,
+      "provider_404_unresolved": 0,
+      "authentication_error": 0,
+      "not_verified": 1723
+    },
+    "securities-lending": {
+      "total": 2765,
+      "recorded_states": {
+        "collecting": 2006,
+        "ready": 695,
+        "no_data": 63,
+        "not_in_provider_catalogue": 1,
+        "missing": 0
+      },
+      "rows_reported": 1049079,
+      "securities_with_reported_rows": 2701,
+      "end_of_history_receipt": 758,
+      "end_of_history_and_current_ready": 678,
+      "cursor_remaining": 2006,
+      "completion_cursor_conflict": 0,
+      "provider_404_unresolved": 0,
+      "authentication_error": 0,
+      "not_verified": 2007
+    },
+    "raw-history": {
+      "total": 2765,
+      "recorded_states": {
+        "collecting": 2162,
+        "ready": 602,
+        "not_in_provider_catalogue": 1,
+        "missing": 0
+      },
+      "rows_reported": 2255434,
+      "securities_with_reported_rows": 2764,
+      "end_of_history_receipt": 514,
+      "end_of_history_and_current_ready": 0,
+      "cursor_remaining": 2162,
+      "completion_cursor_conflict": 0,
+      "provider_404_unresolved": 0,
+      "authentication_error": 0,
+      "not_verified": 2251,
+      "first_observed_period": "1975-06-12",
+      "last_observed_period": "2026-10-08"
+    }
+  },
+  "analysis_cache": {
+    "total": 2765,
+    "cache_states": {
+      "current_cache": 382,
+      "stale_not_verified": 2270,
+      "oversized_not_verified": 3,
+      "missing_not_verified": 110
+    },
+    "stored_metric_rows": {
+      "EPS": {
+        "annual": {
+          "securities_with_cached_numeric_rows": 11,
+          "cached_rows": 54,
+          "first_observed_period": "2023-01-01",
+          "last_observed_period": "2026-06-30"
+        },
+        "ttm": {
+          "securities_with_cached_numeric_rows": 1,
+          "cached_rows": 6,
+          "first_observed_period": "2025-01-01",
+          "last_observed_period": "2026-06-30"
+        }
+      },
+      "OCF": {
+        "annual": {
+          "securities_with_cached_numeric_rows": 8,
+          "cached_rows": 30,
+          "first_observed_period": "2024-01-01",
+          "last_observed_period": "2026-06-30"
+        },
+        "ttm": {
+          "securities_with_cached_numeric_rows": 0,
+          "cached_rows": 0
+        }
+      },
+      "EBITDA": {
+        "annual": {
+          "securities_with_cached_numeric_rows": 7,
+          "cached_rows": 23,
+          "first_observed_period": "2024-01-01",
+          "last_observed_period": "2026-06-30"
+        },
+        "ttm": {
+          "securities_with_cached_numeric_rows": 0,
+          "cached_rows": 0
+        }
+      }
+    },
+    "comparison_verified": null,
+    "comparison_tested": 0,
+    "comparison_not_verified": 2765
+  },
+  "query_count": 124,
+  "elapsed_seconds": 21.84,
+  "audit_helper_sha256": "c9a679acb8cabb8a2cf0325c8c4abcb117e305ced4ca150001a6eaa933fb1808",
+  "public_release": "20261010-analysis-window-v124",
+  "method": {
+    "read_only": true,
+    "isolation": "repeatable read",
+    "provider_calls": 0,
+    "statement_timeout_ms": 3000,
+    "full_history_scan": false,
+    "prior_failures": [
+      "universe Refused: bounded payload exceeded (two attempts)"
+    ],
+    "entire_product_complete": false
+  }
+}

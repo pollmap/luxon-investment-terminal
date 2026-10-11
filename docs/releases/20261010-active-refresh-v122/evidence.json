@@ -1,0 +1,3236 @@
+{
+  "release": "20261010-active-refresh-v122",
+  "source_commit": "908ba43287f51c238e9218c4c924f875da51d4f5",
+  "verification_commit": "908ba43287f51c238e9218c4c924f875da51d4f5",
+  "backend_archive_sha256": "e3a51130e1ac6a4090c14fa89109247703cb50f392dce363abf6c2a514c7604e",
+  "backend_image": "sha256:cbeb10acf7d08a1083f1946b38ed5dbc78371dd6992f798fe0f6dd5d4fc4836a",
+  "cloudflare": {
+    "release": "20261010-active-refresh-v122",
+    "version": "8925f0fc-4c62-4e36-9cb5-afb9fd4d1aba",
+    "url": "https://korea-stocks-edge.lch68-workers.workers.dev",
+    "deployed": true
+  },
+  "static": {
+    "status": "promoted",
+    "release": "20261010-active-refresh-v122",
+    "files": 73,
+    "bytes": 24336582,
+    "nginx_backup": "/srv/services/korea-stocks/backups/nginx/hannun-20261010T061645858519Z-static-20261010-active-refresh-v122.conf",
+    "web": "stopped",
+    "static_root": "/srv/services/korea-stocks/releases/20261010-active-refresh-v122/static-web",
+    "previous_static": "/srv/services/korea-stocks/releases/20261010-active-refresh-v122/static-web.previous-20261010T061645858519Z",
+    "marker": "/srv/services/korea-stocks/releases/20261010-active-refresh-v122/static-web-deployment.json",
+    "public_root": "/var/www/korea-stocks/releases/20261010-active-refresh-v122-20261010T061645858519Z",
+    "previous_public": "/var/www/korea-stocks/releases/20261010-trading-readmodels-v121-20261010T060137510202Z",
+    "archive_sha256": "31a9fbcd4ecedbcfe773afb6918a4745f8a7c60c6e0a12ac550bee1586bfda37",
+    "nginx_before_sha256": "5f0b84a690b2635422ecca8d427657cba490dcb946d0ac60d9337014965c10ab",
+    "nginx_after_sha256": "5f0b84a690b2635422ecca8d427657cba490dcb946d0ac60d9337014965c10ab"
+  },
+  "public": {
+    "at": "2026-10-10T06:17:57.998653+00:00",
+    "release": "20261010-active-refresh-v122",
+    "verification_commit": "908ba43287f51c238e9218c4c924f875da51d4f5",
+    "manifest_sha256": "dce22bd71c225934763d1acec8e649ffaabf54d0dd14dfbf660b1f7db9b19b7f",
+    "checks": [
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/build-manifest.json",
+        "status": 200,
+        "exact_bytes": true
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/stocks",
+        "status": 200,
+        "sha256": "6354edfe88488c1f2167b7c1f4b9bf3e7bb82035dde2bf92d7c22b63b29617a8"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/_next/static/css/56d4c3297aff6eef.css",
+        "status": 200,
+        "sha256": "bfa719c1a38d040e116184ef6b4b2033a0f49b220fc68c7ad0e7ab724e90f802"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/_next/static/bYv35guZovOMoig0Rd8uS/_buildManifest.js",
+        "status": 200,
+        "sha256": "d23884b066ed8d19bae7c02d993e8baddb42176a49ccc7bbe05928ba35b511ef"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/stocks/fonts/PretendardVariable.woff2",
+        "status": 200,
+        "sha256": "9599f12fd42fc0bce1cd50b47a0c022e108d7aa64dd0d1bb0ed44f3282d900b4"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/health",
+        "status": 200,
+        "bytes": 616
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/search?q=005930",
+        "status": 200,
+        "bytes": 3715
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/securities/005930?view=summary",
+        "status": 200,
+        "bytes": 1868
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/securities/094800?view=summary",
+        "status": 200,
+        "bytes": 1102
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/build-manifest.json",
+        "status": 200,
+        "exact_bytes": true
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/stocks",
+        "status": 200,
+        "sha256": "6354edfe88488c1f2167b7c1f4b9bf3e7bb82035dde2bf92d7c22b63b29617a8"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/_next/static/css/56d4c3297aff6eef.css",
+        "status": 200,
+        "sha256": "bfa719c1a38d040e116184ef6b4b2033a0f49b220fc68c7ad0e7ab724e90f802"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/_next/static/bYv35guZovOMoig0Rd8uS/_buildManifest.js",
+        "status": 200,
+        "sha256": "d23884b066ed8d19bae7c02d993e8baddb42176a49ccc7bbe05928ba35b511ef"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/stocks/fonts/PretendardVariable.woff2",
+        "status": 200,
+        "sha256": "9599f12fd42fc0bce1cd50b47a0c022e108d7aa64dd0d1bb0ed44f3282d900b4"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/health",
+        "status": 200,
+        "bytes": 617
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/search?q=005930",
+        "status": 200,
+        "bytes": 3715
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/securities/005930?view=summary",
+        "status": 200,
+        "bytes": 1868
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/securities/094800?view=summary",
+        "status": 200,
+        "bytes": 1102
+      }
+    ],
+    "load_test": false,
+    "fresh_stream_test": false,
+    "passed": true
+  },
+  "browser": {
+    "started_at": "2026-10-10T06:18:43.569Z",
+    "scope": "deployed v122; public API data; isolated Chromium, not real-device or usability testing",
+    "fixture_non_production": false,
+    "screenshots": "viewport only; no full-page composition",
+    "steps": [
+      {
+        "hostName": "vps",
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "width": 390,
+        "checks": [
+          {
+            "name": "investors",
+            "latest_rendered": "2026-10-08\t-27,405\t-89,141\t+116,500\t+371\t12.97%",
+            "source_rows": 103,
+            "available_end": "2026-10-08"
+          },
+          {
+            "name": "[aria-label=\"수급 기간\"] period labels",
+            "display": "grid",
+            "rows": 2,
+            "buttons": [
+              {
+                "label": "1개월",
+                "selected": "false",
+                "height": 52,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "3개월",
+                "selected": "false",
+                "height": 52,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "1년",
+                "selected": "false",
+                "height": 52,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "3년",
+                "selected": "false",
+                "height": 52,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "5년",
+                "selected": "false",
+                "height": 52,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "전체",
+                "selected": "true",
+                "height": 52,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              }
+            ]
+          },
+          {
+            "name": "investors viewport",
+            "scrollY": 320,
+            "width": 390,
+            "documentWidth": 390,
+            "bodyWidth": 390,
+            "headerTop": 0
+          },
+          {
+            "name": "[aria-label=\"대차·신용 기간\"] period labels",
+            "display": "grid",
+            "rows": 2,
+            "buttons": [
+              {
+                "label": "1개월",
+                "selected": "false",
+                "height": 52,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "3개월",
+                "selected": "false",
+                "height": 52,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "1년",
+                "selected": "false",
+                "height": 52,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "3년",
+                "selected": "false",
+                "height": 52,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "5년",
+                "selected": "false",
+                "height": 52,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "전체",
+                "selected": "true",
+                "height": 52,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              }
+            ]
+          },
+          {
+            "name": "lending",
+            "status": "ready",
+            "actual_rows": 103,
+            "latest_actual": {
+              "date": "2026-10-08",
+              "trade_date": "2026-10-08",
+              "date_basis": "trade",
+              "balance": 3326891,
+              "new": 28411,
+              "repaid": 34458,
+              "ratio": null
+            },
+            "latest_rendered": "2026-10-08\t3,326,891\t28,411\t34,458"
+          },
+          {
+            "name": "lending viewport",
+            "scrollY": 401,
+            "width": 390,
+            "documentWidth": 390,
+            "bodyWidth": 390,
+            "headerTop": 0
+          },
+          {
+            "name": "credit",
+            "status": "ready",
+            "actual_rows": 103,
+            "latest_actual": {
+              "date": "2026-10-08",
+              "trade_date": "2026-10-08",
+              "date_basis": "trade",
+              "balance": 990196,
+              "new": 17574,
+              "repaid": 30164,
+              "ratio": 2.78
+            },
+            "latest_rendered": "2026-10-08\t990,196\t17,574\t30,164\t2.78%"
+          },
+          {
+            "name": "credit viewport",
+            "scrollY": 401,
+            "width": 390,
+            "documentWidth": 390,
+            "bodyWidth": 390,
+            "headerTop": 0
+          },
+          {
+            "name": "stock_loan",
+            "status": "ready",
+            "actual_rows": 103,
+            "latest_actual": {
+              "date": "2026-10-08",
+              "trade_date": "2026-10-08",
+              "date_basis": "trade",
+              "balance": 19,
+              "new": 0,
+              "repaid": 130,
+              "ratio": 0
+            },
+            "latest_rendered": "2026-10-08\t19\t0\t130\t0.00%"
+          },
+          {
+            "name": "stock_loan viewport",
+            "scrollY": 401,
+            "width": 390,
+            "documentWidth": 390,
+            "bodyWidth": 390,
+            "headerTop": 0
+          },
+          {
+            "name": "[aria-label=\"공매도 기간\"] period labels",
+            "display": "grid",
+            "rows": 2,
+            "buttons": [
+              {
+                "label": "1개월",
+                "selected": "false",
+                "height": 52,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "3개월",
+                "selected": "false",
+                "height": 52,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "1년",
+                "selected": "false",
+                "height": 52,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "3년",
+                "selected": "false",
+                "height": 52,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "5년",
+                "selected": "false",
+                "height": 52,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "전체",
+                "selected": "true",
+                "height": 52,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              }
+            ]
+          },
+          {
+            "name": "short_trades",
+            "status": "ready",
+            "actual_rows": 203,
+            "latest_actual": {
+              "date": "2026-10-08",
+              "volume": 91907,
+              "value": 3578713900,
+              "total_volume": null,
+              "total_value": null,
+              "ratio": 23.314,
+              "value_ratio": 23.41
+            },
+            "latest_rendered": "2026-10-08\t91,907\t35.79\t23.31%"
+          },
+          {
+            "name": "short-trades viewport",
+            "scrollY": 320,
+            "width": 390,
+            "documentWidth": 390,
+            "bodyWidth": 390,
+            "headerTop": 0
+          },
+          {
+            "name": "short_balance",
+            "status": "error",
+            "actual_rows": 0,
+            "displayed": "자료를 불러오지 못했습니다."
+          },
+          {
+            "name": "short-balance viewport",
+            "scrollY": 225,
+            "width": 390,
+            "documentWidth": 390,
+            "bodyWidth": 390,
+            "headerTop": 0
+          },
+          {
+            "name": "return_to_market",
+            "url": "https://stocks.62-171-141-206.sslip.io/stocks"
+          }
+        ],
+        "asset_verification": {
+          "release": "20261010-active-refresh-v122",
+          "manifest_sha256": "dce22bd71c225934763d1acec8e649ffaabf54d0dd14dfbf660b1f7db9b19b7f",
+          "css_sha256": "4015ab0ea0357e2c1bb5de5f1a9a473b32595c3b5c3c700ea46aa71b1a64580c",
+          "css_path": "_next/static/css/d8669a908a3e8d16.css"
+        },
+        "first_api_response": {
+          "elapsed_ms": 4127,
+          "path": "/api/market/v1/metrics"
+        },
+        "initial_display": {
+          "elapsed_ms": 7028,
+          "navigation": {
+            "response_start_ms": 873.1999999880791,
+            "response_end_ms": 881.6999999880791,
+            "dom_content_loaded_ms": 2060.699999988079
+          },
+          "scope": "single cold browser context; not load/performance target measurement"
+        },
+        "status": "passed"
+      },
+      {
+        "hostName": "cloudflare",
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "width": 1440,
+        "checks": [
+          {
+            "name": "investors",
+            "latest_rendered": "2026-10-08\t-27,405\t-89,141\t+116,500\t+371\t12.97%",
+            "source_rows": 103,
+            "available_end": "2026-10-08"
+          },
+          {
+            "name": "[aria-label=\"수급 기간\"] period labels",
+            "display": "flex",
+            "rows": 1,
+            "buttons": [
+              {
+                "label": "1개월",
+                "selected": "false",
+                "height": 32,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "3개월",
+                "selected": "false",
+                "height": 32,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "1년",
+                "selected": "false",
+                "height": 32,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "3년",
+                "selected": "false",
+                "height": 32,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "5년",
+                "selected": "false",
+                "height": 32,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "전체",
+                "selected": "true",
+                "height": 32,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              }
+            ]
+          },
+          {
+            "name": "investors viewport",
+            "scrollY": 215,
+            "width": 1440,
+            "documentWidth": 1440,
+            "bodyWidth": 1440,
+            "headerTop": 0
+          },
+          {
+            "name": "[aria-label=\"대차·신용 기간\"] period labels",
+            "display": "flex",
+            "rows": 1,
+            "buttons": [
+              {
+                "label": "1개월",
+                "selected": "false",
+                "height": 40.796875,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "3개월",
+                "selected": "false",
+                "height": 40.796875,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "1년",
+                "selected": "false",
+                "height": 40.796875,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "3년",
+                "selected": "false",
+                "height": 40.796875,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "5년",
+                "selected": "false",
+                "height": 40.796875,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "전체",
+                "selected": "true",
+                "height": 40.796875,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              }
+            ]
+          },
+          {
+            "name": "lending",
+            "status": "ready",
+            "actual_rows": 103,
+            "latest_actual": {
+              "date": "2026-10-08",
+              "trade_date": "2026-10-08",
+              "date_basis": "trade",
+              "balance": 3326891,
+              "new": 28411,
+              "repaid": 34458,
+              "ratio": null
+            },
+            "latest_rendered": "2026-10-08\t3,326,891\t28,411\t34,458"
+          },
+          {
+            "name": "lending viewport",
+            "scrollY": 284,
+            "width": 1440,
+            "documentWidth": 1440,
+            "bodyWidth": 1440,
+            "headerTop": 0
+          },
+          {
+            "name": "credit",
+            "status": "ready",
+            "actual_rows": 103,
+            "latest_actual": {
+              "date": "2026-10-08",
+              "trade_date": "2026-10-08",
+              "date_basis": "trade",
+              "balance": 990196,
+              "new": 17574,
+              "repaid": 30164,
+              "ratio": 2.78
+            },
+            "latest_rendered": "2026-10-08\t990,196\t17,574\t30,164\t2.78%"
+          },
+          {
+            "name": "credit viewport",
+            "scrollY": 284,
+            "width": 1440,
+            "documentWidth": 1440,
+            "bodyWidth": 1440,
+            "headerTop": 0
+          },
+          {
+            "name": "stock_loan",
+            "status": "ready",
+            "actual_rows": 103,
+            "latest_actual": {
+              "date": "2026-10-08",
+              "trade_date": "2026-10-08",
+              "date_basis": "trade",
+              "balance": 19,
+              "new": 0,
+              "repaid": 130,
+              "ratio": 0
+            },
+            "latest_rendered": "2026-10-08\t19\t0\t130\t0.00%"
+          },
+          {
+            "name": "stock_loan viewport",
+            "scrollY": 284,
+            "width": 1440,
+            "documentWidth": 1440,
+            "bodyWidth": 1440,
+            "headerTop": 0
+          },
+          {
+            "name": "[aria-label=\"공매도 기간\"] period labels",
+            "display": "flex",
+            "rows": 1,
+            "buttons": [
+              {
+                "label": "1개월",
+                "selected": "false",
+                "height": 40.796875,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "3개월",
+                "selected": "false",
+                "height": 40.796875,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "1년",
+                "selected": "false",
+                "height": 40.796875,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "3년",
+                "selected": "false",
+                "height": 40.796875,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "5년",
+                "selected": "false",
+                "height": 40.796875,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              },
+              {
+                "label": "전체",
+                "selected": "true",
+                "height": 40.796875,
+                "whiteSpace": "nowrap",
+                "textLines": 1,
+                "overflow": false
+              }
+            ]
+          },
+          {
+            "name": "short_trades",
+            "status": "ready",
+            "actual_rows": 203,
+            "latest_actual": {
+              "date": "2026-10-08",
+              "volume": 91907,
+              "value": 3578713900,
+              "total_volume": null,
+              "total_value": null,
+              "ratio": 23.314,
+              "value_ratio": 23.41
+            },
+            "latest_rendered": "2026-10-08\t91,907\t35.79\t23.31%"
+          },
+          {
+            "name": "short-trades viewport",
+            "scrollY": 215,
+            "width": 1440,
+            "documentWidth": 1440,
+            "bodyWidth": 1440,
+            "headerTop": 0
+          },
+          {
+            "name": "short_balance",
+            "status": "error",
+            "actual_rows": 0,
+            "displayed": "자료를 불러오지 못했습니다."
+          },
+          {
+            "name": "short-balance viewport",
+            "scrollY": 0,
+            "width": 1440,
+            "documentWidth": 1440,
+            "bodyWidth": 1440,
+            "headerTop": 0
+          },
+          {
+            "name": "return_to_market",
+            "url": "https://korea-stocks-edge.lch68-workers.workers.dev/stocks"
+          }
+        ],
+        "asset_verification": {
+          "release": "20261010-active-refresh-v122",
+          "manifest_sha256": "dce22bd71c225934763d1acec8e649ffaabf54d0dd14dfbf660b1f7db9b19b7f",
+          "css_sha256": "4015ab0ea0357e2c1bb5de5f1a9a473b32595c3b5c3c700ea46aa71b1a64580c",
+          "css_path": "_next/static/css/d8669a908a3e8d16.css"
+        },
+        "first_api_response": {
+          "elapsed_ms": 3696,
+          "path": "/api/market/v1/metrics"
+        },
+        "initial_display": {
+          "elapsed_ms": 4732,
+          "navigation": {
+            "response_start_ms": 881.4000000357628,
+            "response_end_ms": 886.3000000119209,
+            "dom_content_loaded_ms": 2333.699999988079
+          },
+          "scope": "single cold browser context; not load/performance target measurement"
+        },
+        "status": "passed"
+      }
+    ],
+    "page_errors": [],
+    "http_failures": [],
+    "blocked": [],
+    "local_manifest_sha256": "dce22bd71c225934763d1acec8e649ffaabf54d0dd14dfbf660b1f7db9b19b7f",
+    "expected_period_css": {
+      "path": "_next/static/css/d8669a908a3e8d16.css",
+      "bytes": 17552,
+      "sha256": "4015ab0ea0357e2c1bb5de5f1a9a473b32595c3b5c3c700ea46aa71b1a64580c"
+    },
+    "finished_at": "2026-10-10T06:19:14.665Z"
+  },
+  "period_controls_local": {
+    "started_at": "2026-10-10T06:09:59.263Z",
+    "scope": "local static v121 app with exact modified workspace.css injected; real public GET data; isolated Chromium layout verification; no v122 build or deployment",
+    "checks": [
+      {
+        "section": "investors",
+        "width": 294,
+        "font": "보통",
+        "status": "passed",
+        "display": "grid",
+        "viewportWidth": 360,
+        "documentWidth": 360,
+        "buttons": [
+          {
+            "text": "1개월",
+            "selected": "false",
+            "top": 590.34375,
+            "width": 90.65625,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3개월",
+            "selected": "false",
+            "top": 590.34375,
+            "width": 90.671875,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "1년",
+            "selected": "false",
+            "top": 590.34375,
+            "width": 90.65625,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3년",
+            "selected": "false",
+            "top": 650.34375,
+            "width": 90.65625,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "5년",
+            "selected": "false",
+            "top": 650.34375,
+            "width": 90.671875,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "전체",
+            "selected": "true",
+            "top": 650.34375,
+            "width": 90.65625,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          }
+        ]
+      },
+      {
+        "section": "investors",
+        "width": 294,
+        "font": "더 크게",
+        "status": "passed",
+        "display": "grid",
+        "viewportWidth": 360,
+        "documentWidth": 360,
+        "buttons": [
+          {
+            "text": "1개월",
+            "selected": "false",
+            "top": 620.046875,
+            "width": 90.65625,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3개월",
+            "selected": "false",
+            "top": 620.046875,
+            "width": 90.671875,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "1년",
+            "selected": "false",
+            "top": 620.046875,
+            "width": 90.65625,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3년",
+            "selected": "false",
+            "top": 680.046875,
+            "width": 90.65625,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "5년",
+            "selected": "false",
+            "top": 680.046875,
+            "width": 90.671875,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "전체",
+            "selected": "true",
+            "top": 680.046875,
+            "width": 90.65625,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          }
+        ]
+      },
+      {
+        "section": "investors",
+        "width": 324,
+        "font": "보통",
+        "status": "passed",
+        "display": "grid",
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "buttons": [
+          {
+            "text": "1개월",
+            "selected": "false",
+            "top": 544.65625,
+            "width": 100.65625,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3개월",
+            "selected": "false",
+            "top": 544.65625,
+            "width": 100.671875,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "1년",
+            "selected": "false",
+            "top": 544.65625,
+            "width": 100.65625,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3년",
+            "selected": "false",
+            "top": 604.65625,
+            "width": 100.65625,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "5년",
+            "selected": "false",
+            "top": 604.65625,
+            "width": 100.671875,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "전체",
+            "selected": "true",
+            "top": 604.65625,
+            "width": 100.65625,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          }
+        ]
+      },
+      {
+        "section": "investors",
+        "width": 324,
+        "font": "더 크게",
+        "status": "passed",
+        "display": "grid",
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "buttons": [
+          {
+            "text": "1개월",
+            "selected": "false",
+            "top": 574.359375,
+            "width": 100.65625,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3개월",
+            "selected": "false",
+            "top": 574.359375,
+            "width": 100.671875,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "1년",
+            "selected": "false",
+            "top": 574.359375,
+            "width": 100.65625,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3년",
+            "selected": "false",
+            "top": 634.359375,
+            "width": 100.65625,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "5년",
+            "selected": "false",
+            "top": 634.359375,
+            "width": 100.671875,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "전체",
+            "selected": "true",
+            "top": 634.359375,
+            "width": 100.65625,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          }
+        ]
+      },
+      {
+        "section": "investors",
+        "width": 364,
+        "font": "보통",
+        "status": "passed",
+        "display": "grid",
+        "viewportWidth": 430,
+        "documentWidth": 430,
+        "buttons": [
+          {
+            "text": "1개월",
+            "selected": "false",
+            "top": 544.65625,
+            "width": 114,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3개월",
+            "selected": "false",
+            "top": 544.65625,
+            "width": 114,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "1년",
+            "selected": "false",
+            "top": 544.65625,
+            "width": 114,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3년",
+            "selected": "false",
+            "top": 604.65625,
+            "width": 114,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "5년",
+            "selected": "false",
+            "top": 604.65625,
+            "width": 114,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "전체",
+            "selected": "true",
+            "top": 604.65625,
+            "width": 114,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          }
+        ]
+      },
+      {
+        "section": "investors",
+        "width": 364,
+        "font": "더 크게",
+        "status": "passed",
+        "display": "grid",
+        "viewportWidth": 430,
+        "documentWidth": 430,
+        "buttons": [
+          {
+            "text": "1개월",
+            "selected": "false",
+            "top": 574.359375,
+            "width": 114,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3개월",
+            "selected": "false",
+            "top": 574.359375,
+            "width": 114,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "1년",
+            "selected": "false",
+            "top": 574.359375,
+            "width": 114,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3년",
+            "selected": "false",
+            "top": 634.359375,
+            "width": 114,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "5년",
+            "selected": "false",
+            "top": 634.359375,
+            "width": 114,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "전체",
+            "selected": "true",
+            "top": 634.359375,
+            "width": 114,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          }
+        ]
+      },
+      {
+        "section": "investors",
+        "width": 261.828125,
+        "font": "보통",
+        "status": "passed",
+        "display": "flex",
+        "viewportWidth": 1440,
+        "documentWidth": 1440,
+        "buttons": [
+          {
+            "text": "1개월",
+            "selected": "false",
+            "top": 363.109375,
+            "width": 47.15625,
+            "height": 32,
+            "fontSize": "12px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3개월",
+            "selected": "false",
+            "top": 363.109375,
+            "width": 47.15625,
+            "height": 32,
+            "fontSize": "12px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "1년",
+            "selected": "false",
+            "top": 363.109375,
+            "width": 37.1875,
+            "height": 32,
+            "fontSize": "12px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3년",
+            "selected": "false",
+            "top": 363.109375,
+            "width": 37.1875,
+            "height": 32,
+            "fontSize": "12px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "5년",
+            "selected": "false",
+            "top": 363.109375,
+            "width": 37.1875,
+            "height": 32,
+            "fontSize": "12px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "전체",
+            "selected": "true",
+            "top": 363.109375,
+            "width": 39.953125,
+            "height": 32,
+            "fontSize": "12px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          }
+        ]
+      },
+      {
+        "section": "investors",
+        "width": 259.765625,
+        "font": "더 크게",
+        "status": "passed",
+        "display": "flex",
+        "viewportWidth": 1440,
+        "documentWidth": 1440,
+        "buttons": [
+          {
+            "text": "1개월",
+            "selected": "false",
+            "top": 464.046875,
+            "width": 46.71875,
+            "height": 32,
+            "fontSize": "12px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3개월",
+            "selected": "false",
+            "top": 464.046875,
+            "width": 46.71875,
+            "height": 32,
+            "fontSize": "12px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "1년",
+            "selected": "false",
+            "top": 464.046875,
+            "width": 36.890625,
+            "height": 32,
+            "fontSize": "12px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3년",
+            "selected": "false",
+            "top": 464.046875,
+            "width": 36.890625,
+            "height": 32,
+            "fontSize": "12px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "5년",
+            "selected": "false",
+            "top": 464.046875,
+            "width": 36.890625,
+            "height": 32,
+            "fontSize": "12px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "전체",
+            "selected": "true",
+            "top": 464.046875,
+            "width": 39.65625,
+            "height": 32,
+            "fontSize": "12px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          }
+        ]
+      },
+      {
+        "section": "financing",
+        "width": 294,
+        "font": "보통",
+        "status": "passed",
+        "display": "grid",
+        "viewportWidth": 360,
+        "documentWidth": 360,
+        "buttons": [
+          {
+            "text": "1개월",
+            "selected": "false",
+            "top": 720.34375,
+            "width": 90.65625,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3개월",
+            "selected": "false",
+            "top": 720.34375,
+            "width": 90.671875,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "1년",
+            "selected": "false",
+            "top": 720.34375,
+            "width": 90.65625,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3년",
+            "selected": "false",
+            "top": 780.34375,
+            "width": 90.65625,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "5년",
+            "selected": "false",
+            "top": 780.34375,
+            "width": 90.671875,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "전체",
+            "selected": "true",
+            "top": 780.34375,
+            "width": 90.65625,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          }
+        ]
+      },
+      {
+        "section": "financing",
+        "width": 294,
+        "font": "더 크게",
+        "status": "passed",
+        "display": "grid",
+        "viewportWidth": 360,
+        "documentWidth": 360,
+        "buttons": [
+          {
+            "text": "1개월",
+            "selected": "false",
+            "top": 750.046875,
+            "width": 90.65625,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3개월",
+            "selected": "false",
+            "top": 750.046875,
+            "width": 90.671875,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "1년",
+            "selected": "false",
+            "top": 750.046875,
+            "width": 90.65625,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3년",
+            "selected": "false",
+            "top": 810.046875,
+            "width": 90.65625,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "5년",
+            "selected": "false",
+            "top": 810.046875,
+            "width": 90.671875,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "전체",
+            "selected": "true",
+            "top": 810.046875,
+            "width": 90.65625,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          }
+        ]
+      },
+      {
+        "section": "financing",
+        "width": 324,
+        "font": "보통",
+        "status": "passed",
+        "display": "grid",
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "buttons": [
+          {
+            "text": "1개월",
+            "selected": "false",
+            "top": 674.65625,
+            "width": 100.65625,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3개월",
+            "selected": "false",
+            "top": 674.65625,
+            "width": 100.671875,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "1년",
+            "selected": "false",
+            "top": 674.65625,
+            "width": 100.65625,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3년",
+            "selected": "false",
+            "top": 734.65625,
+            "width": 100.65625,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "5년",
+            "selected": "false",
+            "top": 734.65625,
+            "width": 100.671875,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "전체",
+            "selected": "true",
+            "top": 734.65625,
+            "width": 100.65625,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          }
+        ]
+      },
+      {
+        "section": "financing",
+        "width": 324,
+        "font": "더 크게",
+        "status": "passed",
+        "display": "grid",
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "buttons": [
+          {
+            "text": "1개월",
+            "selected": "false",
+            "top": 704.359375,
+            "width": 100.65625,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3개월",
+            "selected": "false",
+            "top": 704.359375,
+            "width": 100.671875,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "1년",
+            "selected": "false",
+            "top": 704.359375,
+            "width": 100.65625,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3년",
+            "selected": "false",
+            "top": 764.359375,
+            "width": 100.65625,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "5년",
+            "selected": "false",
+            "top": 764.359375,
+            "width": 100.671875,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "전체",
+            "selected": "true",
+            "top": 764.359375,
+            "width": 100.65625,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          }
+        ]
+      },
+      {
+        "section": "financing",
+        "width": 364,
+        "font": "보통",
+        "status": "passed",
+        "display": "grid",
+        "viewportWidth": 430,
+        "documentWidth": 430,
+        "buttons": [
+          {
+            "text": "1개월",
+            "selected": "false",
+            "top": 674.65625,
+            "width": 114,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3개월",
+            "selected": "false",
+            "top": 674.65625,
+            "width": 114,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "1년",
+            "selected": "false",
+            "top": 674.65625,
+            "width": 114,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3년",
+            "selected": "false",
+            "top": 734.65625,
+            "width": 114,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "5년",
+            "selected": "false",
+            "top": 734.65625,
+            "width": 114,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "전체",
+            "selected": "true",
+            "top": 734.65625,
+            "width": 114,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          }
+        ]
+      },
+      {
+        "section": "financing",
+        "width": 364,
+        "font": "더 크게",
+        "status": "passed",
+        "display": "grid",
+        "viewportWidth": 430,
+        "documentWidth": 430,
+        "buttons": [
+          {
+            "text": "1개월",
+            "selected": "false",
+            "top": 704.359375,
+            "width": 114,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3개월",
+            "selected": "false",
+            "top": 704.359375,
+            "width": 114,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "1년",
+            "selected": "false",
+            "top": 704.359375,
+            "width": 114,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3년",
+            "selected": "false",
+            "top": 764.359375,
+            "width": 114,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "5년",
+            "selected": "false",
+            "top": 764.359375,
+            "width": 114,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "전체",
+            "selected": "true",
+            "top": 764.359375,
+            "width": 114,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          }
+        ]
+      },
+      {
+        "section": "financing",
+        "width": 1034,
+        "font": "보통",
+        "status": "passed",
+        "display": "flex",
+        "viewportWidth": 1440,
+        "documentWidth": 1440,
+        "buttons": [
+          {
+            "text": "1개월",
+            "selected": "false",
+            "top": 481.90625,
+            "width": 169.65625,
+            "height": 40.796875,
+            "fontSize": "16px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3개월",
+            "selected": "false",
+            "top": 481.90625,
+            "width": 169.671875,
+            "height": 40.796875,
+            "fontSize": "16px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "1년",
+            "selected": "false",
+            "top": 481.90625,
+            "width": 169.65625,
+            "height": 40.796875,
+            "fontSize": "16px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3년",
+            "selected": "false",
+            "top": 481.90625,
+            "width": 169.671875,
+            "height": 40.796875,
+            "fontSize": "16px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "5년",
+            "selected": "false",
+            "top": 481.90625,
+            "width": 169.671875,
+            "height": 40.796875,
+            "fontSize": "16px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "전체",
+            "selected": "true",
+            "top": 481.90625,
+            "width": 169.671875,
+            "height": 40.796875,
+            "fontSize": "16px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          }
+        ]
+      },
+      {
+        "section": "financing",
+        "width": 1034,
+        "font": "더 크게",
+        "status": "passed",
+        "display": "flex",
+        "viewportWidth": 1440,
+        "documentWidth": 1440,
+        "buttons": [
+          {
+            "text": "1개월",
+            "selected": "false",
+            "top": 582.84375,
+            "width": 169.65625,
+            "height": 40.796875,
+            "fontSize": "16px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3개월",
+            "selected": "false",
+            "top": 582.84375,
+            "width": 169.671875,
+            "height": 40.796875,
+            "fontSize": "16px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "1년",
+            "selected": "false",
+            "top": 582.84375,
+            "width": 169.65625,
+            "height": 40.796875,
+            "fontSize": "16px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3년",
+            "selected": "false",
+            "top": 582.84375,
+            "width": 169.671875,
+            "height": 40.796875,
+            "fontSize": "16px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "5년",
+            "selected": "false",
+            "top": 582.84375,
+            "width": 169.671875,
+            "height": 40.796875,
+            "fontSize": "16px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "전체",
+            "selected": "true",
+            "top": 582.84375,
+            "width": 169.671875,
+            "height": 40.796875,
+            "fontSize": "16px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          }
+        ]
+      },
+      {
+        "section": "short",
+        "width": 294,
+        "font": "보통",
+        "status": "passed",
+        "display": "grid",
+        "viewportWidth": 360,
+        "documentWidth": 360,
+        "buttons": [
+          {
+            "text": "1개월",
+            "selected": "false",
+            "top": 656.34375,
+            "width": 90.65625,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3개월",
+            "selected": "false",
+            "top": 656.34375,
+            "width": 90.671875,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "1년",
+            "selected": "false",
+            "top": 656.34375,
+            "width": 90.65625,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3년",
+            "selected": "false",
+            "top": 716.34375,
+            "width": 90.65625,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "5년",
+            "selected": "false",
+            "top": 716.34375,
+            "width": 90.671875,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "전체",
+            "selected": "true",
+            "top": 716.34375,
+            "width": 90.65625,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          }
+        ]
+      },
+      {
+        "section": "short",
+        "width": 294,
+        "font": "더 크게",
+        "status": "passed",
+        "display": "grid",
+        "viewportWidth": 360,
+        "documentWidth": 360,
+        "buttons": [
+          {
+            "text": "1개월",
+            "selected": "false",
+            "top": 685.953125,
+            "width": 90.65625,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3개월",
+            "selected": "false",
+            "top": 685.953125,
+            "width": 90.671875,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "1년",
+            "selected": "false",
+            "top": 685.953125,
+            "width": 90.65625,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3년",
+            "selected": "false",
+            "top": 745.953125,
+            "width": 90.65625,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "5년",
+            "selected": "false",
+            "top": 745.953125,
+            "width": 90.671875,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "전체",
+            "selected": "true",
+            "top": 745.953125,
+            "width": 90.65625,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          }
+        ]
+      },
+      {
+        "section": "short",
+        "width": 324,
+        "font": "보통",
+        "status": "passed",
+        "display": "grid",
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "buttons": [
+          {
+            "text": "1개월",
+            "selected": "false",
+            "top": 610.65625,
+            "width": 100.65625,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3개월",
+            "selected": "false",
+            "top": 610.65625,
+            "width": 100.671875,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "1년",
+            "selected": "false",
+            "top": 610.65625,
+            "width": 100.65625,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3년",
+            "selected": "false",
+            "top": 670.65625,
+            "width": 100.65625,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "5년",
+            "selected": "false",
+            "top": 670.65625,
+            "width": 100.671875,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "전체",
+            "selected": "true",
+            "top": 670.65625,
+            "width": 100.65625,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          }
+        ]
+      },
+      {
+        "section": "short",
+        "width": 324,
+        "font": "더 크게",
+        "status": "passed",
+        "display": "grid",
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "buttons": [
+          {
+            "text": "1개월",
+            "selected": "false",
+            "top": 640.265625,
+            "width": 100.65625,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3개월",
+            "selected": "false",
+            "top": 640.265625,
+            "width": 100.671875,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "1년",
+            "selected": "false",
+            "top": 640.265625,
+            "width": 100.65625,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3년",
+            "selected": "false",
+            "top": 700.265625,
+            "width": 100.65625,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "5년",
+            "selected": "false",
+            "top": 700.265625,
+            "width": 100.671875,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "전체",
+            "selected": "true",
+            "top": 700.265625,
+            "width": 100.65625,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          }
+        ]
+      },
+      {
+        "section": "short",
+        "width": 364,
+        "font": "보통",
+        "status": "passed",
+        "display": "grid",
+        "viewportWidth": 430,
+        "documentWidth": 430,
+        "buttons": [
+          {
+            "text": "1개월",
+            "selected": "false",
+            "top": 610.65625,
+            "width": 114,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3개월",
+            "selected": "false",
+            "top": 610.65625,
+            "width": 114,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "1년",
+            "selected": "false",
+            "top": 610.65625,
+            "width": 114,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3년",
+            "selected": "false",
+            "top": 670.65625,
+            "width": 114,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "5년",
+            "selected": "false",
+            "top": 670.65625,
+            "width": 114,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "전체",
+            "selected": "true",
+            "top": 670.65625,
+            "width": 114,
+            "height": 52,
+            "fontSize": "18px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          }
+        ]
+      },
+      {
+        "section": "short",
+        "width": 364,
+        "font": "더 크게",
+        "status": "passed",
+        "display": "grid",
+        "viewportWidth": 430,
+        "documentWidth": 430,
+        "buttons": [
+          {
+            "text": "1개월",
+            "selected": "false",
+            "top": 640.265625,
+            "width": 114,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3개월",
+            "selected": "false",
+            "top": 640.265625,
+            "width": 114,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "1년",
+            "selected": "false",
+            "top": 640.265625,
+            "width": 114,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3년",
+            "selected": "false",
+            "top": 700.265625,
+            "width": 114,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "5년",
+            "selected": "false",
+            "top": 700.265625,
+            "width": 114,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "전체",
+            "selected": "true",
+            "top": 700.265625,
+            "width": 114,
+            "height": 52,
+            "fontSize": "22px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          }
+        ]
+      },
+      {
+        "section": "short",
+        "width": 1034,
+        "font": "보통",
+        "status": "passed",
+        "display": "flex",
+        "viewportWidth": 1440,
+        "documentWidth": 1440,
+        "buttons": [
+          {
+            "text": "1개월",
+            "selected": "false",
+            "top": 430.21875,
+            "width": 169.65625,
+            "height": 40.796875,
+            "fontSize": "16px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3개월",
+            "selected": "false",
+            "top": 430.21875,
+            "width": 169.671875,
+            "height": 40.796875,
+            "fontSize": "16px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "1년",
+            "selected": "false",
+            "top": 430.21875,
+            "width": 169.65625,
+            "height": 40.796875,
+            "fontSize": "16px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3년",
+            "selected": "false",
+            "top": 430.21875,
+            "width": 169.671875,
+            "height": 40.796875,
+            "fontSize": "16px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "5년",
+            "selected": "false",
+            "top": 430.21875,
+            "width": 169.671875,
+            "height": 40.796875,
+            "fontSize": "16px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "전체",
+            "selected": "true",
+            "top": 430.21875,
+            "width": 169.671875,
+            "height": 40.796875,
+            "fontSize": "16px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          }
+        ]
+      },
+      {
+        "section": "short",
+        "width": 1034,
+        "font": "더 크게",
+        "status": "passed",
+        "display": "flex",
+        "viewportWidth": 1440,
+        "documentWidth": 1440,
+        "buttons": [
+          {
+            "text": "1개월",
+            "selected": "false",
+            "top": 531.15625,
+            "width": 169.65625,
+            "height": 40.796875,
+            "fontSize": "16px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3개월",
+            "selected": "false",
+            "top": 531.15625,
+            "width": 169.671875,
+            "height": 40.796875,
+            "fontSize": "16px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "1년",
+            "selected": "false",
+            "top": 531.15625,
+            "width": 169.65625,
+            "height": 40.796875,
+            "fontSize": "16px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "3년",
+            "selected": "false",
+            "top": 531.15625,
+            "width": 169.671875,
+            "height": 40.796875,
+            "fontSize": "16px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "5년",
+            "selected": "false",
+            "top": 531.15625,
+            "width": 169.671875,
+            "height": 40.796875,
+            "fontSize": "16px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          },
+          {
+            "text": "전체",
+            "selected": "true",
+            "top": 531.15625,
+            "width": 169.671875,
+            "height": 40.796875,
+            "fontSize": "16px",
+            "whiteSpace": "nowrap",
+            "textLines": 1,
+            "overflow": false
+          }
+        ]
+      }
+    ],
+    "before": {
+      "display": "flex",
+      "width": 324,
+      "viewportWidth": 390,
+      "documentWidth": 390,
+      "buttons": [
+        {
+          "text": "1개월",
+          "selected": "false",
+          "top": 546.953125,
+          "width": 60.53125,
+          "height": 63.78125,
+          "fontSize": "18px",
+          "whiteSpace": "normal",
+          "textLines": 2,
+          "overflow": false
+        },
+        {
+          "text": "3개월",
+          "selected": "true",
+          "top": 546.953125,
+          "width": 60.765625,
+          "height": 63.78125,
+          "fontSize": "18px",
+          "whiteSpace": "normal",
+          "textLines": 2,
+          "overflow": false
+        },
+        {
+          "text": "1년",
+          "selected": "false",
+          "top": 546.953125,
+          "width": 45.65625,
+          "height": 63.78125,
+          "fontSize": "18px",
+          "whiteSpace": "normal",
+          "textLines": 2,
+          "overflow": false
+        },
+        {
+          "text": "3년",
+          "selected": "false",
+          "top": 546.953125,
+          "width": 45.65625,
+          "height": 63.78125,
+          "fontSize": "18px",
+          "whiteSpace": "normal",
+          "textLines": 2,
+          "overflow": false
+        },
+        {
+          "text": "5년",
+          "selected": "false",
+          "top": 546.953125,
+          "width": 45.65625,
+          "height": 63.78125,
+          "fontSize": "18px",
+          "whiteSpace": "normal",
+          "textLines": 2,
+          "overflow": false
+        },
+        {
+          "text": "전체",
+          "selected": "false",
+          "top": 546.953125,
+          "width": 49.734375,
+          "height": 63.78125,
+          "fontSize": "18px",
+          "whiteSpace": "normal",
+          "textLines": 2,
+          "overflow": false
+        }
+      ]
+    },
+    "finished_at": "2026-10-10T06:10:13.715Z"
+  },
+  "heads_before": {
+    "at": "2026-10-10T06:13:56.576228+00:00",
+    "release": "20261010-trading-readmodels-v121",
+    "heads": {
+      "toss:investor-trading:005930": {
+        "status": "ready",
+        "head_received_at": "2026-10-10T06:00:48.269541+00:00",
+        "history_received_at": null,
+        "row_count": 1847,
+        "first_time": "2019-04-01",
+        "last_time": "2026-10-08",
+        "backfill_complete": true
+      },
+      "toss:program-trades:005930": {
+        "status": "ready",
+        "head_received_at": "2026-10-10T06:00:52.323002+00:00",
+        "history_received_at": null,
+        "row_count": 1847,
+        "first_time": "2019-04-01",
+        "last_time": "2026-10-08",
+        "backfill_complete": true
+      },
+      "toss:short-selling:005930": {
+        "status": "ready",
+        "head_received_at": "2026-10-10T06:00:52.846565+00:00",
+        "history_received_at": "2026-10-09T05:10:15.425553+00:00",
+        "row_count": 1847,
+        "first_time": "2019-04-01",
+        "last_time": "2026-10-08",
+        "backfill_complete": true
+      },
+      "toss:credit-trades:005930": {
+        "status": "ready",
+        "head_received_at": "2026-10-10T06:00:54.539739+00:00",
+        "history_received_at": "2026-10-09T05:10:30.282731+00:00",
+        "row_count": 849,
+        "first_time": "2023-04-17",
+        "last_time": "2026-10-08",
+        "backfill_complete": true
+      },
+      "toss:securities-lending:005930": {
+        "status": "ready",
+        "head_received_at": "2026-10-10T06:01:02.889861+00:00",
+        "history_received_at": "2026-10-09T05:11:43.911384+00:00",
+        "row_count": 1357,
+        "first_time": "2021-04-01",
+        "last_time": "2026-10-08",
+        "backfill_complete": true
+      },
+      "toss:investor-trading:035900": {
+        "status": "ready",
+        "head_received_at": "2026-10-10T06:06:20.368698+00:00",
+        "history_received_at": null,
+        "row_count": 103,
+        "first_time": "2026-05-08",
+        "last_time": "2026-10-08",
+        "backfill_complete": false
+      },
+      "toss:program-trades:035900": {
+        "status": "ready",
+        "head_received_at": "2026-10-10T06:06:22.468746+00:00",
+        "history_received_at": "2026-10-04T03:07:34.202236+00:00",
+        "row_count": 203,
+        "first_time": "2025-12-08",
+        "last_time": "2026-10-08",
+        "backfill_complete": false
+      },
+      "toss:short-selling:035900": {
+        "status": "ready",
+        "head_received_at": "2026-10-10T06:06:26.752847+00:00",
+        "history_received_at": "2026-10-04T04:43:47.777735+00:00",
+        "row_count": 203,
+        "first_time": "2025-12-08",
+        "last_time": "2026-10-08",
+        "backfill_complete": false
+      },
+      "toss:credit-trades:035900": {
+        "status": "ready",
+        "head_received_at": "2026-10-10T06:06:27.238612+00:00",
+        "history_received_at": null,
+        "row_count": 103,
+        "first_time": "2026-05-08",
+        "last_time": "2026-10-08",
+        "backfill_complete": false
+      },
+      "toss:securities-lending:035900": {
+        "status": "ready",
+        "head_received_at": "2026-10-10T06:06:30.274052+00:00",
+        "history_received_at": null,
+        "row_count": 103,
+        "first_time": "2026-05-08",
+        "last_time": "2026-10-08",
+        "backfill_complete": false
+      }
+    }
+  },
+  "heads_after": {
+    "at": "2026-10-10T06:19:23.834486+00:00",
+    "release": "20261010-active-refresh-v122",
+    "heads": {
+      "toss:investor-trading:005930": {
+        "status": "ready",
+        "head_received_at": "2026-10-10T06:17:38.493750+00:00",
+        "history_received_at": null,
+        "row_count": 1847,
+        "first_time": "2019-04-01",
+        "last_time": "2026-10-08",
+        "backfill_complete": true
+      },
+      "toss:program-trades:005930": {
+        "status": "ready",
+        "head_received_at": "2026-10-10T06:17:46.346297+00:00",
+        "history_received_at": null,
+        "row_count": 1847,
+        "first_time": "2019-04-01",
+        "last_time": "2026-10-08",
+        "backfill_complete": true
+      },
+      "toss:short-selling:005930": {
+        "status": "ready",
+        "head_received_at": "2026-10-10T06:17:48.462677+00:00",
+        "history_received_at": "2026-10-09T05:10:15.425553+00:00",
+        "row_count": 1847,
+        "first_time": "2019-04-01",
+        "last_time": "2026-10-08",
+        "backfill_complete": true
+      },
+      "toss:credit-trades:005930": {
+        "status": "ready",
+        "head_received_at": "2026-10-10T06:17:49.032574+00:00",
+        "history_received_at": "2026-10-09T05:10:30.282731+00:00",
+        "row_count": 849,
+        "first_time": "2023-04-17",
+        "last_time": "2026-10-08",
+        "backfill_complete": true
+      },
+      "toss:securities-lending:005930": {
+        "status": "ready",
+        "head_received_at": "2026-10-10T06:17:52.923152+00:00",
+        "history_received_at": "2026-10-09T05:11:43.911384+00:00",
+        "row_count": 1357,
+        "first_time": "2021-04-01",
+        "last_time": "2026-10-08",
+        "backfill_complete": true
+      },
+      "toss:investor-trading:035900": {
+        "status": "ready",
+        "head_received_at": "2026-10-10T06:06:20.368698+00:00",
+        "history_received_at": null,
+        "row_count": 103,
+        "first_time": "2026-05-08",
+        "last_time": "2026-10-08",
+        "backfill_complete": false
+      },
+      "toss:program-trades:035900": {
+        "status": "ready",
+        "head_received_at": "2026-10-10T06:06:22.468746+00:00",
+        "history_received_at": "2026-10-04T03:07:34.202236+00:00",
+        "row_count": 203,
+        "first_time": "2025-12-08",
+        "last_time": "2026-10-08",
+        "backfill_complete": false
+      },
+      "toss:short-selling:035900": {
+        "status": "ready",
+        "head_received_at": "2026-10-10T06:06:26.752847+00:00",
+        "history_received_at": "2026-10-04T04:43:47.777735+00:00",
+        "row_count": 203,
+        "first_time": "2025-12-08",
+        "last_time": "2026-10-08",
+        "backfill_complete": false
+      },
+      "toss:credit-trades:035900": {
+        "status": "ready",
+        "head_received_at": "2026-10-10T06:06:27.238612+00:00",
+        "history_received_at": null,
+        "row_count": 103,
+        "first_time": "2026-05-08",
+        "last_time": "2026-10-08",
+        "backfill_complete": false
+      },
+      "toss:securities-lending:035900": {
+        "status": "ready",
+        "head_received_at": "2026-10-10T06:06:30.274052+00:00",
+        "history_received_at": null,
+        "row_count": 103,
+        "first_time": "2026-05-08",
+        "last_time": "2026-10-08",
+        "backfill_complete": false
+      }
+    }
+  },
+  "provider_and_collection": {
+    "at": "2026-10-10T06:19:18.296395+00:00",
+    "rows": {
+      "provider-toss": {
+        "status": "ready",
+        "received_at": "2026-10-10T06:19:10.100135+00:00"
+      },
+      "provider-toss-stream": {
+        "status": "subscribed",
+        "received_at": "2026-10-10T06:18:55.389429+00:00",
+        "epoch": "814c0cf3490545cea3ba1fd1dc55ecda"
+      },
+      "toss-backfill-progress": {
+        "status": "capacity_limited",
+        "cursor": 444,
+        "phase": 1,
+        "attempts": 56787
+      },
+      "collection:035900": {
+        "attempts": 33,
+        "sources": {
+          "credit": {
+            "status": "ready",
+            "received_at": "2026-10-10T06:06:27.238612+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "incomplete",
+            "backfill_complete": false
+          },
+          "flows": {
+            "status": "ready",
+            "received_at": "2026-10-10T06:06:20.368698+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "incomplete",
+            "backfill_complete": false
+          },
+          "lending": {
+            "status": "ready",
+            "received_at": "2026-10-10T06:06:30.274052+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "incomplete",
+            "backfill_complete": false
+          },
+          "short_trades": {
+            "status": "ready",
+            "received_at": "2026-10-10T06:06:26.752847+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2025-12-08"
+            },
+            "validated_rows": 203,
+            "history_status": "incomplete",
+            "backfill_complete": false
+          },
+          "stock_loan": {
+            "status": "ready",
+            "received_at": "2026-10-10T06:06:27.238612+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "incomplete",
+            "backfill_complete": false
+          }
+        }
+      },
+      "collection:005930": {
+        "attempts": 804,
+        "sources": {
+          "credit": {
+            "status": "ready",
+            "received_at": "2026-10-10T06:17:49.032574+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "complete",
+            "backfill_complete": true
+          },
+          "flows": {
+            "status": "ready",
+            "received_at": "2026-10-10T06:17:38.493750+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "complete",
+            "backfill_complete": true
+          },
+          "lending": {
+            "status": "ready",
+            "received_at": "2026-10-10T06:17:52.923152+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "complete",
+            "backfill_complete": true
+          },
+          "short_trades": {
+            "status": "ready",
+            "received_at": "2026-10-10T06:17:48.462677+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "complete",
+            "backfill_complete": true
+          },
+          "stock_loan": {
+            "status": "ready",
+            "received_at": "2026-10-10T06:17:49.032574+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "complete",
+            "backfill_complete": true
+          }
+        }
+      },
+      "collection:005935": {
+        "attempts": 336,
+        "sources": {
+          "credit": {
+            "status": "ready",
+            "received_at": "2026-10-10T05:19:44.985104+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "complete",
+            "backfill_complete": true
+          },
+          "flows": {
+            "status": "ready",
+            "received_at": "2026-10-09T17:24:49.157881+00:00",
+            "source": "네이버 증권 공개 투자자 집계",
+            "as_of": "2026-10-08"
+          },
+          "lending": {
+            "status": "ready",
+            "received_at": "2026-10-10T05:19:49.292650+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "complete",
+            "backfill_complete": true
+          },
+          "short_trades": {
+            "status": "ready",
+            "received_at": "2026-10-10T05:19:44.437518+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "complete",
+            "backfill_complete": true
+          },
+          "stock_loan": {
+            "status": "ready",
+            "received_at": "2026-10-10T05:19:44.985104+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "complete",
+            "backfill_complete": true
+          }
+        }
+      }
+    }
+  },
+  "tests": {
+    "root-v122-refresh-tests.xml": {
+      "tests": 32,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "root-v122-related-tests.xml": {
+      "tests": 116,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "toss-active-refresh-related-tests.xml": {
+      "tests": 161,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "github_ci_success": [
+    38030152223,
+    38030148290
+  ],
+  "runtime": {
+    "at": "2026-10-10T06:19:11.961555+00:00",
+    "disk": {
+      "total": 154894188544,
+      "used": 139467231232,
+      "free": 15410180096
+    },
+    "changed_containers": [
+      "/korea-stocks-market-api-1",
+      "/korea-stocks-market-worker-1"
+    ],
+    "other_containers_preserved": true,
+    "scheduled_files_preserved": true
+  },
+  "dated_archive_restore_observation": {
+    "at": "2026-10-10T06:17:41.159869+00:00",
+    "checkpoint": {
+      "prefix_sha256": "46228cb9a8eb706ee890cbe5bf324b6a77466a4fafc21d2fa8aee557be9a37d9",
+      "sequence": 32070,
+      "series_complete": false,
+      "series_rows": 12819200,
+      "trace_complete": true,
+      "trace_rows": 8071
+    },
+    "cumulative_approximate_stats": [
+      [
+        "checkpoint",
+        1801,
+        1800,
+        30287,
+        30287,
+        1
+      ],
+      [
+        "rows",
+        5,
+        12819200,
+        4972407,
+        4972412,
+        12819600
+      ],
+      [
+        "traces",
+        4,
+        114830,
+        362571,
+        263879,
+        57417
+      ]
+    ],
+    "activity": [
+      [
+        "idle",
+        "Client",
+        "ClientRead",
+        0
+      ]
+    ],
+    "free_bytes": 24695574528,
+    "final_proof": false
+  },
+  "completion": {
+    "deployed": true,
+    "whole_market_history": false,
+    "production_storage_migration": false,
+    "dated_archive_full_restore": false,
+    "fresh_live_stream": false,
+    "performance_targets": false,
+    "actual_device_and_father_usability": false
+  }
+}

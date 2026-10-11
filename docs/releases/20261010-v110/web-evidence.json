@@ -1,0 +1,339 @@
+{
+  "public_checks": {
+    "observed_at": "2026-10-09T21:08:12.101483+00:00",
+    "expected_release": "20261010-storage-writes-v110",
+    "checks": [
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/build-manifest.json",
+        "status": 200,
+        "sha256": "505c2e76aa31f114fdc197127157a76992ecb3f911d0e6dbbaae942d610f0d27",
+        "bytes": 12665,
+        "release": "20261010-storage-writes-v110",
+        "files_match": true
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/stocks?code=005930",
+        "status": 200,
+        "sha256": "0a494080af9748c20477bfd8af0002e10be20002c3a22594e9bbb513d58258b7",
+        "bytes": 12504
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/api/market/v1/health",
+        "status": 200,
+        "sha256": "f73ac6707d646a7dd89dbbe592c195f91afc1723df55e80acf6ea34a3d69ab7e",
+        "bytes": 617
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/api/market/v1/securities/005930?view=summary",
+        "status": 200,
+        "sha256": "a4ec46f96610d06bdfacc55d55952e4a353d2a5bd2b1614629a8e3a31b2b1fc4",
+        "bytes": 1868
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/build-manifest.json",
+        "status": 200,
+        "sha256": "505c2e76aa31f114fdc197127157a76992ecb3f911d0e6dbbaae942d610f0d27",
+        "bytes": 12665,
+        "release": "20261010-storage-writes-v110",
+        "files_match": true
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/stocks?code=005930",
+        "status": 200,
+        "sha256": "0a494080af9748c20477bfd8af0002e10be20002c3a22594e9bbb513d58258b7",
+        "bytes": 12504
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/api/market/v1/health",
+        "status": 200,
+        "sha256": "f317f852d126d48512abeb571699579b8ab4b2a2ca730c2d72e516adc247bcac",
+        "bytes": 617
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/api/market/v1/securities/005930?view=summary",
+        "status": 200,
+        "sha256": "a4ec46f96610d06bdfacc55d55952e4a353d2a5bd2b1614629a8e3a31b2b1fc4",
+        "bytes": 1868
+      }
+    ]
+  },
+  "deployment": {
+    "release": "20261010-storage-writes-v110",
+    "files": 73,
+    "bytes": 24332526,
+    "archive_sha256": "397cf66a39ac3765b682b6855aa459539cfe2234d66c2206942caaa21fb168db",
+    "nginx_before_sha256": "5f0b84a690b2635422ecca8d427657cba490dcb946d0ac60d9337014965c10ab",
+    "nginx_after_sha256": "5f0b84a690b2635422ecca8d427657cba490dcb946d0ac60d9337014965c10ab"
+  },
+  "cloudflare_version": "19eccd27-0bc1-4c77-a0f2-e2e6c0c586af",
+  "local_tests": {
+    "python_passed": 1327,
+    "python_external_deselected": 4,
+    "node_passed": 69,
+    "browser_passed": 13
+  },
+  "linux_ci": {
+    "commit": "102b3862f9a2a17c652ee6d0cb7df7ad369091af",
+    "run": 37991203367,
+    "feature_jobs_passed": true,
+    "codeql_gate_passed": false
+  },
+  "npm_audit": {
+    "production_advisories": 0,
+    "development_advisories": 1,
+    "unpatched_development_dependency": "braces"
+  },
+  "public_load": {
+    "at": "2026-10-09T21:08:00.952Z",
+    "concurrency": 100,
+    "cache_probe": null,
+    "transport": "HTTP/2 one TLS session, 100 concurrent streams, Windows PC public internet",
+    "complete": true
+  },
+  "public_load_results": [
+    {
+      "hostname": "stocks.62-171-141-206.sslip.io",
+      "endpoint": "search",
+      "first": {
+        "requests": 100,
+        "ttfb_p95_ms": 1590.29,
+        "body_p95_ms": 13.01,
+        "wire_bytes": 178720,
+        "origin_cache": {
+          "MISS": 10,
+          "EXPIRED": 10,
+          "HIT": 80
+        },
+        "p50_ms": 1584.75,
+        "p95_ms": 1602.19,
+        "app_timing_samples": 20,
+        "app_p95_ms": 289.18,
+        "errors": 0,
+        "cache": {
+          "ORIGIN": 100
+        }
+      },
+      "warm": {
+        "requests": 300,
+        "ttfb_p95_ms": 1179.56,
+        "body_p95_ms": 180.67,
+        "wire_bytes": 536160,
+        "origin_cache": {
+          "EXPIRED": 300
+        },
+        "p50_ms": 716.52,
+        "p95_ms": 1179.76,
+        "app_timing_samples": 300,
+        "app_p95_ms": 217.19,
+        "errors": 0,
+        "cache": {
+          "ORIGIN": 300
+        }
+      },
+      "after_1600ms": {
+        "requests": 100,
+        "ttfb_p95_ms": 1237.25,
+        "body_p95_ms": 557.08,
+        "wire_bytes": 178720,
+        "origin_cache": {
+          "EXPIRED": 100
+        },
+        "p50_ms": 1237.83,
+        "p95_ms": 1251.44,
+        "app_timing_samples": 100,
+        "app_p95_ms": 135.66,
+        "errors": 0,
+        "cache": {
+          "ORIGIN": 100
+        }
+      }
+    },
+    {
+      "hostname": "stocks.62-171-141-206.sslip.io",
+      "endpoint": "summary",
+      "first": {
+        "requests": 100,
+        "ttfb_p95_ms": 2892.19,
+        "body_p95_ms": 0.42,
+        "wire_bytes": 99260,
+        "origin_cache": {
+          "MISS": 10,
+          "EXPIRED": 10,
+          "HIT": 80
+        },
+        "p50_ms": 1296.34,
+        "p95_ms": 2892.34,
+        "app_timing_samples": 20,
+        "app_p95_ms": 317.18,
+        "errors": 0,
+        "cache": {
+          "ORIGIN": 100
+        }
+      },
+      "warm": {
+        "requests": 300,
+        "ttfb_p95_ms": 729.69,
+        "body_p95_ms": 14.1,
+        "wire_bytes": 297780,
+        "origin_cache": {
+          "EXPIRED": 100,
+          "HIT": 200
+        },
+        "p50_ms": 292.94,
+        "p95_ms": 734.54,
+        "app_timing_samples": 100,
+        "app_p95_ms": 213.41,
+        "errors": 0,
+        "cache": {
+          "ORIGIN": 300
+        }
+      },
+      "after_1600ms": {
+        "requests": 100,
+        "ttfb_p95_ms": 984.66,
+        "body_p95_ms": 275.86,
+        "wire_bytes": 99260,
+        "origin_cache": {
+          "EXPIRED": 100
+        },
+        "p50_ms": 985.09,
+        "p95_ms": 1124.49,
+        "app_timing_samples": 100,
+        "app_p95_ms": 251.6,
+        "errors": 0,
+        "cache": {
+          "ORIGIN": 100
+        }
+      }
+    },
+    {
+      "hostname": "korea-stocks-edge.lch68-workers.workers.dev",
+      "endpoint": "search",
+      "first": {
+        "requests": 100,
+        "ttfb_p95_ms": 1846.49,
+        "body_p95_ms": 2.97,
+        "wire_bytes": 178720,
+        "origin_cache": {
+          "EXPIRED": 10,
+          "HIT": 80,
+          "MISS": 10
+        },
+        "p50_ms": 1347.8,
+        "p95_ms": 1846.99,
+        "app_timing_samples": 20,
+        "app_p95_ms": 46.35,
+        "errors": 0,
+        "cache": {
+          "MISS": 100
+        }
+      },
+      "warm": {
+        "requests": 300,
+        "ttfb_p95_ms": 1107.32,
+        "body_p95_ms": 31.53,
+        "wire_bytes": 549962,
+        "origin_cache": {
+          "EXPIRED": 258,
+          "HIT": 42
+        },
+        "p50_ms": 750.51,
+        "p95_ms": 1107.47,
+        "app_timing_samples": 158,
+        "app_p95_ms": 462.91,
+        "errors": 0,
+        "cache": {
+          "MISS": 200,
+          "HIT": 100
+        }
+      },
+      "after_1600ms": {
+        "requests": 100,
+        "ttfb_p95_ms": 911.77,
+        "body_p95_ms": 1.19,
+        "wire_bytes": 178720,
+        "origin_cache": {
+          "EXPIRED": 23,
+          "HIT": 77
+        },
+        "p50_ms": 774.59,
+        "p95_ms": 912.57,
+        "app_timing_samples": 23,
+        "app_p95_ms": 54.87,
+        "errors": 0,
+        "cache": {
+          "MISS": 100
+        }
+      }
+    },
+    {
+      "hostname": "korea-stocks-edge.lch68-workers.workers.dev",
+      "endpoint": "summary",
+      "first": {
+        "requests": 100,
+        "ttfb_p95_ms": 908.77,
+        "body_p95_ms": 0.76,
+        "wire_bytes": 99260,
+        "origin_cache": {
+          "EXPIRED": 3,
+          "MISS": 9,
+          "HIT": 88
+        },
+        "p50_ms": 706.37,
+        "p95_ms": 909.24,
+        "app_timing_samples": 12,
+        "app_p95_ms": 123.47,
+        "errors": 0,
+        "cache": {
+          "MISS": 100
+        }
+      },
+      "warm": {
+        "requests": 300,
+        "ttfb_p95_ms": 747.86,
+        "body_p95_ms": 0.68,
+        "wire_bytes": 298131,
+        "origin_cache": {
+          "HIT": 154,
+          "EXPIRED": 146
+        },
+        "p50_ms": 273.45,
+        "p95_ms": 747.94,
+        "app_timing_samples": 46,
+        "app_p95_ms": 144.68,
+        "errors": 0,
+        "cache": {
+          "HIT": 196,
+          "MISS": 104
+        }
+      },
+      "after_1600ms": {
+        "requests": 100,
+        "ttfb_p95_ms": 1758.03,
+        "body_p95_ms": 5.96,
+        "wire_bytes": 99260,
+        "origin_cache": {
+          "EXPIRED": 100
+        },
+        "p50_ms": 1748.16,
+        "p95_ms": 1763.89,
+        "app_timing_samples": 100,
+        "app_p95_ms": 925.27,
+        "errors": 0,
+        "cache": {
+          "MISS": 100
+        }
+      }
+    }
+  ],
+  "public_load_target_passed": false,
+  "all_data_complete": false
+}

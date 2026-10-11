@@ -1,0 +1,106 @@
+{
+  "at": "2026-10-09T22:21:17.572469+00:00",
+  "release": "20261010-ocf-republication-v112",
+  "companies": {
+    "005930": {
+      "status": "ready",
+      "availability": {
+        "prices": true,
+        "comparison": true,
+        "reasons": [],
+        "forecast": false,
+        "dividends": false
+      },
+      "latest_period": {
+        "period_start": "2025-04-01",
+        "period_end": "2026-03-31",
+        "value": 18594.553147242743,
+        "metric_value": null,
+        "available_at": "2026-05-15",
+        "reason": null
+      },
+      "points": 262,
+      "expected_period_end": "2026-03-31",
+      "expected_exact_value": "18594.55314724274223212533476",
+      "latest_point": {
+        "date": "2026-10-08",
+        "price": 262500.0,
+        "metric_value": 18594.553147242743,
+        "reference_price": 185945.53147242742,
+        "period_end": "2026-03-31",
+        "comparison_eligible": true,
+        "reason": null
+      },
+      "period_matches": true,
+      "amount_matches": true
+    },
+    "000660": {
+      "status": "ready",
+      "availability": {
+        "prices": true,
+        "comparison": true,
+        "reasons": [],
+        "forecast": false,
+        "dividends": false
+      },
+      "latest_period": {
+        "period_start": "2025-07-01",
+        "period_end": "2026-06-30",
+        "value": 181181.3235474612,
+        "metric_value": null,
+        "available_at": "2026-08-14",
+        "reason": null
+      },
+      "points": 262,
+      "expected_period_end": "2026-06-30",
+      "expected_exact_value": "181181.3235474611955270514044",
+      "latest_point": {
+        "date": "2026-10-08",
+        "price": 1686000.0,
+        "metric_value": 181181.3235474612,
+        "reference_price": 1811813.235474612,
+        "period_end": "2026-06-30",
+        "comparison_eligible": true,
+        "reason": null
+      },
+      "period_matches": true,
+      "amount_matches": true
+    },
+    "005380": {
+      "status": "price_only",
+      "availability": {
+        "prices": true,
+        "comparison": false,
+        "reasons": [
+          "no_available_fact",
+          "non_positive_metric"
+        ],
+        "forecast": false,
+        "dividends": false
+      },
+      "latest_period": {
+        "period_start": "2025-07-01",
+        "period_end": "2026-06-30",
+        "value": -10379.672015935826,
+        "metric_value": null,
+        "available_at": "2026-08-14",
+        "reason": null
+      },
+      "points": 262,
+      "expected_period_end": "2026-06-30",
+      "expected_exact_value": "-10379.67201593582738374199946",
+      "latest_point": {
+        "date": "2026-10-08",
+        "price": 325000.0,
+        "metric_value": -10379.672015935826,
+        "reference_price": null,
+        "period_end": "2026-06-30",
+        "comparison_eligible": false,
+        "reason": "non_positive_metric"
+      },
+      "period_matches": true,
+      "amount_matches": true
+    }
+  },
+  "passed": false
+}

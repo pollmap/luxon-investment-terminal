@@ -1,0 +1,185 @@
+{
+  "recorded_at": "2026-10-09T22:28:59.098769+00:00",
+  "release": "20261010-ocf-republication-v112",
+  "source_commit": "43d917f5f7d1334aa1cd0c61485b66914ddd5096",
+  "backend": {
+    "status": "deployed",
+    "release": "20261010-ocf-republication-v112",
+    "archive_sha256": "7192a90a9763555cd5c224d4af9bd3e0664275f6f265733eb6255ea63efa7ddd",
+    "result": "sha256:44e2ef04be140cd1e4a0aa45f1fe292e42e8304726b0557e1ccb5d5a7ae40187\n{\"release\": \"20261010-ocf-republication-v112\", \"status\": \"activated\", \"updated_services\": [\"market-api\", \"market-worker\"], \"postgres\": \"unchanged\", \"redis\": \"unchanged\", \"web\": \"unchanged\", \"openalgo\": \"unchanged\"}"
+  },
+  "static": {
+    "status": "promoted",
+    "release": "20261010-ocf-republication-v112",
+    "files": 73,
+    "bytes": 24332526,
+    "nginx_backup": "/srv/services/korea-stocks/backups/nginx/hannun-20261009T222135651735Z-static-20261010-ocf-republication-v112.conf",
+    "web": "stopped",
+    "static_root": "/srv/services/korea-stocks/releases/20261010-ocf-republication-v112/static-web",
+    "previous_static": "/srv/services/korea-stocks/releases/20261010-ocf-republication-v112/static-web.previous-20261009T222135651735Z",
+    "marker": "/srv/services/korea-stocks/releases/20261010-ocf-republication-v112/static-web-deployment.json",
+    "public_root": "/var/www/korea-stocks/releases/20261010-ocf-republication-v112-20261009T222135651735Z",
+    "previous_public": "/var/www/korea-stocks/releases/20261010-raw-boundary-v111-20261009T221100129595Z",
+    "archive_sha256": "4e7647a1dc92b64e9d5ce7dd01d030d0ac4ec30cabeff1c83f345b1947ce0090",
+    "nginx_before_sha256": "5f0b84a690b2635422ecca8d427657cba490dcb946d0ac60d9337014965c10ab",
+    "nginx_after_sha256": "5f0b84a690b2635422ecca8d427657cba490dcb946d0ac60d9337014965c10ab"
+  },
+  "public": {
+    "at": "2026-10-09T22:24:42.934129+00:00",
+    "release": "20261010-ocf-republication-v112",
+    "source_commit": "43d917f5f7d1334aa1cd0c61485b66914ddd5096",
+    "manifest_sha256": "d37d8ccd929b54d1b45579fa9ff88c1c32a543ef459e369696d91f7ca30d1ee5",
+    "checks": [
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/build-manifest.json",
+        "status": 200,
+        "exact_bytes": true
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/stocks",
+        "status": 200,
+        "sha256": "c1bae1b417e42b71a0e63125725678f210a8439ca471f9b84ee779757521a0c0"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/_next/static/css/56d4c3297aff6eef.css",
+        "status": 200,
+        "sha256": "bfa719c1a38d040e116184ef6b4b2033a0f49b220fc68c7ad0e7ab724e90f802"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/_next/static/chunks/109-556813f986d82c94.js",
+        "status": 200,
+        "sha256": "d573cab20684f834275f391bd460777036349d55e7ebc50adf74f3f3adff2921"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/stocks/fonts/PretendardVariable.woff2",
+        "status": 200,
+        "sha256": "9599f12fd42fc0bce1cd50b47a0c022e108d7aa64dd0d1bb0ed44f3282d900b4"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/health",
+        "status": 200,
+        "bytes": 620
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/search?q=005930",
+        "status": 200,
+        "bytes": 3715
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/securities/005930?view=summary",
+        "status": 200,
+        "bytes": 1868
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/securities/094800?view=summary",
+        "status": 200,
+        "bytes": 1102
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/build-manifest.json",
+        "status": 200,
+        "exact_bytes": true
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/stocks",
+        "status": 200,
+        "sha256": "c1bae1b417e42b71a0e63125725678f210a8439ca471f9b84ee779757521a0c0"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/_next/static/css/56d4c3297aff6eef.css",
+        "status": 200,
+        "sha256": "bfa719c1a38d040e116184ef6b4b2033a0f49b220fc68c7ad0e7ab724e90f802"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/_next/static/chunks/109-556813f986d82c94.js",
+        "status": 200,
+        "sha256": "d573cab20684f834275f391bd460777036349d55e7ebc50adf74f3f3adff2921"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/stocks/fonts/PretendardVariable.woff2",
+        "status": 200,
+        "sha256": "9599f12fd42fc0bce1cd50b47a0c022e108d7aa64dd0d1bb0ed44f3282d900b4"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/health",
+        "status": 200,
+        "bytes": 620
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/search?q=005930",
+        "status": 200,
+        "bytes": 3715
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/securities/005930?view=summary",
+        "status": 200,
+        "bytes": 1868
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/securities/094800?view=summary",
+        "status": 200,
+        "bytes": 1102
+      }
+    ],
+    "load_test": false,
+    "fresh_stream_test": false,
+    "passed": true
+  },
+  "cloudflare_version": "d6ce7987-aaef-40ff-8411-49f2f935c575",
+  "ci": {
+    "url": "https://github.com/pollmap/luxon-investment-terminal/actions/runs/37998303057",
+    "head_sha": "43d917f5f7d1334aa1cd0c61485b66914ddd5096",
+    "conclusion": "success",
+    "python": {
+      "passed": 1402,
+      "skipped": 21,
+      "deselected": 4
+    },
+    "node_passed": 69,
+    "fixture_browser_passed": 13
+  },
+  "ocf_actual_assessment_passed": true,
+  "public_verification_first_attempt": {
+    "passed": false,
+    "phase": "manifest_exact_bytes",
+    "remote_response_retained": false,
+    "cause_confirmed": false
+  },
+  "storage": {
+    "production_inactive_release_count": 6,
+    "production_files_logical_bytes": 2009107130,
+    "observed_production_free_increase_bytes": 1782681600,
+    "local_ntfs_files": 18,
+    "local_ntfs_allocated_bytes_saved": 11336110080,
+    "local_bytes_and_hashes_preserved": true,
+    "production_database_migrated": false,
+    "full_rehearsal_completed": false
+  },
+  "gates": {
+    "implemented": true,
+    "three_companies_public_ocf_verified": true,
+    "whole_universe_complete": false,
+    "fresh_stream_verified": false,
+    "public_performance_target_met": false,
+    "actual_user_tasks_verified": false,
+    "security_all_alerts_reviewed": false
+  }
+}

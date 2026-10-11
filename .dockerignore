@@ -39,3 +39,6 @@ storage/charts/**
 storage/imports/**
 storage/parse_failures/**
 storage/rendered_charts/**
+storage/public-market/**
+work/**
+docs/screenshots/**

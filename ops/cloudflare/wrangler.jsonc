@@ -1,0 +1,27 @@
+{
+  "name": "korea-stocks-edge",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-10-03",
+  "workers_dev": true,
+  "assets": {
+    "directory": "../../apps/web/out",
+    "binding": "ASSETS",
+    "html_handling": "drop-trailing-slash",
+    "not_found_handling": "404-page",
+    "run_worker_first": [
+      "/api/*",
+      "/internal*",
+      "/ops/*",
+      "/",
+      "/terminal*",
+      "/company/*",
+      "/screener*",
+      "/portfolio*",
+      "/system*"
+    ]
+  },
+  "vars": {
+    "ORIGIN": "https://stocks.62-171-141-206.sslip.io",
+    "RELEASE": "20261011-stock-shopping-v132"
+  }
+}

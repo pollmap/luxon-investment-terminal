@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "Local-first source-traced investment terminal"
 requires-python = ">=3.12"
 dependencies = [
+  "anyio>=4.14.2,<5",
   "beautifulsoup4>=4.14.0",
   "duckdb>=1.5.0",
   "fastapi>=0.136.0",
@@ -20,6 +21,7 @@ dependencies = [
   "pydantic>=2.12.0",
   "pyarrow>=23.0.0",
   "sqlalchemy>=2.0.0",
+  "soupsieve>=2.9,<3",
   "uvicorn>=0.38.0"
 ]
 
@@ -33,6 +35,7 @@ include = ["backend*", "data*", "mcp*", "packages*", "services*"]
 namespaces = false
 
 [project.optional-dependencies]
+market = ["redis>=5.0.0", "websockets>=15.0.0"]
 ingestion = [
   "beautifulsoup4>=4.14.0",
   "finance-datareader>=0.9.96",
@@ -51,6 +54,7 @@ migration = [
 ]
 dev = [
   "alembic>=1.18.0",
+  "cryptography>=50.0.2,<51",
   "beautifulsoup4>=4.14.0",
   "duckdb>=1.5.0",
   "finance-datareader>=0.9.96",

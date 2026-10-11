@@ -1,0 +1,505 @@
+{
+  "release": "20261010-read-consistency-v119",
+  "recorded_at": "2026-10-10T05:07:59.542150+00:00",
+  "source_commit": "d1cb16baae741b32316fd8b3fbfe2602e4c1449c",
+  "cloudflare_version": "2ec32521-be85-458f-888a-8927490652f3",
+  "backend_archive_sha256": "6ce88c500b92b572d5d8325e236a802ce1389d0def96bb2ac16277478c134473",
+  "backend_image": "sha256:82c2d5694232af487fbb41d9b27f016a11de1cbc788b9c5631e63ee6c4581882",
+  "static_deployment": {
+    "status": "promoted",
+    "release": "20261010-read-consistency-v119",
+    "files": 73,
+    "bytes": 24336138,
+    "nginx_backup": "/srv/services/korea-stocks/backups/nginx/hannun-20261010T050544531907Z-static-20261010-read-consistency-v119.conf",
+    "web": "stopped",
+    "static_root": "/srv/services/korea-stocks/releases/20261010-read-consistency-v119/static-web",
+    "previous_static": "/srv/services/korea-stocks/releases/20261010-read-consistency-v119/static-web.previous-20261010T050544531907Z",
+    "marker": "/srv/services/korea-stocks/releases/20261010-read-consistency-v119/static-web-deployment.json",
+    "public_root": "/var/www/korea-stocks/releases/20261010-read-consistency-v119-20261010T050544531907Z",
+    "previous_public": "/var/www/korea-stocks/releases/20261010-backfill-status-v118-20261010T045216501826Z",
+    "archive_sha256": "a913020da8c21f4a0a5eb9217d93ddd841bda3f440cdb9ecfca44063a3a6a3a3",
+    "nginx_before_sha256": "5f0b84a690b2635422ecca8d427657cba490dcb946d0ac60d9337014965c10ab",
+    "nginx_after_sha256": "5f0b84a690b2635422ecca8d427657cba490dcb946d0ac60d9337014965c10ab"
+  },
+  "public_checks": {
+    "at": "2026-10-10T05:06:18.818893+00:00",
+    "release": "20261010-read-consistency-v119",
+    "verification_commit": "d1cb16baae741b32316fd8b3fbfe2602e4c1449c",
+    "manifest_sha256": "4c86055d240e4f5d003ba92e257be25f6084ebdb131ec10f580636b3a9cb94ab",
+    "checks": [
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/build-manifest.json",
+        "status": 200,
+        "exact_bytes": true
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/stocks",
+        "status": 200,
+        "sha256": "1e37076997a0fd67bd560ca241d7142dbbaf8a35a70c48ea35cc62316f870d92"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/_next/static/css/56d4c3297aff6eef.css",
+        "status": 200,
+        "sha256": "bfa719c1a38d040e116184ef6b4b2033a0f49b220fc68c7ad0e7ab724e90f802"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/_next/static/chunks/109-501f3365c70aacdb.js",
+        "status": 200,
+        "sha256": "7f978c7c5cd83d6ec2a8132abf45cb6dc0ce896220e50ed24fd8d8d71a6aa664"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/stocks/fonts/PretendardVariable.woff2",
+        "status": 200,
+        "sha256": "9599f12fd42fc0bce1cd50b47a0c022e108d7aa64dd0d1bb0ed44f3282d900b4"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/health",
+        "status": 200,
+        "bytes": 618
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/search?q=005930",
+        "status": 200,
+        "bytes": 3715
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/securities/005930?view=summary",
+        "status": 200,
+        "bytes": 1868
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/securities/094800?view=summary",
+        "status": 200,
+        "bytes": 1102
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/build-manifest.json",
+        "status": 200,
+        "exact_bytes": true
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/stocks",
+        "status": 200,
+        "sha256": "1e37076997a0fd67bd560ca241d7142dbbaf8a35a70c48ea35cc62316f870d92"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/_next/static/css/56d4c3297aff6eef.css",
+        "status": 200,
+        "sha256": "bfa719c1a38d040e116184ef6b4b2033a0f49b220fc68c7ad0e7ab724e90f802"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/_next/static/chunks/109-501f3365c70aacdb.js",
+        "status": 200,
+        "sha256": "7f978c7c5cd83d6ec2a8132abf45cb6dc0ce896220e50ed24fd8d8d71a6aa664"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/stocks/fonts/PretendardVariable.woff2",
+        "status": 200,
+        "sha256": "9599f12fd42fc0bce1cd50b47a0c022e108d7aa64dd0d1bb0ed44f3282d900b4"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/health",
+        "status": 200,
+        "bytes": 618
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/search?q=005930",
+        "status": 200,
+        "bytes": 3715
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/securities/005930?view=summary",
+        "status": 200,
+        "bytes": 1868
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/securities/094800?view=summary",
+        "status": 200,
+        "bytes": 1102
+      }
+    ],
+    "load_test": false,
+    "fresh_stream_test": false,
+    "passed": true
+  },
+  "local_tests": {
+    "bars": 163,
+    "collection": 58,
+    "fixture_only": true
+  },
+  "postgres_fixture": {
+    "fixture_non_production": true,
+    "production_contacted": false,
+    "existing_cluster_used": false,
+    "deleted": false,
+    "passed": true,
+    "cases": [
+      {
+        "existing": false,
+        "toss_first": false,
+        "database_lock_observed": true,
+        "receipt_and_independent_sections_preserved": true,
+        "attempts": 1
+      },
+      {
+        "existing": false,
+        "toss_first": true,
+        "database_lock_observed": true,
+        "receipt_and_independent_sections_preserved": true,
+        "attempts": 1
+      },
+      {
+        "existing": true,
+        "toss_first": false,
+        "database_lock_observed": true,
+        "receipt_and_independent_sections_preserved": true,
+        "attempts": 3
+      },
+      {
+        "existing": true,
+        "toss_first": true,
+        "database_lock_observed": true,
+        "receipt_and_independent_sections_preserved": true,
+        "attempts": 3
+      }
+    ],
+    "limits": {
+      "seconds": 120,
+      "cluster_bytes": 268435456
+    },
+    "postgres_version_num": 170011,
+    "reservation_rollback": true,
+    "stop_exit": 0,
+    "status_exit": 3,
+    "cluster_stopped": true,
+    "elapsed_seconds": 19.375,
+    "cluster_bytes": 49434176,
+    "source_sha256": {
+      "services/market_dashboard/collection.py": "cb61b7a26f03baab356b61c5c4cc22085e77718ddbbea8a864c1051df4677b08",
+      "tests/test_collection_merge.py": "24fa2f8e830224c3da97fd5a462d72263f2f0433322c3592ec8e5b776becc383"
+    }
+  },
+  "bars_before": {
+    "at": "2026-10-10T05:00:01.070086+00:00",
+    "phase": "before",
+    "path": "/api/market/v1/securities/005930/bars?venue=%ED%86%B5%ED%95%A9&interval=day&start=2026-09-01&end=2026-10-08&adjustment=source",
+    "concurrency": 1,
+    "scope": "three sequential existing public range requests",
+    "rows": [
+      {
+        "ms": 11548.39,
+        "status": 200,
+        "transport": "openalgo",
+        "count": 25,
+        "rows_sha256": "817ebda52b701c5b338c2efc8e66de539a413cda5b8635613b51f34fcd7c5218",
+        "first": "2026-09-01",
+        "last": "2026-10-08"
+      },
+      {
+        "ms": 546.17,
+        "status": 200,
+        "transport": "openalgo",
+        "count": 25,
+        "rows_sha256": "817ebda52b701c5b338c2efc8e66de539a413cda5b8635613b51f34fcd7c5218",
+        "first": "2026-09-01",
+        "last": "2026-10-08"
+      },
+      {
+        "ms": 397.29,
+        "status": 200,
+        "transport": "openalgo",
+        "count": 25,
+        "rows_sha256": "817ebda52b701c5b338c2efc8e66de539a413cda5b8635613b51f34fcd7c5218",
+        "first": "2026-09-01",
+        "last": "2026-10-08"
+      }
+    ]
+  },
+  "bars_after": {
+    "at": "2026-10-10T05:05:21.192551+00:00",
+    "phase": "after",
+    "path": "/api/market/v1/securities/005930/bars?venue=%ED%86%B5%ED%95%A9&interval=day&start=2026-09-01&end=2026-10-08&adjustment=source",
+    "concurrency": 1,
+    "scope": "three sequential existing public range requests",
+    "rows": [
+      {
+        "ms": 8308.15,
+        "status": 200,
+        "transport": "stored_fallback",
+        "count": 25,
+        "rows_sha256": "817ebda52b701c5b338c2efc8e66de539a413cda5b8635613b51f34fcd7c5218",
+        "first": "2026-09-01",
+        "last": "2026-10-08"
+      },
+      {
+        "ms": 329.87,
+        "status": 200,
+        "transport": "stored_fallback",
+        "count": 25,
+        "rows_sha256": "817ebda52b701c5b338c2efc8e66de539a413cda5b8635613b51f34fcd7c5218",
+        "first": "2026-09-01",
+        "last": "2026-10-08"
+      },
+      {
+        "ms": 306.34,
+        "status": 200,
+        "transport": "stored_fallback",
+        "count": 25,
+        "rows_sha256": "817ebda52b701c5b338c2efc8e66de539a413cda5b8635613b51f34fcd7c5218",
+        "first": "2026-09-01",
+        "last": "2026-10-08"
+      }
+    ]
+  },
+  "bars_later": {
+    "at": "2026-10-10T05:06:52.608557+00:00",
+    "status": 200,
+    "ms": 3523.17,
+    "transport": "openalgo",
+    "count": 25
+  },
+  "bars_values_unchanged": true,
+  "bars_whole_service_speedup_claim": false,
+  "provider_and_collection_observation": {
+    "at": "2026-10-10T05:07:10.056072+00:00",
+    "rows": {
+      "provider-toss": {
+        "status": "ready",
+        "received_at": "2026-10-10T05:07:09.496559+00:00"
+      },
+      "provider-toss-stream": {
+        "status": "subscribed",
+        "received_at": "2026-10-10T05:06:57.582309+00:00",
+        "epoch": "be5dd45804214c3e8fc728d426bb959b"
+      },
+      "toss-backfill-progress": {
+        "status": "capacity_limited",
+        "cursor": 444,
+        "phase": 1,
+        "attempts": 56787
+      },
+      "collection:035900": {
+        "attempts": 15,
+        "sources": {
+          "credit": {
+            "status": "error",
+            "source": "toss"
+          },
+          "flows": {
+            "status": "ready",
+            "received_at": "2026-10-06T08:04:05.388518+00:00",
+            "source": "네이버 증권 공개 투자자 집계",
+            "as_of": "2026-10-02"
+          },
+          "lending": {
+            "status": "error",
+            "source": "toss"
+          },
+          "short_trades": {
+            "status": "error",
+            "received_at": null,
+            "source": "toss",
+            "as_of": null
+          },
+          "stock_loan": {
+            "status": "error",
+            "source": "toss"
+          }
+        }
+      },
+      "collection:005930": {
+        "attempts": 788,
+        "sources": {
+          "credit": {
+            "status": "ready",
+            "received_at": "2026-10-10T05:04:11.339116+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "complete",
+            "backfill_complete": true
+          },
+          "flows": {
+            "status": "ready",
+            "received_at": "2026-10-09T17:41:39.252568+00:00",
+            "source": "네이버 증권 공개 투자자 집계",
+            "as_of": "2026-10-08"
+          },
+          "lending": {
+            "status": "ready",
+            "received_at": "2026-10-10T05:04:12.004171+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "complete",
+            "backfill_complete": true
+          },
+          "short_trades": {
+            "status": "ready",
+            "received_at": "2026-10-10T05:04:07.376236+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "complete",
+            "backfill_complete": true
+          },
+          "stock_loan": {
+            "status": "ready",
+            "received_at": "2026-10-10T05:04:11.339116+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "complete",
+            "backfill_complete": true
+          }
+        }
+      },
+      "collection:005935": {
+        "attempts": 335,
+        "sources": {
+          "credit": {
+            "status": "ready",
+            "received_at": "2026-10-10T04:52:43.594170+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "complete",
+            "backfill_complete": true
+          },
+          "flows": {
+            "status": "ready",
+            "received_at": "2026-10-09T17:24:49.157881+00:00",
+            "source": "네이버 증권 공개 투자자 집계",
+            "as_of": "2026-10-08"
+          },
+          "lending": {
+            "status": "ready",
+            "received_at": "2026-10-10T04:52:46.514453+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "complete",
+            "backfill_complete": true
+          },
+          "short_trades": {
+            "status": "ready",
+            "received_at": "2026-10-10T04:52:42.137994+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "complete",
+            "backfill_complete": true
+          },
+          "stock_loan": {
+            "status": "ready",
+            "received_at": "2026-10-10T04:52:43.594170+00:00",
+            "source": "toss",
+            "as_of": "2026-10-08",
+            "period": {
+              "end": "2026-10-08",
+              "start": "2026-10-08"
+            },
+            "validated_rows": 1,
+            "history_status": "complete",
+            "backfill_complete": true
+          }
+        }
+      }
+    }
+  },
+  "storage": {
+    "at": "2026-10-10T05:07:17.295212+00:00",
+    "disk": {
+      "total": 154894188544,
+      "used": 138656489472,
+      "free": 16220921856
+    },
+    "used_percent": 89.517,
+    "history_resume_gate": "below 80 percent and write verification",
+    "restore_passed": false,
+    "production_table_migration_executed": false,
+    "original_deleted": false
+  },
+  "fresh_stream_verified": false,
+  "whole_dataset_complete": false,
+  "public_load_targets_passed": false,
+  "previous_load_evidence": "../20261010-backfill-status-v118/ACCEPTANCE.md",
+  "github_checks_at_source_commit": [
+    {
+      "run_id": 38026086019,
+      "conclusion": "success"
+    },
+    {
+      "run_id": 38026088612,
+      "conclusion": "success"
+    }
+  ],
+  "local_evidence": [
+    {
+      "path": "root-v119-bars-tests.xml",
+      "sha256": "286796b76cc0223775dea960271fae33769bc1d7d63443abbb0405405c1b98bd"
+    },
+    {
+      "path": "root-v119-collection-tests.xml",
+      "sha256": "b64018d55d4a9389d79ff857434189bcd4ae02165232484c02f46ccd90c7b5dd"
+    },
+    {
+      "path": "v118-jyp-source-dates.json",
+      "sha256": "483e32f5a9ccdb87b3e2b181aecbe27eafeec980c960b9208934e700d5ade22d"
+    },
+    {
+      "path": "frontend-v118-public-flow.json",
+      "sha256": "4506c4d1c7a7e69f09dae47ec34562e6c595d13390c4f4d8b2fd1698cb0032a9"
+    },
+    {
+      "path": "v118-public-http2.json",
+      "sha256": "6a193e74ac73e65206fad92ba03b6bd316029116a948bbdc1e3010c2ecbe0751"
+    }
+  ]
+}

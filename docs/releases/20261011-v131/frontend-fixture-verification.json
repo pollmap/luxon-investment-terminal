@@ -1,0 +1,156 @@
+{
+  "fixture_non_production": true,
+  "scope": "Chromium local dev UI with intercepted financial fixtures. Not live data, public deployment, physical mobile, or 200% browser zoom validation.",
+  "stats": {
+    "startTime": "2026-10-11T09:59:58.854Z",
+    "duration": 140764.813,
+    "expected": 30,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "measurements": [
+    {
+      "test": "one chart and adaptive depth workspace at 360px",
+      "fixture": true,
+      "width": 360,
+      "chart": {
+        "x": 16,
+        "y": 353.390625,
+        "width": 328,
+        "height": 320
+      }
+    },
+    {
+      "test": "one chart and adaptive depth workspace at 390px",
+      "fixture": true,
+      "width": 390,
+      "chart": {
+        "x": 16,
+        "y": 353.390625,
+        "width": 358,
+        "height": 320
+      }
+    },
+    {
+      "test": "one chart and adaptive depth workspace at 430px",
+      "fixture": true,
+      "width": 430,
+      "chart": {
+        "x": 16,
+        "y": 353.390625,
+        "width": 398,
+        "height": 320
+      }
+    },
+    {
+      "test": "one chart and adaptive depth workspace at 768px",
+      "fixture": true,
+      "width": 768,
+      "chart": {
+        "x": 32,
+        "y": 292.984375,
+        "width": 704,
+        "height": 420
+      }
+    },
+    {
+      "test": "one chart and adaptive depth workspace at 1024px",
+      "fixture": true,
+      "width": 1024,
+      "chart": {
+        "x": 292,
+        "y": 292.984375,
+        "width": 700,
+        "height": 420
+      }
+    },
+    {
+      "test": "one chart and adaptive depth workspace at 1100px",
+      "fixture": true,
+      "width": 1100,
+      "chart": {
+        "x": 292,
+        "y": 244.984375,
+        "width": 776,
+        "height": 420
+      }
+    },
+    {
+      "test": "one chart and adaptive depth workspace at 1280px",
+      "fixture": true,
+      "width": 1280,
+      "chart": {
+        "x": 292,
+        "y": 292.984375,
+        "width": 660,
+        "height": 420
+      }
+    },
+    {
+      "test": "one chart and adaptive depth workspace at 1440px",
+      "fixture": true,
+      "width": 1440,
+      "chart": {
+        "x": 292,
+        "y": 244.984375,
+        "width": 820,
+        "height": 420
+      }
+    },
+    {
+      "test": "one chart and adaptive depth workspace at 1920px",
+      "fixture": true,
+      "width": 1920,
+      "chart": {
+        "x": 412,
+        "y": 244.984375,
+        "width": 1060,
+        "height": 420
+      }
+    },
+    {
+      "test": "mobile compact controls expose candles above the bottom navigation and preserve keyboard/URL choices",
+      "fixture": true,
+      "viewport": [
+        390,
+        844
+      ],
+      "chartTop": 353.390625,
+      "visibleChartBeforeBottomNavigation": 413.609375
+    },
+    {
+      "test": "market shows useful rows before scrolling at 390px",
+      "fixture": true,
+      "width": 390,
+      "visible": 3
+    },
+    {
+      "test": "market shows useful rows before scrolling at 1440px",
+      "fixture": true,
+      "width": 1440,
+      "visible": 8
+    }
+  ],
+  "typecheck": "pass",
+  "eslint": {
+    "errors": 0,
+    "warnings": 1,
+    "warning": "Existing brand img next/no-img-element"
+  },
+  "unchanged_storage_contracts": [
+    "korea-stocks preferences schema and browser keys",
+    "stocks.chart per-security settings",
+    "existing share URL routes"
+  ],
+  "review": "React best practices: no new dependency, no chart duplication, existing preload and request dedup retained; accessibility labels and actual VI/suspension warnings retained.",
+  "market_followup": {
+    "startTime": "2026-10-11T10:03:45.857Z",
+    "duration": 6527.8460000000005,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "market_followup_reason": "Adding an explicit market date shifted a legacy nth-child selector; changed to the semantic mk-strip-flat class so declining-stock breadth remains visible."
+}

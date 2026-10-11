@@ -1,0 +1,1709 @@
+{
+  "release": "20261010-search-intent-v123",
+  "source_commit": "2ed002f36df5fe516b0d1a6018b930fd9b02f1d9",
+  "verification_commit": "2ed002f36df5fe516b0d1a6018b930fd9b02f1d9",
+  "backend_source_changed_from_v122": false,
+  "backend_archive_sha256": "5038f831288a6e48338b3ee30026c2fd89f76b93a02caa7b3bbaf4bdff67afba",
+  "backend_image": "sha256:a03b83194f8c231fbd34bc26d462d87b8fc968005da2eca26028f1479233d5d7",
+  "cloudflare_version": "24bcda0d-6762-445c-991e-84aff01946d4",
+  "static": {
+    "status": "promoted",
+    "release": "20261010-search-intent-v123",
+    "files": 73,
+    "bytes": 24336596,
+    "nginx_backup": "/srv/services/korea-stocks/backups/nginx/hannun-20261010T064235304193Z-static-20261010-search-intent-v123.conf",
+    "web": "stopped",
+    "static_root": "/srv/services/korea-stocks/releases/20261010-search-intent-v123/static-web",
+    "previous_static": "/srv/services/korea-stocks/releases/20261010-search-intent-v123/static-web.previous-20261010T064235304193Z",
+    "marker": "/srv/services/korea-stocks/releases/20261010-search-intent-v123/static-web-deployment.json",
+    "public_root": "/var/www/korea-stocks/releases/20261010-search-intent-v123-20261010T064235304193Z",
+    "previous_public": "/var/www/korea-stocks/releases/20261010-active-refresh-v122-20261010T061645858519Z",
+    "archive_sha256": "767d8a03dd7aea068d6bada9852d2d92bd977807cfe9d145fc7d6332c85d5eb6",
+    "nginx_before_sha256": "5f0b84a690b2635422ecca8d427657cba490dcb946d0ac60d9337014965c10ab",
+    "nginx_after_sha256": "5f0b84a690b2635422ecca8d427657cba490dcb946d0ac60d9337014965c10ab"
+  },
+  "public": {
+    "at": "2026-10-10T06:44:59.287506+00:00",
+    "release": "20261010-search-intent-v123",
+    "verification_commit": "2ed002f36df5fe516b0d1a6018b930fd9b02f1d9",
+    "manifest_sha256": "73eae7fbac6000dee3974a4f46bcf802d772ab09eb977b1e77039def54b09c3b",
+    "checks": [
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/build-manifest.json",
+        "status": 200,
+        "exact_bytes": true
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/stocks",
+        "status": 200,
+        "sha256": "06fa5f786cd5bc7ace28c53e37c4a0b5de1c11b4ad65924ad66ced96534e44e0"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/_next/static/css/56d4c3297aff6eef.css",
+        "status": 200,
+        "sha256": "bfa719c1a38d040e116184ef6b4b2033a0f49b220fc68c7ad0e7ab724e90f802"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/_next/static/chunks/109-6c3ff03a1bf1a349.js",
+        "status": 200,
+        "sha256": "d0ee6c64e411cf4e17a718206759b6b6f67590e056178788ec8151d6e28b4083"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/stocks/fonts/PretendardVariable.woff2",
+        "status": 200,
+        "sha256": "9599f12fd42fc0bce1cd50b47a0c022e108d7aa64dd0d1bb0ed44f3282d900b4"
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/health",
+        "status": 200,
+        "bytes": 616
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/search?q=005930",
+        "status": 200,
+        "bytes": 3715
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/securities/005930?view=summary",
+        "status": 200,
+        "bytes": 1868
+      },
+      {
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "path": "/securities/094800?view=summary",
+        "status": 200,
+        "bytes": 1102
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/build-manifest.json",
+        "status": 200,
+        "exact_bytes": true
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/stocks",
+        "status": 200,
+        "sha256": "06fa5f786cd5bc7ace28c53e37c4a0b5de1c11b4ad65924ad66ced96534e44e0"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/_next/static/css/56d4c3297aff6eef.css",
+        "status": 200,
+        "sha256": "bfa719c1a38d040e116184ef6b4b2033a0f49b220fc68c7ad0e7ab724e90f802"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/_next/static/chunks/109-6c3ff03a1bf1a349.js",
+        "status": 200,
+        "sha256": "d0ee6c64e411cf4e17a718206759b6b6f67590e056178788ec8151d6e28b4083"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/stocks/fonts/PretendardVariable.woff2",
+        "status": 200,
+        "sha256": "9599f12fd42fc0bce1cd50b47a0c022e108d7aa64dd0d1bb0ed44f3282d900b4"
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/health",
+        "status": 200,
+        "bytes": 615
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/search?q=005930",
+        "status": 200,
+        "bytes": 3715
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/securities/005930?view=summary",
+        "status": 200,
+        "bytes": 1868
+      },
+      {
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "path": "/securities/094800?view=summary",
+        "status": 200,
+        "bytes": 1102
+      }
+    ],
+    "load_test": false,
+    "fresh_stream_test": false,
+    "passed": true
+  },
+  "browser": {
+    "started_at": "2026-10-10T06:46:13.867Z",
+    "scope": "Exactly two public UI observations, isolated Chromium; not a load test, Android test or user acceptance test",
+    "fixture_non_production": false,
+    "release": "20261010-search-intent-v123",
+    "source_commit": "2ed002f",
+    "cloudflare_version": "24bcda0d-6762-445c-991e-84aff01946d4",
+    "manifest_sha256": "73eae7fbac6000dee3974a4f46bcf802d772ab09eb977b1e77039def54b09c3b",
+    "timing_scope": "One ordinary observation per host/width; no before/after improvement claim",
+    "screenshots": "viewport only",
+    "steps": [
+      {
+        "name": "vps",
+        "host": "https://stocks.62-171-141-206.sslip.io",
+        "width": 390,
+        "checks": [
+          {
+            "name": "initial-market",
+            "width": 390,
+            "document_width": 390,
+            "body_width": 390,
+            "scroll_y": 0
+          },
+          {
+            "name": "chosung-results",
+            "width": 390,
+            "document_width": 390,
+            "body_width": 390,
+            "scroll_y": 0
+          },
+          {
+            "name": "detail",
+            "width": 390,
+            "document_width": 390,
+            "body_width": 390,
+            "scroll_y": 0
+          },
+          {
+            "name": "return_and_reuse",
+            "url": "https://stocks.62-171-141-206.sslip.io/stocks",
+            "search_index_requests": 1
+          },
+          {
+            "name": "reused-search",
+            "width": 390,
+            "document_width": 390,
+            "body_width": 390,
+            "scroll_y": 0
+          }
+        ],
+        "api_requests": [
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/metrics",
+            "start_elapsed_ms": 6058,
+            "status": 200,
+            "response_elapsed_ms": 6926,
+            "finished_elapsed_ms": 6926,
+            "timing": {
+              "startTime": 1791614783556.633,
+              "domainLookupStart": 1.149,
+              "domainLookupEnd": 1.156,
+              "connectStart": 1.156,
+              "secureConnectionStart": 280.103,
+              "connectEnd": 558.948,
+              "requestStart": 559.12,
+              "responseStart": 859.982,
+              "responseEnd": 867.487
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 375,
+              "responseBodySize": 1613,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/indices/KOSPI/chart?period=day",
+            "start_elapsed_ms": 8220,
+            "status": 200,
+            "response_elapsed_ms": 8564,
+            "finished_elapsed_ms": 8564,
+            "timing": {
+              "startTime": 1791614785720.3691,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 0.768,
+              "responseStart": 336.233,
+              "responseEnd": 353.027
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 387,
+              "responseBodySize": 1703,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/indices/KOSDAQ/chart?period=day",
+            "start_elapsed_ms": 8223,
+            "status": 200,
+            "response_elapsed_ms": 8736,
+            "finished_elapsed_ms": 8736,
+            "timing": {
+              "startTime": 1791614785722.6128,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 1.517,
+              "responseStart": 505.836,
+              "responseEnd": 524.153
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 388,
+              "responseBodySize": 1534,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/indices/KPI200/chart?period=day",
+            "start_elapsed_ms": 8224,
+            "status": 200,
+            "response_elapsed_ms": 8736,
+            "finished_elapsed_ms": 8750,
+            "timing": {
+              "startTime": 1791614785722.707,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 2.159,
+              "responseStart": 505.831,
+              "responseEnd": 538.39
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 388,
+              "responseBodySize": 3477,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/news?limit=6",
+            "start_elapsed_ms": 8226,
+            "status": 200,
+            "response_elapsed_ms": 11913,
+            "finished_elapsed_ms": 11918,
+            "timing": {
+              "startTime": 1791614785723.0608,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 2.145,
+              "responseStart": 3681.986,
+              "responseEnd": 3699.538
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 372,
+              "responseBodySize": 1941,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "POST",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/screener",
+            "start_elapsed_ms": 8227,
+            "status": 200,
+            "response_elapsed_ms": 9036,
+            "finished_elapsed_ms": 9038,
+            "timing": {
+              "startTime": 1791614785724.1829,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 2.268,
+              "responseStart": 804.873,
+              "responseEnd": 818.719
+            },
+            "bytes": {
+              "requestBodySize": 105,
+              "requestHeadersSize": 457,
+              "responseBodySize": 16407,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/overview",
+            "start_elapsed_ms": 8227,
+            "status": 200,
+            "response_elapsed_ms": 11993,
+            "finished_elapsed_ms": 11994,
+            "timing": {
+              "startTime": 1791614785723.239,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 2.442,
+              "responseStart": 3761.569,
+              "responseEnd": 3773.137
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 376,
+              "responseBodySize": 10262,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/sectors",
+            "start_elapsed_ms": 8231,
+            "status": 200,
+            "response_elapsed_ms": 8840,
+            "finished_elapsed_ms": 8840,
+            "timing": {
+              "startTime": 1791614785726.88,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 0.769,
+              "responseStart": 605.626,
+              "responseEnd": 609.804
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 375,
+              "responseBodySize": 6884,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "POST",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/screener",
+            "start_elapsed_ms": 9081,
+            "status": 200,
+            "response_elapsed_ms": 11876,
+            "finished_elapsed_ms": 11877,
+            "timing": {
+              "startTime": 1791614786577.3088,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 1.564,
+              "responseStart": 2790.591,
+              "responseEnd": 2802.02
+            },
+            "bytes": {
+              "requestBodySize": 112,
+              "requestHeadersSize": 457,
+              "responseBodySize": 16407,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/search-index",
+            "start_elapsed_ms": 10046,
+            "status": 200,
+            "response_elapsed_ms": 13586,
+            "finished_elapsed_ms": 13867,
+            "timing": {
+              "startTime": 1791614787543.465,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 0.684,
+              "responseStart": 3533.403,
+              "responseEnd": 3818.029
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 380,
+              "responseBodySize": 78476,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/search?q=%E3%85%85%E3%85%85%E3%85%88%E3%85%88",
+            "start_elapsed_ms": 10184,
+            "status": 200,
+            "response_elapsed_ms": 11908,
+            "finished_elapsed_ms": 11912,
+            "timing": {
+              "startTime": 1791614787679.654,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 0.648,
+              "responseStart": 1720.713,
+              "responseEnd": 1723.213
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 374,
+              "responseBodySize": 1862,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "POST",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/screener",
+            "start_elapsed_ms": 12115,
+            "status": 200,
+            "response_elapsed_ms": 13309,
+            "finished_elapsed_ms": 13310,
+            "timing": {
+              "startTime": 1791614789611.547,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 0.625,
+              "responseStart": 1189.437,
+              "responseEnd": 1193.666
+            },
+            "bytes": {
+              "requestBodySize": 112,
+              "requestHeadersSize": 457,
+              "responseBodySize": 16407,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "POST",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/screener",
+            "start_elapsed_ms": 14000,
+            "status": 200,
+            "response_elapsed_ms": 14302,
+            "finished_elapsed_ms": 14302,
+            "timing": {
+              "startTime": 1791614791495.296,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 0.654,
+              "responseStart": 299.214,
+              "responseEnd": 304.726
+            },
+            "bytes": {
+              "requestBodySize": 32,
+              "requestHeadersSize": 469,
+              "responseBodySize": 3028,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/securities/005930?view=summary",
+            "start_elapsed_ms": 14588,
+            "status": 200,
+            "response_elapsed_ms": 14922,
+            "finished_elapsed_ms": 14922,
+            "timing": {
+              "startTime": 1791614792085.041,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 0.802,
+              "responseStart": 329.002,
+              "responseEnd": 333.69
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 397,
+              "responseBodySize": 1540,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/securities/005930/quote",
+            "start_elapsed_ms": 14590,
+            "status": 200,
+            "response_elapsed_ms": 14934,
+            "finished_elapsed_ms": 14935,
+            "timing": {
+              "startTime": 1791614792085.571,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 0.569,
+              "responseStart": 336.469,
+              "responseEnd": 341.26
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 403,
+              "responseBodySize": 2744,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/securities/005930/chart?period=day",
+            "start_elapsed_ms": 14590,
+            "status": 200,
+            "response_elapsed_ms": 14904,
+            "finished_elapsed_ms": 14905,
+            "timing": {
+              "startTime": 1791614792086.44,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 0.408,
+              "responseStart": 310.643,
+              "responseEnd": 314.888
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 403,
+              "responseBodySize": 3876,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/securities/005930/warnings",
+            "start_elapsed_ms": 15240,
+            "failure": "net::ERR_ABORTED"
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/securities/005930/price-window?view=returns",
+            "start_elapsed_ms": 15241,
+            "failure": "net::ERR_ABORTED"
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/securities/005930/financials/timeline",
+            "start_elapsed_ms": 15242,
+            "failure": "net::ERR_ABORTED"
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/indices/KOSPI/chart?period=day",
+            "start_elapsed_ms": 15403
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/indices/KOSDAQ/chart?period=day",
+            "start_elapsed_ms": 15404
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/indices/KPI200/chart?period=day",
+            "start_elapsed_ms": 15406
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/news?limit=6",
+            "start_elapsed_ms": 15406
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/overview",
+            "start_elapsed_ms": 15406
+          },
+          {
+            "method": "POST",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/screener",
+            "start_elapsed_ms": 15408
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/sectors",
+            "start_elapsed_ms": 15410
+          }
+        ],
+        "page_errors": [],
+        "http_errors": [],
+        "request_failures": [
+          {
+            "url": "https://stocks.62-171-141-206.sslip.io/api/market/v1/securities/005930/warnings",
+            "error": "net::ERR_ABORTED"
+          },
+          {
+            "url": "https://stocks.62-171-141-206.sslip.io/api/market/v1/securities/005930/price-window?view=returns",
+            "error": "net::ERR_ABORTED"
+          },
+          {
+            "url": "https://stocks.62-171-141-206.sslip.io/api/market/v1/securities/005930/financials/timeline",
+            "error": "net::ERR_ABORTED"
+          }
+        ],
+        "blocked": [],
+        "public_manifest_sha256": "73eae7fbac6000dee3974a4f46bcf802d772ab09eb977b1e77039def54b09c3b",
+        "initial_list": {
+          "elapsed_ms": 9266,
+          "search_index_requests": 0,
+          "navigation": {
+            "response_start_ms": 3692.599999964237,
+            "response_end_ms": 3702.899999976158,
+            "dom_content_loaded_ms": 4735.5
+          }
+        },
+        "first_search": {
+          "elapsed_since_focus_ms": 3878,
+          "search_index_requests": 1,
+          "index_rows": 2765,
+          "query": "ㅅㅅㅈㅈ",
+          "selected_result": "삼성전자\n005930 · KOSPI"
+        },
+        "status": "passed"
+      },
+      {
+        "name": "cloudflare",
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "width": 1440,
+        "checks": [
+          {
+            "name": "initial-market",
+            "width": 1440,
+            "document_width": 1440,
+            "body_width": 1440,
+            "scroll_y": 0
+          }
+        ],
+        "api_requests": [
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/metrics",
+            "start_elapsed_ms": 8137,
+            "status": 200,
+            "response_elapsed_ms": 8998,
+            "finished_elapsed_ms": 8998,
+            "timing": {
+              "startTime": 1791614802245.0059,
+              "domainLookupStart": 0.573,
+              "domainLookupEnd": 1.526,
+              "connectStart": 1.599,
+              "secureConnectionStart": 280.838,
+              "connectEnd": 570.425,
+              "requestStart": 570.682,
+              "responseStart": 856.712,
+              "responseEnd": 861.337
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 443,
+              "responseBodySize": 1739,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/indices/KOSPI/chart?period=day",
+            "start_elapsed_ms": 8798,
+            "status": 200,
+            "response_elapsed_ms": 9108,
+            "finished_elapsed_ms": 9108,
+            "timing": {
+              "startTime": 1791614802907.559,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 4.893,
+              "responseStart": 304.026,
+              "responseEnd": 315.418
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 455,
+              "responseBodySize": 1829,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/indices/KOSDAQ/chart?period=day",
+            "start_elapsed_ms": 8799,
+            "status": 200,
+            "response_elapsed_ms": 9156,
+            "finished_elapsed_ms": 9157,
+            "timing": {
+              "startTime": 1791614802911.0552,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 12.553,
+              "responseStart": 349.304,
+              "responseEnd": 363.39
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 456,
+              "responseBodySize": 1660,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/indices/KPI200/chart?period=day",
+            "start_elapsed_ms": 8799,
+            "status": 200,
+            "response_elapsed_ms": 9156,
+            "finished_elapsed_ms": 9267,
+            "timing": {
+              "startTime": 1791614802911.1372,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 12.689,
+              "responseStart": 349.291,
+              "responseEnd": 474.217
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 456,
+              "responseBodySize": 3605,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/news?limit=6",
+            "start_elapsed_ms": 8801,
+            "status": 200,
+            "response_elapsed_ms": 11490,
+            "finished_elapsed_ms": 11493,
+            "timing": {
+              "startTime": 1791614802911.196,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 13.015,
+              "responseStart": 2680.591,
+              "responseEnd": 2694.172
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 440,
+              "responseBodySize": 2067,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/overview",
+            "start_elapsed_ms": 8806,
+            "status": 200,
+            "response_elapsed_ms": 11490,
+            "finished_elapsed_ms": 11492,
+            "timing": {
+              "startTime": 1791614802921.4978,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 2.568,
+              "responseStart": 2670.134,
+              "responseEnd": 2691.659
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 444,
+              "responseBodySize": 10389,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/sectors",
+            "start_elapsed_ms": 8813,
+            "status": 200,
+            "response_elapsed_ms": 9275,
+            "finished_elapsed_ms": 9275,
+            "timing": {
+              "startTime": 1791614802921.737,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 2.602,
+              "responseStart": 457.693,
+              "responseEnd": 469.171
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 443,
+              "responseBodySize": 7010,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "POST",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/screener",
+            "start_elapsed_ms": 8816,
+            "status": 200,
+            "response_elapsed_ms": 9436,
+            "finished_elapsed_ms": 9438,
+            "timing": {
+              "startTime": 1791614802923.7358,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 0.808,
+              "responseStart": 616.598,
+              "responseEnd": 639.612
+            },
+            "bytes": {
+              "requestBodySize": 105,
+              "requestHeadersSize": 477,
+              "responseBodySize": 16533,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "POST",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/screener",
+            "start_elapsed_ms": 9474,
+            "status": 200,
+            "response_elapsed_ms": 11487,
+            "finished_elapsed_ms": 11490,
+            "timing": {
+              "startTime": 1791614803581.791,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 0.69,
+              "responseStart": 2007.992,
+              "responseEnd": 2017.943
+            },
+            "bytes": {
+              "requestBodySize": 112,
+              "requestHeadersSize": 477,
+              "responseBodySize": 16533,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "korea-stocks-edge.lch68-workers.workers.dev",
+            "path": "/api/market/v1/search-index",
+            "start_elapsed_ms": 9566,
+            "status": 200,
+            "response_elapsed_ms": 11532,
+            "failure": "net::ERR_ABORTED"
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/search?q=%E3%85%85%E3%85%85%E3%85%88%E3%85%88",
+            "start_elapsed_ms": 9691,
+            "status": 200,
+            "response_elapsed_ms": 11489,
+            "finished_elapsed_ms": 11490,
+            "timing": {
+              "startTime": 1791614803798.027,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 0.654,
+              "responseStart": 1791.75,
+              "responseEnd": 1795.838
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 442,
+              "responseBodySize": 1906,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "POST",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/screener",
+            "start_elapsed_ms": 12491
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/search-index",
+            "start_elapsed_ms": 12585
+          }
+        ],
+        "page_errors": [],
+        "http_errors": [],
+        "request_failures": [
+          {
+            "url": "https://korea-stocks-edge.lch68-workers.workers.dev/api/market/v1/search-index",
+            "error": "net::ERR_ABORTED"
+          }
+        ],
+        "blocked": [],
+        "public_manifest_sha256": "73eae7fbac6000dee3974a4f46bcf802d772ab09eb977b1e77039def54b09c3b",
+        "initial_list": {
+          "elapsed_ms": 9490,
+          "search_index_requests": 0,
+          "navigation": {
+            "response_start_ms": 3456.7999999523163,
+            "response_end_ms": 6788.899999976158,
+            "dom_content_loaded_ms": 8092.899999976158
+          }
+        },
+        "status": "failed",
+        "error": "Error: response.json: Protocol error (Network.getResponseBody): No data found for resource with given identifier\nResponse body is not available for a response that was navigated away from. Read response.body() before triggering any navigation.",
+        "url": "https://korea-stocks-edge.lch68-workers.workers.dev/stocks"
+      }
+    ],
+    "finished_at": "2026-10-10T06:46:46.921Z"
+  },
+  "browser_cloudflare_one_retry": {
+    "started_at": "2026-10-10T06:47:55.471Z",
+    "scope": "Exactly two public UI observations, isolated Chromium; not a load test, Android test or user acceptance test",
+    "fixture_non_production": false,
+    "release": "20261010-search-intent-v123",
+    "source_commit": "2ed002f",
+    "cloudflare_version": "24bcda0d-6762-445c-991e-84aff01946d4",
+    "manifest_sha256": "73eae7fbac6000dee3974a4f46bcf802d772ab09eb977b1e77039def54b09c3b",
+    "timing_scope": "One ordinary observation per host/width; no before/after improvement claim",
+    "screenshots": "viewport only",
+    "steps": [
+      {
+        "name": "cloudflare",
+        "host": "https://korea-stocks-edge.lch68-workers.workers.dev",
+        "width": 1440,
+        "checks": [
+          {
+            "name": "initial-market",
+            "width": 1440,
+            "document_width": 1440,
+            "body_width": 1440,
+            "scroll_y": 0
+          },
+          {
+            "name": "chosung-results",
+            "width": 1440,
+            "document_width": 1440,
+            "body_width": 1440,
+            "scroll_y": 0
+          },
+          {
+            "name": "detail",
+            "width": 1440,
+            "document_width": 1440,
+            "body_width": 1440,
+            "scroll_y": 0
+          },
+          {
+            "name": "return_and_reuse",
+            "url": "https://korea-stocks-edge.lch68-workers.workers.dev/stocks",
+            "search_index_requests": 1
+          },
+          {
+            "name": "reused-search",
+            "width": 1440,
+            "document_width": 1440,
+            "body_width": 1440,
+            "scroll_y": 0
+          }
+        ],
+        "api_requests": [
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/metrics",
+            "start_elapsed_ms": 1555,
+            "status": 200,
+            "response_elapsed_ms": 2849,
+            "finished_elapsed_ms": 2850,
+            "timing": {
+              "startTime": 1791614878466.7952,
+              "domainLookupStart": 0.633,
+              "domainLookupEnd": 1.569,
+              "connectStart": 1.635,
+              "secureConnectionStart": 415.468,
+              "connectEnd": 693.17,
+              "requestStart": 693.784,
+              "responseStart": 1289.544,
+              "responseEnd": 1295.546
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 443,
+              "responseBodySize": 1738,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/indices/KOSPI/chart?period=day",
+            "start_elapsed_ms": 1802,
+            "status": 200,
+            "response_elapsed_ms": 2661,
+            "finished_elapsed_ms": 2662,
+            "timing": {
+              "startTime": 1791614878714.7678,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 445.702,
+              "responseStart": 851.808,
+              "responseEnd": 865.637
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 455,
+              "responseBodySize": 1829,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/indices/KOSDAQ/chart?period=day",
+            "start_elapsed_ms": 1804,
+            "status": 200,
+            "response_elapsed_ms": 2661,
+            "finished_elapsed_ms": 2665,
+            "timing": {
+              "startTime": 1791614878716.1902,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 444.115,
+              "responseStart": 850.22,
+              "responseEnd": 867.037
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 456,
+              "responseBodySize": 1660,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/indices/KPI200/chart?period=day",
+            "start_elapsed_ms": 1804,
+            "status": 200,
+            "response_elapsed_ms": 2661,
+            "finished_elapsed_ms": 2661,
+            "timing": {
+              "startTime": 1791614878716.2651,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 444.152,
+              "responseStart": 849.911,
+              "responseEnd": 863.997
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 456,
+              "responseBodySize": 3606,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/news?limit=6",
+            "start_elapsed_ms": 1806,
+            "failure": "net::ERR_ABORTED"
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/overview",
+            "start_elapsed_ms": 1806,
+            "failure": "net::ERR_ABORTED"
+          },
+          {
+            "method": "POST",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/screener",
+            "start_elapsed_ms": 1808,
+            "status": 200,
+            "response_elapsed_ms": 2936,
+            "finished_elapsed_ms": 2937,
+            "timing": {
+              "startTime": 1791614878718.12,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 442.4,
+              "responseStart": 1123.866,
+              "responseEnd": 1134.347
+            },
+            "bytes": {
+              "requestBodySize": 105,
+              "requestHeadersSize": 477,
+              "responseBodySize": 16419,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/sectors",
+            "start_elapsed_ms": 1809,
+            "status": 200,
+            "response_elapsed_ms": 2800,
+            "finished_elapsed_ms": 2800,
+            "timing": {
+              "startTime": 1791614878719.156,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 441.22,
+              "responseStart": 986.815,
+              "responseEnd": 990.323
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 443,
+              "responseBodySize": 7010,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "POST",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/screener",
+            "start_elapsed_ms": 2971,
+            "failure": "net::ERR_ABORTED"
+          },
+          {
+            "method": "GET",
+            "host": "korea-stocks-edge.lch68-workers.workers.dev",
+            "path": "/api/market/v1/search-index",
+            "start_elapsed_ms": 3312,
+            "status": 200,
+            "response_elapsed_ms": 5378,
+            "finished_elapsed_ms": 5545,
+            "timing": {
+              "startTime": 1791614880222.411,
+              "domainLookupStart": 0.583,
+              "domainLookupEnd": 0.607,
+              "connectStart": 1.081,
+              "secureConnectionStart": 1.081,
+              "connectEnd": 144.118,
+              "requestStart": 144.394,
+              "responseStart": 2061.192,
+              "responseEnd": 2231.408
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 393,
+              "responseBodySize": 78841,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/search?q=%E3%85%85%E3%85%85%E3%85%88%E3%85%88",
+            "start_elapsed_ms": 3433,
+            "failure": "net::ERR_ABORTED"
+          },
+          {
+            "method": "POST",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/screener",
+            "start_elapsed_ms": 5684,
+            "status": 200,
+            "response_elapsed_ms": 6193,
+            "finished_elapsed_ms": 6193,
+            "timing": {
+              "startTime": 1791614882593.455,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 0.695,
+              "responseStart": 506.228,
+              "responseEnd": 511.23
+            },
+            "bytes": {
+              "requestBodySize": 32,
+              "requestHeadersSize": 477,
+              "responseBodySize": 3153,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/securities/005930?view=summary",
+            "start_elapsed_ms": 5986,
+            "status": 200,
+            "response_elapsed_ms": 6382,
+            "finished_elapsed_ms": 6382,
+            "timing": {
+              "startTime": 1791614882898.74,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 2.203,
+              "responseStart": 389.879,
+              "responseEnd": 397.272
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 453,
+              "responseBodySize": 1671,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/securities/005930/quote",
+            "start_elapsed_ms": 5989,
+            "status": 200,
+            "response_elapsed_ms": 6375,
+            "finished_elapsed_ms": 6375,
+            "timing": {
+              "startTime": 1791614882899.1248,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 1.613,
+              "responseStart": 382.884,
+              "responseEnd": 389.731
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 459,
+              "responseBodySize": 2870,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/securities/005930/chart?period=day",
+            "start_elapsed_ms": 5992,
+            "status": 200,
+            "response_elapsed_ms": 6356,
+            "finished_elapsed_ms": 6356,
+            "timing": {
+              "startTime": 1791614882902.275,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 0.619,
+              "responseStart": 360.469,
+              "responseEnd": 366.244
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 459,
+              "responseBodySize": 4001,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/securities/005930/warnings",
+            "start_elapsed_ms": 6707,
+            "status": 200,
+            "response_elapsed_ms": 7121,
+            "finished_elapsed_ms": 7121,
+            "timing": {
+              "startTime": 1791614883618.389,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 0.901,
+              "responseStart": 405.107,
+              "responseEnd": 411.512
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 462,
+              "responseBodySize": 686,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/securities/005930/price-window?view=returns",
+            "start_elapsed_ms": 6709,
+            "status": 200,
+            "response_elapsed_ms": 7105,
+            "finished_elapsed_ms": 7105,
+            "timing": {
+              "startTime": 1791614883618.459,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 0.699,
+              "responseStart": 386.784,
+              "responseEnd": 391.982
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 466,
+              "responseBodySize": 1015,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/securities/005930/financials/timeline",
+            "start_elapsed_ms": 6709,
+            "status": 200,
+            "response_elapsed_ms": 7097,
+            "finished_elapsed_ms": 7102,
+            "timing": {
+              "startTime": 1791614883618.487,
+              "domainLookupStart": -1,
+              "domainLookupEnd": -1,
+              "connectStart": -1,
+              "secureConnectionStart": -1,
+              "connectEnd": -1,
+              "requestStart": 0.772,
+              "responseStart": 339.097,
+              "responseEnd": 343.835
+            },
+            "bytes": {
+              "requestBodySize": 0,
+              "requestHeadersSize": 473,
+              "responseBodySize": 2530,
+              "responseHeadersSize": 0
+            }
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/securities/005930/quote",
+            "start_elapsed_ms": 7008,
+            "failure": "net::ERR_ABORTED"
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/indices/KOSPI/chart?period=day",
+            "start_elapsed_ms": 7195
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/indices/KOSDAQ/chart?period=day",
+            "start_elapsed_ms": 7197
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/indices/KPI200/chart?period=day",
+            "start_elapsed_ms": 7199
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/news?limit=6",
+            "start_elapsed_ms": 7199
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/overview",
+            "start_elapsed_ms": 7202
+          },
+          {
+            "method": "POST",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/screener",
+            "start_elapsed_ms": 7204
+          },
+          {
+            "method": "GET",
+            "host": "stocks.62-171-141-206.sslip.io",
+            "path": "/api/market/v1/sectors",
+            "start_elapsed_ms": 7205
+          }
+        ],
+        "page_errors": [],
+        "http_errors": [],
+        "request_failures": [
+          {
+            "url": "https://stocks.62-171-141-206.sslip.io/api/market/v1/search?q=%E3%85%85%E3%85%85%E3%85%88%E3%85%88",
+            "error": "net::ERR_ABORTED"
+          },
+          {
+            "url": "https://stocks.62-171-141-206.sslip.io/api/market/v1/news?limit=6",
+            "error": "net::ERR_ABORTED"
+          },
+          {
+            "url": "https://stocks.62-171-141-206.sslip.io/api/market/v1/overview",
+            "error": "net::ERR_ABORTED"
+          },
+          {
+            "url": "https://stocks.62-171-141-206.sslip.io/api/market/v1/screener",
+            "error": "net::ERR_ABORTED"
+          },
+          {
+            "url": "https://stocks.62-171-141-206.sslip.io/api/market/v1/securities/005930/quote",
+            "error": "net::ERR_ABORTED"
+          }
+        ],
+        "blocked": [],
+        "public_manifest_sha256": "73eae7fbac6000dee3974a4f46bcf802d772ab09eb977b1e77039def54b09c3b",
+        "initial_list": {
+          "elapsed_ms": 3234,
+          "search_index_requests": 0,
+          "navigation": {
+            "response_start_ms": 542.4000000357628,
+            "response_end_ms": 543.7000000476837,
+            "dom_content_loaded_ms": 823.6000000238419
+          }
+        },
+        "first_search": {
+          "elapsed_since_focus_ms": 2286,
+          "search_index_requests": 1,
+          "index_rows": 2765,
+          "query": "ㅅㅅㅈㅈ",
+          "selected_result": "삼성전자\n005930 · KOSPI"
+        },
+        "status": "passed"
+      }
+    ],
+    "attempt": 2,
+    "retry_reason": "First observation selected a 200 edge response whose body was aborted by the existing 3-second edge budget. Observe a completed response once; preserve the original attempt.",
+    "finished_at": "2026-10-10T06:48:04.358Z"
+  },
+  "first_cloudflare_attempt_retained": true,
+  "local_fixture_verification": {
+    "observed_at": "2026-10-10T06:36:16.621724+00:00",
+    "scope": "Local fixture regression only; no production latency or coverage claim",
+    "fixture_non_production": true,
+    "app_change": "Header search starts the existing shared identity loader only after open/focus or non-empty input; query fallback and shared loader unchanged",
+    "files": [
+      {
+        "path": "apps/web/components/market/header-search.tsx",
+        "sha256": "b64cfc6eefa9be012bbc0154aba10ba7f0da04e4876b7becb4794daeb8649f54"
+      },
+      {
+        "path": "apps/web/tests/market/request-efficiency.spec.ts",
+        "sha256": "5fdcfd2f2da9729739455f5937c4595965e12eba3bec6c1b13c67e322a72ff5b"
+      }
+    ],
+    "verification": {
+      "search_fixture_tests": {
+        "passed": 4,
+        "report": "work/storage-v117/frontend-search-intent-tests.xml"
+      },
+      "route_history_fixture_tests": {
+        "passed": 4,
+        "report": "work/storage-v117/frontend-search-intent-route-tests.xml"
+      },
+      "typescript": {
+        "command": "node node_modules/typescript/bin/tsc --noEmit --incremental false",
+        "exit_code": 0
+      },
+      "eslint": {
+        "command": "node node_modules/eslint/bin/eslint.js components/market/header-search.tsx tests/market/request-efficiency.spec.ts",
+        "exit_code": 0
+      },
+      "generated_config_restored": [
+        {
+          "path": "apps/web/next-env.d.ts",
+          "restored_to_pre_task_head": true
+        },
+        {
+          "path": "apps/web/tsconfig.json",
+          "restored_to_pre_task_head": true
+        }
+      ],
+      "local_dev_server_stopped": true
+    },
+    "limitations": [
+      "No app build, commit or deployment in this task",
+      "No measured production milliseconds saved",
+      "Tests use synthetic fixture data and isolated Chromium, not end-user or real-device testing"
+    ],
+    "runner_note": "pnpm exec initially attempted an install and aborted without a TTY; verification used the existing local Node package binaries without installation."
+  },
+  "github_source_ci_success": [
+    38031635503,
+    38031632634
+  ],
+  "runtime": {
+    "at": "2026-10-10T06:45:17.779507+00:00",
+    "disk": {
+      "total": 154894188544,
+      "used": 138889027584,
+      "free": 15988383744
+    },
+    "changed_containers": [
+      "/korea-stocks-market-api-1",
+      "/korea-stocks-market-worker-1"
+    ],
+    "other_containers_and_mounts_preserved": true,
+    "scheduled_files_preserved": true
+  },
+  "dated_restore_latest_observation": {
+    "at": "2026-10-10T06:45:48.183092+00:00",
+    "checkpoint": {
+      "prefix_sha256": "46228cb9a8eb706ee890cbe5bf324b6a77466a4fafc21d2fa8aee557be9a37d9",
+      "sequence": 32070,
+      "series_complete": false,
+      "series_rows": 12819200,
+      "trace_complete": true,
+      "trace_rows": 8071
+    },
+    "cumulative_approximate_stats": [
+      [
+        "checkpoint",
+        1801,
+        1800,
+        30291,
+        30291,
+        1
+      ],
+      [
+        "rows",
+        5,
+        12819200,
+        9472807,
+        9472812,
+        12819600
+      ],
+      [
+        "traces",
+        4,
+        114830,
+        383810,
+        285118,
+        57417
+      ]
+    ],
+    "activity": [
+      [
+        "active",
+        null,
+        null,
+        0
+      ]
+    ],
+    "free_bytes": 24169295872,
+    "final_proof": false
+  },
+  "current_trace_count": {
+    "at": "2026-10-10T06:43:04.068062+00:00",
+    "source_trace_count": 9557,
+    "source_trace_payload_bytes": 9710874,
+    "time_series_estimated_rows": 16632346.0,
+    "current_snapshot_proof": false,
+    "equality_proof": false
+  },
+  "completion": {
+    "deployed": true,
+    "whole_market_history": false,
+    "production_storage_migration": false,
+    "dated_archive_full_restore": false,
+    "fresh_live_stream": false,
+    "performance_targets": false,
+    "actual_device_and_father_usability": false
+  }
+}

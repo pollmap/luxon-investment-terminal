@@ -1,0 +1,49 @@
+{
+  "at": "2026-10-10T06:30:06.703699+00:00",
+  "release": "20261010-active-refresh-v122",
+  "operation": "inactive_release_retention",
+  "archive_sha256": "d970fe0407effa417078f26b03b047bfe38c1d350b34a9dedb40b33a3d2f9f8e",
+  "compressed_bytes": 101834067,
+  "verified_files": 7530,
+  "all_release_hashes_verified": true,
+  "restored_release": "20261010-archive-atomic-v114",
+  "restored_files": 1864,
+  "restored_bytes": 229527815,
+  "restored_tree_sha256": "e9b51a697b8d01baa8ef9522e78e287530ad01e378d6bd544b11900ae24b79bf",
+  "restore_verified": true,
+  "removed_release_names": [
+    "20261010-archive-atomic-v114",
+    "20261010-backfill-status-v118",
+    "20261010-history-contract-v116",
+    "20261010-read-consistency-v119"
+  ],
+  "removed_file_logical_bytes": 942502938,
+  "kept_releases": [
+    "20261005-share-universe-archive-v73",
+    "20261009-first-interaction-v93",
+    "20261010-active-refresh-v122",
+    "20261010-flow-projection-v120",
+    "20261010-ocf-republication-v112",
+    "20261010-reader-floor-v109",
+    "20261010-share-review-v113",
+    "20261010-storage-writes-v110",
+    "20261010-trading-readmodels-v121"
+  ],
+  "containers_and_mounts_unchanged": true,
+  "scheduled_files_unchanged": true,
+  "disk_before": {
+    "at": "2026-10-10T06:19:11.961555+00:00",
+    "total": 154894188544,
+    "used": 139467231232,
+    "free": 15410180096
+  },
+  "disk_after": {
+    "total": 154894188544,
+    "used": 138620383232,
+    "free": 16257028096
+  },
+  "observed_free_bytes_change": 846848000,
+  "physical_change_is_not_isolated_from_concurrent_writes": true,
+  "data_backups_originals_and_database_not_removed": true,
+  "whole_history_capacity_gate_released": false
+}

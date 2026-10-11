@@ -1,0 +1,32 @@
+{
+  "assessed_at": "2026-10-09T22:24:21.682680+00:00",
+  "response_observed_at": "2026-10-09T22:21:17.572469+00:00",
+  "release": "20261010-ocf-republication-v112",
+  "source_evidence_sha256": "1d216a885389791356f468a45862c2ff92e50c1e0c23c547662fda551c52aaed",
+  "previous_failed_validator_preserved": true,
+  "validator_correction": "The original checker incorrectly required a positive comparison line for negative OCF. Negative values must remain actual values with a null comparison line.",
+  "companies": {
+    "005930": {
+      "period_matches": true,
+      "amount_matches": true,
+      "actual_metric_preserved": true,
+      "comparison_contract_matches": true,
+      "expected_positive_comparison": true
+    },
+    "000660": {
+      "period_matches": true,
+      "amount_matches": true,
+      "actual_metric_preserved": true,
+      "comparison_contract_matches": true,
+      "expected_positive_comparison": true
+    },
+    "005380": {
+      "period_matches": true,
+      "amount_matches": true,
+      "actual_metric_preserved": true,
+      "comparison_contract_matches": true,
+      "expected_positive_comparison": false
+    }
+  },
+  "passed": true
+}
