@@ -1,0 +1,119 @@
+{
+  "at": "2026-10-11T10:14:43.564Z",
+  "connections": 100,
+  "transport": "HTTP/2 100 independent TLS sessions, one concurrent request per session, Windows PC public internet",
+  "measurement_contract": {
+    "version": "http2-receive-end-v2",
+    "scope": "API endpoint load; not the browser search/detail user flow",
+    "phases": {
+      "first": "First batch; not guaranteed cold",
+      "warm": "Three subsequent batches; not guaranteed cache hits",
+      "after_1600ms": "Batch after a 1600ms pause; classify expiry from response headers"
+    },
+    "request_headers": {
+      "accept-encoding": "gzip",
+      "origin": null,
+      "if-none-match": null,
+      "cache-control": null
+    },
+    "browser_behaviour_included": false,
+    "connection_setup_in_request_timing": false,
+    "request_model": "100 independent TLS sessions; one offered concurrent request per session; sessions reused across phases and endpoints",
+    "body_validation": "ms/body_ms end at the readable end event; JSON/gzip validation runs only after the entire batch has received or failed",
+    "stream_readiness": "stream_ready_ms records Node stream readiness, not proven network-only or server queue time; peer_max_concurrent_streams is the observed peer limit",
+    "timing": "TTFB includes proxy/queue/transit; app_ms is current uncached application-header time. Do not subtract independent percentiles.",
+    "origin_header": "On edge HIT the origin cache header is historical, not a new origin lookup",
+    "connection_setup": "DNS/TCP/TLS/connect and peer-settings readiness recorded separately; all attempts settle before the first batch; no automatic reconnect"
+  },
+  "complete": true,
+  "results": [
+    {
+      "host": "stocks.62-171-141-206.sslip.io",
+      "endpoint": "search",
+      "first": {
+        "requests": 100,
+        "p95_ms": 1277.63,
+        "app_p95_ms": 932.69,
+        "errors": 0
+      },
+      "warm": {
+        "requests": 300,
+        "p95_ms": 472.23,
+        "app_p95_ms": 158.12,
+        "errors": 0
+      },
+      "after_1600ms": {
+        "requests": 100,
+        "p95_ms": 466.68,
+        "app_p95_ms": 143.86,
+        "errors": 0
+      }
+    },
+    {
+      "host": "stocks.62-171-141-206.sslip.io",
+      "endpoint": "summary",
+      "first": {
+        "requests": 100,
+        "p95_ms": 686.23,
+        "app_p95_ms": 369.71,
+        "errors": 0
+      },
+      "warm": {
+        "requests": 300,
+        "p95_ms": 503.7,
+        "app_p95_ms": 173,
+        "errors": 0
+      },
+      "after_1600ms": {
+        "requests": 100,
+        "p95_ms": 566.31,
+        "app_p95_ms": 258.66,
+        "errors": 0
+      }
+    },
+    {
+      "host": "korea-stocks-edge.lch68-workers.workers.dev",
+      "endpoint": "search",
+      "first": {
+        "requests": 100,
+        "p95_ms": 1929.95,
+        "app_p95_ms": 355.42,
+        "errors": 0
+      },
+      "warm": {
+        "requests": 300,
+        "p95_ms": 1558.8,
+        "app_p95_ms": 226.33,
+        "errors": 0
+      },
+      "after_1600ms": {
+        "requests": 100,
+        "p95_ms": 2172.92,
+        "app_p95_ms": 264.62,
+        "errors": 0
+      }
+    },
+    {
+      "host": "korea-stocks-edge.lch68-workers.workers.dev",
+      "endpoint": "summary",
+      "first": {
+        "requests": 100,
+        "p95_ms": 862.38,
+        "app_p95_ms": 312.74,
+        "errors": 0
+      },
+      "warm": {
+        "requests": 300,
+        "p95_ms": 1727.64,
+        "app_p95_ms": 480.78,
+        "errors": 0
+      },
+      "after_1600ms": {
+        "requests": 100,
+        "p95_ms": 1580.65,
+        "app_p95_ms": 166.37,
+        "errors": 0
+      }
+    }
+  ]
+}

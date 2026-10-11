@@ -78,15 +78,6 @@ def has_official_financial_data(official):
 
 
 
-def next_konex_target(rows, cursor=0):
-    """Return one fair, rotating KONEX enrichment target and the next cursor."""
-    codes = [row["code"] for row in rows if row.get("market") == "KONEX"]
-    if not codes:
-        return None, 0
-    index = int(cursor) % len(codes)
-    return codes[index], (index + 1) % len(codes)
-
-
 async def run(once=False):
     load_worker_credentials()
     store = Store()
@@ -187,15 +178,11 @@ async def run(once=False):
             start = cursor % max(1, len(ordered))
             batch_size = max(1, min(20, int(os.getenv("MARKET_ENRICHMENT_BATCH", "3"))))
             background = ordered[start : start + batch_size] if ordered else []
-            konex_code, next_konex_cursor = next_konex_target(
-                ordered, store.get("konex_enrichment_cursor", {}).get("index", 0)
-            )
             active = store.active()
             targets = list(
                 dict.fromkeys(
                     active
                     + [r["code"] for r in (ordered[:16] if once else background)]
-                    + ([konex_code] if konex_code else [])
                 )
             )
             if not once and authenticated.dart and ordered:
@@ -476,7 +463,7 @@ async def run(once=False):
                         )
                         log.warning("Broker %s failed: %s", code, type(exc).__name__)
 
-                if code in active or code == konex_code:
+                if code in active:
                     try:
                         quote = await provider.quote(code)
                         if quote:
@@ -506,10 +493,6 @@ async def run(once=False):
                     "batch_size": batch_size,
                     "last_batch_at": now(),
                 },
-            )
-            store.put(
-                "konex_enrichment_cursor",
-                {"index": next_konex_cursor, "updated_at": now()},
             )
             if once:
                 return

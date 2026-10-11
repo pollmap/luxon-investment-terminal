@@ -1,5 +1,6 @@
 """Fixtures are synthetic and never constitute live provider evidence."""
 import asyncio
+import json
 
 import pytest
 from fastapi import FastAPI
@@ -7,7 +8,13 @@ from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 
 from services.market_dashboard.market_context import (
-    BRIEFS, DOCUMENTS, LINKS, ContextRepository, attach_routes, market_context_loop,
+    BRIEFS,
+    DOCUMENTS,
+    LINKS,
+    ContextRepository,
+    attach_routes,
+    market_context_loop,
+    project_filings_batch,
 )
 from services.market_dashboard.store import Store
 
@@ -105,7 +112,9 @@ def test_news_versions_are_preserved_and_pagination_deduplicates_associations(se
     first = client.get('/api/market/v1/news?limit=1').json()
     assert first['has_more']
     assert first['rows'][0]['title'] == '정정된 제목'
-    assert {r['code'] for r in first['rows'][0]['securities']} == {'005930', '000660'}
+    assert first['rows'][0]['securities'] == []
+    assert {r['code'] for r in first['rows'][0]['candidate_securities']} == {'005930', '000660'}
+    assert first['rows'][0]['association_status'] == 'unverified'
     assert 'body' not in first['rows'][0] and 'client_secret' not in first['rows'][0]
     last = client.get('/api/market/v1/news?limit=1&offset=1').json()
     assert not last['has_more'] and last['rows'][0]['url'].endswith('000002')
@@ -142,12 +151,11 @@ def test_news_association_is_not_promoted_to_business_relation(setup_context):
     repo.ingest_news('005930', snapshot())
     repo.ingest_news('000660', snapshot())
     result = client.get('/api/market/v1/securities/005930/relations').json()
-    assert len(result['rows']) == 1
-    relation = result['rows'][0]
-    assert relation['kind'] == 'shared_news'
-    assert relation['label'] == '같은 관련 기사'
-    assert relation['evidence']['excerpt_kind'] == 'headline'
-    assert relation['review_status'] == 'source_observed'
+    assert result['rows'] == []
+    assert result['candidate_relations'] == []
+    article = repo.news()['rows'][0]
+    assert {r['code'] for r in article['candidate_securities']} == {'005930', '000660'}
+    assert repo.news(code='005930')['rows'] == []
     assert repo.relations('005930', day='2026-10-01')['rows'] == []
 
 
@@ -207,3 +215,82 @@ def test_projection_imports_existing_news_without_any_provider_call(setup_contex
     asyncio.run(market_context_loop(store, once=True))
     assert repo.news()['rows'][0]['title'] == '반도체 소식'
     assert repo.brief()['date'] == '2026-10-02'
+
+
+def filing_snapshot(store, **change):
+    """Synthetic DART-shaped archive, not an actual issuer source."""
+    store.put('dart-corporations', {'codes': {'005930': '00126380'}})
+    row = {'rcept_no': '20261001000001', 'rcept_dt': '20261001', 'report_nm': '사업보고서',
+           'corp_code': '00126380', 'stock_code': '005930', **change}
+    raw = json.dumps({'status': '000', 'list': [row]}).encode()
+    source_hash = store.raw('dart', 'https://opendart.fss.or.kr/api/list.json?corp_code=00126380', raw)
+    return {'rows': [{'receipt': row['rcept_no'], 'date': row['rcept_dt'], 'title': row['report_nm'],
+                     'source_trace': {'source': 'opendart', 'source_document_id': source_hash}}]}
+
+
+def test_verified_dart_issuer_projection_retains_preferred_company_binding(setup_context):
+    from services.market_dashboard.research_search import ResearchRepository
+    store, repo, _ = setup_context
+    result = repo.ingest_filings('005930', filing_snapshot(store))
+    assert result['verified'] == 1 and result['rejected'] == 0
+    for code in ('005930', '005935'):
+        document = ResearchRepository(store).search('사업보고서', code=code)['items'][0]
+        assert document['code'] == code
+        assert document['association_basis'] == 'document_issuer'
+        assert document['association_status'] == 'verified'
+        assert document['source_hash_status'] == 'present'
+    assert repo.news()['rows'] == []  # Filing documents never enter the news feed.
+    assert ResearchRepository(store).search('사업보고서', code='000660')['items'] == []
+    with store.read_connection() as db:
+        payload = json.loads(db.execute(select(DOCUMENTS.c.payload)).scalar_one())
+    assert payload['issuer_binding']['corp_code'] == '00126380'
+
+
+@pytest.mark.parametrize('change', [{'corp_code': '99999999'}, {'stock_code': '000660'}])
+def test_dart_wrong_company_is_rejected_even_with_matching_title(setup_context, change):
+    store, repo, _ = setup_context
+    assert repo.ingest_filings('005930', filing_snapshot(store, **change))['rejected'] == 1
+    with store.read_connection() as db:
+        assert db.execute(select(func.count()).select_from(DOCUMENTS)).scalar_one() == 0
+
+
+def test_missing_or_corrupt_filing_original_is_not_issuer_evidence(setup_context):
+    store, repo, _ = setup_context
+    snapshot = filing_snapshot(store)
+    source_hash = snapshot['rows'][0]['source_trace']['source_document_id']
+    (store.root / 'raw' / 'dart' / (source_hash + '.bin')).write_bytes(b'fixture_corrupt')
+    assert repo.ingest_filings('005930', snapshot)['rejected'] == 1
+    snapshot['rows'][0]['source_trace']['source_document_id'] = 'f' * 64
+    assert repo.ingest_filings('005930', snapshot)['rejected'] == 1
+
+
+def test_filing_projection_capacity_budget_and_checkpoint(setup_context, monkeypatch):
+    store, repo, _ = setup_context
+    store.put('filings:005930', filing_snapshot(store))
+    monkeypatch.setattr('services.market_dashboard.storage_budget.collection_capacity',
+                        lambda *_args: {'limited': True})
+    assert project_filings_batch(store, repo)['status'] == 'capacity_limited'
+    assert store.get('research-filings:005930') is None
+    monkeypatch.setattr('services.market_dashboard.storage_budget.collection_capacity',
+                        lambda *_args: {'limited': False, 'used_percent': 85})
+    assert project_filings_batch(store, repo)['status'] == 'capacity_limited'
+    monkeypatch.setattr('services.market_dashboard.storage_budget.collection_capacity',
+                        lambda *_args: {'limited': False})
+    assert project_filings_batch(store, repo, rows_per_security=1)['processed'] == 1
+    state = store.get('research-filings:005930')
+    assert state['next_offset'] == 1 and state['has_more'] is False
+    assert project_filings_batch(store, repo, rows_per_security=1)['processed'] == 0
+    with pytest.raises(ValueError):
+        project_filings_batch(store, repo, securities_per_run=5)
+
+
+def test_postgres_verified_company_filter_uses_bound_json_membership():
+    from sqlalchemy.dialects import postgresql
+
+    from services.market_dashboard.market_context import verified_document_filter
+    statement = select(DOCUMENTS.c.document_id).where(
+        verified_document_filter(DOCUMENTS.c.payload, '005930', 'postgresql'))
+    compiled = statement.compile(dialect=postgresql.dialect())
+    assert '@>' in str(compiled) and 'JSONB' in str(compiled)
+    assert '005930' not in str(compiled)  # Code remains a bound parameter.
+    assert ['005930'] in compiled.params.values()

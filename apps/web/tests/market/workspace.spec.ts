@@ -42,6 +42,8 @@ for(const width of [360,390,430,768,1024,1100,1280,1440,1920])test(`one chart an
   expect(calls.filter(path=>path.includes('/price-window?range='))).toEqual(['/securities/005930/price-window?range=63&interval=day']);
   expect(calls.some(path=>path.includes('/chart?')||path.includes('/bars?'))).toBe(false);
   expect(await canvas.evaluate(el=>Math.round(el.getBoundingClientRect().height))).toBe(width<768?320:420);
+  if(width===1440)expect((await canvas.boundingBox())!.y).toBeLessThanOrEqual(260);
+  await info.attach('workspace-dimensions',{body:JSON.stringify({fixture:true,width,chart:await canvas.boundingBox()}),contentType:'application/json'});
   await expect(page.locator('.mk-workspace-list')).toBeVisible({visible:width>=1024});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   if(width>=1280){
@@ -83,6 +85,7 @@ test('shared selection overrides saved settings; reset and reload retain chart d
   const calls=await fixture(page);await page.goto('/stocks?code=005930&mode=history&range=1260&kind=bar&bar=month');
   await expect(page.locator('.mk-chart-caption')).toBeVisible();
   expect(calls.filter(path=>path.includes('/price-window?range='))).toEqual(['/securities/005930/price-window?range=1260&interval=month']);
+  await page.locator('.mk-chart-options > summary').click();
   await page.getByRole('button',{name:'기본 차트로',exact:true}).click();
   await expect(page.getByRole('button',{name:'3개월',exact:true})).toHaveAttribute('aria-pressed','true');
   await expect(page.getByRole('button',{name:'캔들',exact:true})).toHaveAttribute('aria-pressed','true');
@@ -150,7 +153,7 @@ test('mobile compact controls expose candles above the bottom navigation and pre
   await expect(canvas.locator('canvas').first()).toBeVisible();
   const bounds=await canvas.boundingBox();
   const bottom=await page.locator('.mk-bottom-nav').evaluate(el=>el.getBoundingClientRect().top);
-  expect(bounds!.y).toBeLessThan(600);expect(bottom-bounds!.y).toBeGreaterThanOrEqual(180);
+  expect(bounds!.y).toBeLessThanOrEqual(380);expect(bottom-bounds!.y).toBeGreaterThanOrEqual(320);
   await info.attach('mobile-chart-position',{body:JSON.stringify({fixture:true,viewport:[390,844],chartTop:bounds!.y,visibleChartBeforeBottomNavigation:bottom-bounds!.y}),contentType:'application/json'});
   await page.screenshot({path:info.outputPath('mobile-390-compact-controls-fixture.png')});
   const period=page.getByRole('combobox',{name:'차트 기간 선택',exact:true});
@@ -161,6 +164,7 @@ test('mobile compact controls expose candles above the bottom navigation and pre
   await expect(shape).toHaveValue('area');
   await expect.poll(()=>new URL(page.url()).searchParams.get('kind')).toBe('area');
   await page.reload();await expect(period).toHaveValue('1260');await expect(bar).toHaveValue('week');await expect(shape).toHaveValue('area');
+  await page.locator('.mk-chart-options > summary').click();
   await page.getByRole('button',{name:'기본 차트로',exact:true}).click();
   await expect(period).toHaveValue('63');await expect(bar).toHaveValue('day');await expect(shape).toHaveValue('candle');
   await expect(canvas).toHaveCount(1);
@@ -170,4 +174,29 @@ test('mobile compact controls expose candles above the bottom navigation and pre
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   await expect(period).toHaveValue('63');await expect(shape).toHaveValue('candle');
   await page.screenshot({path:info.outputPath('mobile-390-compact-large-fixture.png')});
+});
+
+
+for(const width of [390,1440])test(`market shows useful rows before scrolling at ${width}px`,async({page},info)=>{
+  await page.setViewportSize({width,height:width===390?844:900});await fixture(page);
+  await page.route('**/api/market/v1/overview',route=>route.fulfill({json:{indices:['KOSPI','KOSDAQ','KPI200'].map(code=>({code,price:2500.23,change:1.25,market_status:'CLOSE',as_of:'2026-10-08T15:30:00+09:00'})),breadth:{up:1200,down:1000,flat:100},total:2765,value:1000000000000,sectors:[],filings:{rows:[]},fixture_non_production:true}}));
+  await page.goto('/stocks');await expect(page.locator('.mk-market-date')).toHaveText('2026-10-08');
+  const rows=page.locator(width<768?'.mk-mobile-stock':'.mk-stock-table tbody tr');
+  await expect(rows.first()).toBeVisible();
+  const edge=width<768?await page.locator('.mk-bottom-nav').evaluate(el=>el.getBoundingClientRect().top):900;
+  const visible=await rows.evaluateAll((els,bottom)=>els.filter(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=bottom;}).length,edge);
+  expect(visible).toBeGreaterThanOrEqual(width<768?3:8);
+  await info.attach('visible-market-rows',{body:JSON.stringify({fixture:true,width,visible}),contentType:'application/json'});
+  await page.screenshot({path:info.outputPath(`market-${width}-fixture.png`)});
+});
+
+test('price limits are folded while trading suspension and VI stay visible',async({page})=>{
+  await page.setViewportSize({width:390,height:844});await fixture(page);
+  await page.route('**/securities/005930/warnings',route=>route.fulfill({json:{rows:[{name:'VI 발동',exchange:'KRX'}],status:'ready',limits:{upper:130000,lower:70000},stock:{koreanMarketDetail:{krxTradingSuspended:true}},fixture_non_production:true}}));
+  await page.goto('/stocks?code=005930');
+  await expect(page.getByText('VI 발동 (KRX)',{exact:true})).toBeVisible();
+  await expect(page.getByText('KRX 거래정지',{exact:true})).toBeVisible();
+  await expect(page.getByText('상한가 130,000원 · 하한가 70,000원',{exact:true})).not.toBeVisible();
+  await page.locator('.mk-price-limits summary').click();
+  await expect(page.getByText('상한가 130,000원 · 하한가 70,000원',{exact:true})).toBeVisible();
 });

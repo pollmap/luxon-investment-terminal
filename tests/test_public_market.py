@@ -26,7 +26,6 @@ from services.market_dashboard.providers import (
     trace,
 )
 from services.market_dashboard.store import Store, now
-from services.market_dashboard.worker import next_konex_target
 
 
 @pytest.fixture
@@ -213,19 +212,6 @@ def test_brokers_missing_rank_is_not_zero():
 
 
 
-
-
-def test_konex_enrichment_cursor_rotates_fairly():
-    rows = [
-        {"code": "000001", "market": "KOSPI"},
-        {"code": "000002", "market": "KONEX"},
-        {"code": "000003", "market": "KONEX"},
-    ]
-    first, cursor = next_konex_target(rows)
-    second, cursor = next_konex_target(rows, cursor)
-    wrapped, cursor = next_konex_target(rows, cursor)
-    assert (first, second, wrapped, cursor) == ("000002", "000003", "000002", 1)
-    assert next_konex_target([rows[0]]) == (None, 0)
 
 
 @pytest.mark.asyncio

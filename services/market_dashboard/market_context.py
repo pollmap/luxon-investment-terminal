@@ -4,11 +4,13 @@ Collectors write append-only observations. Public reads never create tables or
 refresh providers. A missing historical day is not filled with today's values.
 """
 import asyncio
+import gzip
 import hashlib
 import ipaddress
 import json
 import logging
 import math
+import re
 from datetime import date, datetime
 from urllib.parse import urlsplit, urlunsplit
 from zoneinfo import ZoneInfo
@@ -16,7 +18,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import Column, Index, MetaData, String, Table, Text, func, inspect, select, text
 
 from .service_scope import included
-from .store import now, next_snapshot_revision
+from .store import next_snapshot_revision, now
 
 VERSION = 'market-context-v1'
 KST = ZoneInfo('Asia/Seoul')
@@ -109,6 +111,83 @@ def insert_ignore(store, db, table, rows):
         db.execute(insert(table).values(rows[offset:offset + 100]).on_conflict_do_nothing())
 
 
+def verified_document_codes(payload):
+    """A provider's stock tag is not a reviewed document-to-company assertion.
+
+    Explicit per-code evidence is revision-bound in the immutable payload. A
+    document's quality review alone must never promote every historical LINKS row.
+    """
+    bases = ('document_issuer', 'reviewed_document_subject')
+    if payload.get('review_status') != 'verified' or payload.get('association_basis') not in bases:
+        return set()
+    codes = payload.get('verified_security_codes')
+    if not isinstance(codes, list):
+        return set()
+    return {code for code in codes if isinstance(code, str) and re.fullmatch(r'[A-Z0-9]{6}', code)}
+
+
+def verified_document_filter(payload, code, dialect):
+    """Apply the same company-evidence policy before SQL limits and counts."""
+    from sqlalchemy import JSON, and_
+    bases = ('document_issuer', 'reviewed_document_subject')
+    if dialect == 'sqlite':
+        values = func.json_each(payload, '$.verified_security_codes').table_valued('value')
+        return and_(
+            func.json_extract(payload, '$.review_status') == 'verified',
+            func.json_extract(payload, '$.association_basis').in_(bases),
+            func.json_type(payload, '$.verified_security_codes') == 'array',
+            select(1).select_from(values).where(values.c.value == code).exists(),
+        )
+    from sqlalchemy.dialects.postgresql import JSONB
+    document = payload.cast(JSON)
+    return and_(
+        document['review_status'].as_string() == 'verified',
+        document['association_basis'].as_string().in_(bases),
+        payload.cast(JSONB)['verified_security_codes'].contains([code]),
+    )
+
+
+def dart_list_evidence(store, source_hash):
+    """Bounded local original read; no network or archive mutation in projection."""
+    if not isinstance(source_hash, str) or not re.fullmatch(r'[a-f0-9]{64}', source_hash):
+        raise ValueError('Filing source hash missing')
+    root = store.root.resolve()
+    directory = root / 'raw' / 'dart'
+    if directory.resolve() != directory or directory.parent.is_symlink():
+        raise ValueError('Unsafe filing archive')
+    envelope = directory / (source_hash + '.json')
+    if envelope.is_symlink() or envelope.stat().st_size > 8 * 1024**2:
+        raise ValueError('Filing metadata limit')
+    metadata = json.loads(envelope.read_bytes())
+    if not isinstance(metadata, dict):
+        raise ValueError('Invalid filing metadata')
+    url = urlsplit(metadata.get('url', ''))
+    if (url.scheme != 'https' or url.hostname != 'opendart.fss.or.kr' or
+            url.path != '/api/list.json' or url.username or url.password):
+        raise ValueError('Not an official filing list')
+    content = None
+    maximum = 4 * 1024**2
+    for suffix in ('.bin', '.bin.gz'):
+        path = directory / (source_hash + suffix)
+        if path.is_symlink():
+            raise ValueError('Unsafe filing archive')
+        if path.is_file():
+            opener = gzip.open if suffix.endswith('.gz') else open
+            with opener(path, 'rb') as stream:
+                content = stream.read(maximum + 1)
+            break
+    if content is None and isinstance(metadata.get('payload'), str):
+        content = metadata['payload'].encode('utf-8')
+    if (content is None or len(content) > maximum or
+            hashlib.sha256(content).hexdigest() != source_hash):
+        raise ValueError('Filing source integrity failure')
+    page = json.loads(content)
+    if (not isinstance(page, dict) or page.get('status') != '000' or
+            not isinstance(page.get('list'), list)):
+        raise ValueError('Filing list unavailable')
+    return page['list']
+
+
 class ContextRepository:
     def __init__(self, store):
         self.store = store
@@ -144,6 +223,73 @@ class ContextRepository:
                 'published_day': day_of(published_at), 'published_at': published_at,
                 'recorded_at': now(), 'payload': encoded(payload)})
             links.append({'document_id': document_id, 'code': code})
+        return self._append_documents(documents, links)
+
+    def ingest_filings(self, code, snapshot, *, offset=0, limit=20):
+        """Confirm issuer identities from stored DART bytes, not title mentions."""
+        if not 1 <= limit <= 50 or offset < 0:
+            raise ValueError('Filing projection bound')
+        from .issuer_documents import document_issuer
+        identities = securities(self.store)
+        corporations = self.store.get('dart-corporations', {}).get('codes', {})
+        issuer = document_issuer(self.store, code, corporations)
+        corporation = corporations.get(issuer)
+        if code not in identities or not corporation:
+            return {'processed': 0, 'verified': 0, 'rejected': 0, 'has_more': False}
+        verified_codes = sorted(c for c in identities
+                                if corporations.get(c) == corporation or
+                                document_issuer(self.store, c, corporations) == issuer)
+        all_rows = snapshot.get('rows') or []
+        rows = all_rows[offset:offset + limit]
+        documents, links, pages, rejected = [], [], {}, 0
+        for row in rows:
+            try:
+                trace = row.get('source_trace') or {}
+                source_hash = trace.get('source_document_id') or trace.get('sha256')
+                if trace.get('source') != 'opendart':
+                    raise ValueError('Unofficial filing')
+                if source_hash not in pages:
+                    pages[source_hash] = dart_list_evidence(self.store, source_hash)
+                receipt = str(row.get('receipt') or '')
+                if not re.fullmatch(r'\d{14}', receipt):
+                    raise ValueError('Invalid filing identity')
+                matches = [r for r in pages[source_hash]
+                           if isinstance(r, dict) and r.get('rcept_no') == receipt]
+                if len(matches) != 1:
+                    raise ValueError('Missing or conflicting filing')
+                original = matches[0]
+                if (not isinstance(row.get('title'), str) or not 0 < len(row['title']) <= 1000 or
+                        original.get('corp_code') != corporation or
+                        original.get('stock_code') not in (None, '', issuer) or
+                        original.get('report_nm') != row.get('title') or
+                        original.get('rcept_dt') != row.get('date')):
+                    raise ValueError('Filing issuer or content mismatch')
+                day = datetime.strptime(original['rcept_dt'], '%Y%m%d').date().isoformat()
+                url = 'https://dart.fss.or.kr/dsaf001/main.do?rcpNo=' + receipt
+                identifier = digest(url)
+                payload = {'document_id': identifier, 'title': row['title'], 'url': url,
+                    'kind': 'filing', 'published_at': day, 'issuer': identities[issuer]['name'],
+                    'source': 'opendart', 'source_hash': source_hash,
+                    'association_basis': 'document_issuer', 'review_status': 'verified',
+                    'verified_security_codes': verified_codes,
+                    'issuer_binding': {'corp_code': corporation, 'issuer_security_code': issuer,
+                                       'receipt': receipt,
+                                       'method': 'dart_original_list_identity_v1'}}
+                revision = digest({k: v for k, v in payload.items() if k != 'source_hash'})
+                payload['revision'] = revision
+                documents.append({'document_id': identifier, 'revision': revision, 'kind': 'filing',
+                    'published_day': day, 'published_at': day,
+                    'recorded_at': now(), 'payload': encoded(payload)})
+                links.extend({'document_id': identifier, 'code': c} for c in verified_codes)
+            except (ValueError, TypeError, KeyError, OSError, UnicodeError, EOFError):
+                rejected += 1
+        self._append_documents(documents, links)
+        return {'processed': len(rows), 'verified': len(documents), 'rejected': rejected,
+                'has_more': offset + len(rows) < len(all_rows), 'next_offset': offset + len(rows)}
+
+    def _append_documents(self, documents, links):
+        if not documents:
+            return 0
         with self.store.engine.begin() as db:
             # Receipt clocks can tie on fast corrections. Order actual revisions
             # by a monotonic internal receipt, without changing publication dates
@@ -179,7 +325,11 @@ class ContextRepository:
             func.row_number().over(partition_by=DOCUMENTS.c.document_id,
                 order_by=(DOCUMENTS.c.recorded_at.desc(), DOCUMENTS.c.revision.desc())).label('n')).subquery()
         linked = select(LINKS.c.document_id).where(LINKS.c.code.in_([code] if code else list(identities)))
-        query = select(ranked.c.payload).where(ranked.c.n == 1, ranked.c.document_id.in_(linked))
+        query = select(ranked.c.payload).where(ranked.c.n == 1, ranked.c.kind == 'news',
+                                              ranked.c.document_id.in_(linked))
+        if code:
+            query = query.where(verified_document_filter(
+                ranked.c.payload, code, self.store.engine.dialect.name))
         if day:
             query = query.where(ranked.c.published_day == day)
         query = query.order_by(ranked.c.published_at.desc(), ranked.c.document_id).offset(offset).limit(limit + 1)
@@ -192,7 +342,17 @@ class ContextRepository:
             if link['code'] in identities:
                 stock = identities[link['code']]
                 by_id.setdefault(link['document_id'], []).append({'code': stock['code'], 'name': stock['name']})
-        return {'rows': [{**r, 'securities': by_id.get(r['document_id'], [])} for r in rows[:limit]],
+        public_rows = []
+        for row in rows[:limit]:
+            verified = verified_document_codes(row)
+            associations = by_id.get(row['document_id'], [])
+            confirmed = [r for r in associations if r['code'] in verified]
+            candidates = [{**r, 'review_status': 'candidate',
+                           'association_basis': 'provider_stock_news'}
+                          for r in associations if r['code'] not in verified]
+            public_rows.append({**row, 'securities': confirmed, 'candidate_securities': candidates,
+                                'association_status': 'verified' if confirmed else 'unverified'})
+        return {'rows': public_rows,
             'status': 'ready' if rows else 'no_observations', 'has_more': len(rows) > limit,
             'date': day, 'offset': offset, 'history_mode': 'latest_recorded_revision',
             'coverage': 'collected_stock_headlines', 'revision': digest([r['revision'] for r in rows[:limit]])}
@@ -325,23 +485,64 @@ class ContextRepository:
             if row['valid_from'] > target_day or (row['valid_until'] and row['valid_until'] < target_day):
                 continue
             result.append({**row, 'name': identities[row['object_code']]['name']})
-        # Provider stock-news association is a navigation link, not proof of a
-        # supply chain, subsidiary, partnership, or a reason for a price move.
+        # Even confirmed co-mentions remain document-navigation candidates, never
+        # supplier/partner relations. Unreviewed provider tags cannot enter here.
+        candidates = []
         for article in self.news(day=day, code=code, limit=50)['rows']:
             if not article.get('published_at') or day_of(article['published_at']) > target_day:
                 continue
             for stock in article['securities']:
                 if stock['code'] == code:
                     continue
-                result.append({'relation_id': digest([code, stock['code'], article['document_id']]),
+                candidates.append({
+                    'relation_id': digest([code, stock['code'], article['document_id']]),
                     'subject_code': code, 'object_code': stock['code'], 'name': stock['name'],
                     'kind': 'shared_news', 'label': '같은 관련 기사', 'review_status': 'source_observed',
                     'valid_from': day_of(article['published_at']), 'valid_until': None,
                     'evidence': {'document_id': article['document_id'], 'url': article['url'],
                         'excerpt': article['title'], 'excerpt_kind': 'headline',
                         'published_at': article['published_at']}})
-        return {'rows': result, 'status': 'ready' if result else 'no_observations', 'date': day,
-            'history_mode': 'latest_recorded_revision', 'revision': digest(result)}
+        return {'rows': result, 'candidate_relations': candidates,
+            'status': 'ready' if result else 'no_observations', 'date': day,
+            'history_mode': 'latest_recorded_revision', 'revision': digest([result, candidates])}
+
+
+def project_filings_batch(store, repository, *, securities_per_run=4, rows_per_security=20):
+    """Collector-only, capacity-gated projection with persistent per-stock cursors."""
+    from .storage_budget import collection_capacity
+    if not 1 <= securities_per_run <= 4 or not 1 <= rows_per_security <= 50:
+        raise ValueError('Filing projection budget')
+    capacity = collection_capacity(store, 'research-filings')
+    if capacity['limited'] or capacity.get('used_percent', 0) >= 80:
+        return {'status': 'capacity_limited', 'processed': 0}
+    codes = sorted(securities(store))
+    cursor = store.get('research-filings-projection', {}).get('after_code', '')
+    chosen = [c for c in codes if c > cursor][:securities_per_run]
+    if not chosen:
+        chosen = codes[:securities_per_run]
+    versions = store.revisions(['filings:' + c for c in chosen])
+    processed = 0
+    for code in chosen:
+        source_revision = versions.get('filings:' + code)
+        if not source_revision:
+            continue
+        key = 'research-filings:' + code
+        previous = store.get(key, {})
+        same = previous.get('source_revision') == source_revision
+        if same and previous.get('has_more') is False:
+            continue
+        offset = previous.get('next_offset', 0) if same else 0
+        try:
+            result = repository.ingest_filings(code, store.get('filings:' + code, {}),
+                                               offset=offset, limit=rows_per_security)
+            store.put(key, {**result, 'source_revision': source_revision, 'recorded_at': now()})
+            processed += result['processed']
+        except (ValueError, KeyError, TypeError, OSError):
+            # Keep source and last successful cursor; another stock still gets a turn.
+            store.put(key, {**previous, 'last_error': 'projection_failed', 'recorded_at': now()})
+    if chosen:
+        store.put('research-filings-projection', {'after_code': chosen[-1], 'recorded_at': now()})
+    return {'status': 'ready', 'processed': processed}
 
 
 async def market_context_loop(store, *, once=False):
@@ -364,6 +565,7 @@ async def market_context_loop(store, *, once=False):
                     # An invalid document must not stop projection of unrelated stocks.
                     logging.getLogger(__name__).warning('News projection rejected: %s', type(exc).__name__)
             repository.capture_market()
+            project_filings_batch(store, repository)
         except Exception as exc:
             logging.getLogger(__name__).warning('Market context projection: %s', type(exc).__name__)
         if once:

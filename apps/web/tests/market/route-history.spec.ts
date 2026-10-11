@@ -44,7 +44,8 @@ for (const width of [1440,390]) {
     await page.setViewportSize({width,height:900});await fixture(page);
     await page.goto('/stocks');
     await expect(page.locator('.mk-stock-link:visible,.mk-mobile-stock-open:visible').first()).toBeVisible();
-    await page.getByRole('button',{name:'시가총액',exact:true}).click();
+    if(width<768){await page.getByRole('button',{name:'순위 변경',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'시가총액 큰 종목',exact:true}).click();}
+    else await page.getByRole('button',{name:'시가총액',exact:true}).click();
     const listURL = page.url();
     await page.evaluate(() => window.scrollTo(0,300));
     const scroll = await page.evaluate(() => scrollY);

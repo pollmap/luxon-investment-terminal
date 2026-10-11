@@ -97,6 +97,9 @@ def filing(text="영업현금흐름 개선 원문 근거", revision="b" * 64):
         "published_at": "2026-10-01",
         "source_hash": "d" * 64,
         "issuer": "fixture_non_production",
+        "review_status": "verified",
+        "association_basis": "document_issuer",
+        "verified_security_codes": ["005930"],
         "sections": [{"text": text, "section": "현금흐름", "page": 15}],
     }
 
@@ -111,7 +114,10 @@ def test_existing_title_fallback_never_writes_or_exposes_news_body(setup):
     assert result["coverage"]["index"] == "context_titles_only"
     assert result["available_documents"] == 1
     row = result["items"][0]
-    assert row["code"] == "005930" and row["source_hash"] == "a" * 64
+    assert row["code"] is None and row["source_hash"] == "a" * 64
+    assert row["company"] is None and row["securities"] == []
+    assert row["candidate_securities"][0]["code"] == "005930"
+    assert row["association_status"] == "unverified"
     assert row["excerpt"] == row["title"] == "반도체 공급 계약"
     assert "비밀 기사 본문" not in json.dumps(result, ensure_ascii=False)
     assert "NOT_PUBLIC" not in json.dumps(result)
@@ -129,7 +135,6 @@ def test_lexical_filters_latest_revision_and_unknown_date(setup):
         "/api/market/v1/research/search",
         params={
             "q": "반도체",
-            "code": "005930",
             "kind": "news",
             "from": "2026-10-01",
             "to": "2026-10-01",
@@ -138,10 +143,75 @@ def test_lexical_filters_latest_revision_and_unknown_date(setup):
     assert len(result["items"]) == 1
     assert result["items"][0]["title"] == "반도체 계약 정정"
     assert result["available_documents"] == 1
+    unverified = client.get(
+        "/api/market/v1/research/search", params={"q": "반도체", "code": "005930"}
+    ).json()
+    assert unverified["items"] == [] and unverified["available_documents"] == 0
     other = client.get(
         "/api/market/v1/research/search", params={"q": "반도체", "code": "000660"}
     ).json()
     assert not other["items"]
+
+
+def test_unrelated_provider_tag_stays_candidate_before_and_after_indexing(setup):
+    store, context, _ = setup
+    universe = store.get("universe")
+    universe["rows"].append({"code": "068270", "name": "셀트리온", "market": "KOSPI"})
+    store.put("universe", universe)
+    context.ingest_news("068270", news("반도체 무관한 신세계·달바는 9개월째 순매수"))
+    repo = ResearchRepository(store)
+    for indexed in (False, True):
+        if indexed:
+            repo.initialize()
+            assert repo.project_context()["rejected"] == 0
+        item = repo.search("반도체")["items"][0]
+        assert item["code"] is None and item["company"] is None
+        assert item["securities"] == []
+        assert item["candidate_securities"][0]["code"] == "068270"
+        assert repo.search("반도체", code="068270")["available_documents"] == 0
+        assert repo.document(item["id"])["chunks"][0]["code"] is None
+    with store.read_connection() as db:
+        assert db.execute(select(func.count()).select_from(DOCUMENTS)).scalar_one() == 1
+
+
+def test_verified_issuer_binding_survives_and_does_not_promote_other_tags(setup):
+    store, _, _ = setup
+    repo = ResearchRepository(store)
+    repo.initialize()
+    repo.ingest(filing(), codes=["005930", "000660"])
+    item = repo.search("현금흐름", code="005930")["items"][0]
+    assert item["code"] == "005930" and item["association_status"] == "verified"
+    assert [r["code"] for r in item["securities"]] == ["005930"]
+    assert [r["code"] for r in item["candidate_securities"]] == ["000660"]
+    assert repo.search("현금흐름", code="000660")["available_documents"] == 0
+
+
+@pytest.mark.parametrize(
+    "missing", ["review_status", "association_basis", "verified_security_codes"]
+)
+def test_document_type_and_title_do_not_prove_issuer(setup, missing):
+    store, _, _ = setup
+    repo = ResearchRepository(store)
+    repo.initialize()
+    payload = filing()
+    payload.pop(missing)
+    repo.ingest(payload, codes=["005930"])
+    assert repo.search("현금흐름")["items"][0]["code"] is None
+    assert repo.search("현금흐름", code="005930")["items"] == []
+
+
+def test_correction_does_not_inherit_prior_company_verification(setup):
+    store, _, _ = setup
+    repo = ResearchRepository(store)
+    repo.initialize()
+    source = filing()
+    repo.ingest(source, codes=["005930"])
+    correction = filing("현금흐름 정정", "e" * 64)
+    correction.pop("verified_security_codes")
+    repo.ingest(correction, codes=["005930"])
+    assert repo.search("현금흐름", code="005930")["items"] == []
+    old = repo.document(source["document_id"], revision=source["revision"])
+    assert old["chunks"][0]["code"] == "005930"
 
 
 @pytest.mark.parametrize(

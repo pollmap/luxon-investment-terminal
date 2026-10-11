@@ -1,0 +1,89 @@
+{
+  "at": "2026-10-11T10:12:34.778752+00:00",
+  "checks": [
+    {
+      "path": "/health",
+      "success": true,
+      "bytes": 617,
+      "top_keys": [
+        "status",
+        "worker",
+        "database",
+        "mode",
+        "release"
+      ],
+      "release": "20261011-stock-shopping-v131",
+      "worker_status": "collecting"
+    },
+    {
+      "path": "/securities/005930?view=summary",
+      "success": true,
+      "bytes": 1868,
+      "top_keys": [
+        "security",
+        "detail",
+        "prices",
+        "status",
+        "company",
+        "official",
+        "filings"
+      ],
+      "code": "005930",
+      "price": 262500
+    },
+    {
+      "path": "/securities/035900?view=summary",
+      "success": true,
+      "bytes": 1720,
+      "top_keys": [
+        "security",
+        "detail",
+        "prices",
+        "status",
+        "company",
+        "official",
+        "filings"
+      ],
+      "code": "035900",
+      "price": 38900
+    },
+    {
+      "path": "/research/search?q=%EB%B0%98%EB%8F%84%EC%B2%B4&limit=5",
+      "success": true,
+      "bytes": 6660,
+      "top_keys": [
+        "status",
+        "mode",
+        "fallback_reason",
+        "available_documents",
+        "items",
+        "coverage",
+        "revision",
+        "elapsed_ms",
+        "version"
+      ],
+      "items": 5,
+      "verified": 0,
+      "unverified_with_code": 0
+    },
+    {
+      "path": "/research/search?q=%EB%B0%98%EB%8F%84%EC%B2%B4&code=068270&limit=5",
+      "success": true,
+      "bytes": 481,
+      "top_keys": [
+        "status",
+        "mode",
+        "fallback_reason",
+        "available_documents",
+        "items",
+        "coverage",
+        "revision",
+        "elapsed_ms",
+        "version"
+      ],
+      "items": 0,
+      "verified": 0,
+      "unverified_with_code": 0
+    }
+  ]
+}

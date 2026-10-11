@@ -57,7 +57,7 @@ try {
   const built = path.join(stage, 'out');
   await cp(path.join(repo, 'ops', 'cloudflare', 'legacy-routes.mjs'), path.join(built, 'legacy-routes.mjs'));
   await writeFile(path.join(built, 'legacy-entry.mjs'), 'import { legacyDestination } from "/legacy-routes.mjs";\nconst target = legacyDestination(new URL(location.href));\nif (target) location.replace(target);\n');
-  await writeFile(path.join(built, 'legacy.html'), '<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>주식담</title><script type="module" src="/legacy-entry.mjs"></script><a href="/stocks">주식담 열기</a></html>');
+  await writeFile(path.join(built, 'legacy.html'), '<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>주식 장보기</title><script type="module" src="/legacy-entry.mjs"></script><a href="/stocks">주식 장보기 열기</a></html>');
   await writeFile(path.join(built, '_headers'), '/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n/_next/static/*\n  Cache-Control: public, max-age=31536000, immutable\n/stocks\n  Cache-Control: no-cache\n/stocks/sw.js\n  Cache-Control: no-cache\n/legacy*\n  Cache-Control: no-cache\n');
   const files = await digestFiles(built);
   await writeFile(path.join(built, 'build-manifest.json'), JSON.stringify({ profile: 'static', release: process.env.MARKET_RELEASE || 'local',

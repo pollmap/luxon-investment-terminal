@@ -449,6 +449,87 @@ def test_failed_smoke_restores_release_environment_without_database_rollback(dep
     assert all(d.state[service]['image'] == 'korea-stocks-api:previous-v88' for service in d.promoter.BACKEND)
 
 
+def quote_patch():
+    return {**BACKEND,
+            'services/market_dashboard/store.py': b'# compatible snapshot reader and writer',
+            'services/market_dashboard/quote_store.py': b'# incremental quote contract'}
+
+
+def test_first_quote_transition_failure_uses_verified_compatibility_image(
+        deployment, tmp_path, monkeypatch):
+    d = deployment
+    archive = write_archive(tmp_path/'patch.tar.gz', quote_patch())
+    original_run = d.promoter.run
+    def run(*args, **kwargs):
+        original_run(*args, **kwargs)
+        if args[:2] == ('docker', 'compose'):
+            overrides = [Path(args[index+1]) for index, value in enumerate(args[:-1])
+                         if value == '-f' and args[index+1].endswith('compose.quote-rollback.json')]
+            for override in overrides:
+                config = json.loads(override.read_text())
+                for service in d.promoter.BACKEND:
+                    d.state[service]['image'] = config['services'][service]['image']
+    monkeypatch.setattr(d.promoter, 'run', run)
+    def fail(version):
+        raise RuntimeError('candidate readiness failed')
+    monkeypatch.setattr(d.promoter, 'smoke', fail)
+    with pytest.raises(RuntimeError, match='candidate readiness failed'):
+        d.promoter.promote('candidate-v131', 'previous-v88', archive)
+    release = d.root/'releases/candidate-v131'
+    image = 'korea-stocks-api:candidate-v131-quote-rollback'
+    report = json.loads((release/'quote-rollback.json').read_text())
+    assert report['image'] == image
+    assert report['state'] == 'activated_after_candidate_failure'
+    assert report['requires_override_for_manual_rollback']
+    assert d.env.read_bytes() == d.old_env
+    assert (d.root/'current').resolve() == d.previous
+    assert d.data.read_bytes() == b'existing database contents'
+    assert d.state['openalgo']['id'] == 'old-openalgo'
+    assert d.state['market-web']['id'] == 'old-web'
+    assert all(d.state[service]['image'] == image for service in d.promoter.BACKEND)
+    assert not (d.previous/'services/market_dashboard/quote_store.py').exists()
+    assert not any(args[:2] == ('docker', 'tag') and args[-1] ==
+                   'korea-stocks-api:previous-v88' for args in d.calls)
+    check = next(args for args in d.calls if args[:2] == ('docker', 'run'))
+    assert '--read-only' in check and '--network' in check and 'none' in check
+    assert not any(arg in ('-v', '--volume', '--env-file') for arg in check)
+    compile(check[-1], '<rollback canary>', 'exec')
+    first_compose = next(index for index, args in enumerate(d.calls)
+                         if args[:2] == ('docker', 'compose'))
+    assert d.calls.index(check) < first_compose
+    dockerfile = (release/'Dockerfile.quote-rollback').read_text()
+    assert dockerfile.startswith('FROM korea-stocks-api:previous-v88\n')
+    assert dockerfile.count('COPY ') == 2 and 'store.py' in dockerfile
+
+
+def test_failed_quote_compatibility_canary_does_not_start_candidate(
+        deployment, tmp_path, monkeypatch):
+    d = deployment
+    archive = write_archive(tmp_path/'patch.tar.gz', quote_patch())
+    original_run = d.promoter.run
+    def fail_canary(*args, **kwargs):
+        original_run(*args, **kwargs)
+        if args[:2] == ('docker', 'run'):
+            raise RuntimeError('compatibility canary failed')
+    monkeypatch.setattr(d.promoter, 'run', fail_canary)
+    with pytest.raises(RuntimeError, match='compatibility canary failed'):
+        d.promoter.promote('candidate-v131', 'previous-v88', archive)
+    assert d.env.read_bytes() == d.old_env
+    assert (d.root/'current').resolve() == d.previous
+    assert not any(args[:2] == ('docker', 'compose') for args in d.calls)
+    assert d.data.read_bytes() == b'existing database contents'
+
+
+def test_already_incremental_previous_release_needs_no_compatibility_layer(
+        deployment, tmp_path):
+    d = deployment
+    (d.previous/'services/market_dashboard/quote_store.py').write_text('# existing reader')
+    archive = write_archive(tmp_path/'patch.tar.gz', quote_patch())
+    d.promoter.promote('candidate-v131', 'previous-v88', archive)
+    assert not any(args[:2] == ('docker', 'run') for args in d.calls)
+    assert not (d.root/'releases/candidate-v131/compose.quote-rollback.json').exists()
+
+
 def test_failure_after_pointer_switch_restores_old_pointer(deployment, tmp_path, monkeypatch):
     d = deployment
     archive = write_archive(tmp_path/'patch.tar.gz', BACKEND)

@@ -10,7 +10,7 @@ const siteUrl =
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "주식담 — 국내 주식 시세와 기업 정보",
+  title: "주식 장보기 — 국내 주식 시세와 기업 정보",
   description: "국내 상장종목의 시세, 순위, 차트와 기업 정보를 살펴보는 주식 대시보드.",
   icons: {
     icon: "/brand/jusikdam-symbol.png",
@@ -18,12 +18,12 @@ export const metadata: Metadata = {
     apple: "/brand/jusikdam-symbol.png"
   },
   openGraph: {
-    title: "주식담 — 국내 주식 시세와 기업 정보",
+    title: "주식 장보기 — 국내 주식 시세와 기업 정보",
     description: "국내 상장종목의 시세, 순위, 차트와 기업 정보를 살펴보는 주식 대시보드."
   },
   twitter: {
     card: "summary_large_image",
-    title: "주식담 — 국내 주식 시세와 기업 정보",
+    title: "주식 장보기 — 국내 주식 시세와 기업 정보",
     description: "국내 상장종목의 시세, 순위, 차트와 기업 정보를 살펴보는 주식 대시보드."
   }
 };

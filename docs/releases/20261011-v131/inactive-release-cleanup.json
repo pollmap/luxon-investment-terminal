@@ -1,0 +1,28 @@
+{
+  "archive_sha256": "0d249df73be6cd2339c9ce949584c588891b1ed8249458241bdfb5f6c6c96c26",
+  "candidate_bytes": 688747314,
+  "verified_files": 5594,
+  "compressed_bytes": 101495501,
+  "restored_release": "20261010-index-reuse-v125",
+  "restored_files": 1864,
+  "restored_bytes": 229577548,
+  "restored_tree_sha256": "2018a4ad055220e9a6b97c784363f188658e889e1e01e9d428ac3e0465e65314",
+  "restore_verified": true,
+  "all_release_hashes_verified": true,
+  "cleanup": {
+    "removed": 3,
+    "reclaimed_bytes": 688747314,
+    "kept": [
+      "20261005-share-universe-archive-v73",
+      "20261009-first-interaction-v93",
+      "20261010-ocf-republication-v112",
+      "20261010-reader-floor-v109",
+      "20261010-share-review-v113",
+      "20261010-storage-writes-v110",
+      "20261011-candle-research-v128",
+      "20261011-candle-research-v129",
+      "20261011-candle-research-v130"
+    ]
+  },
+  "scope": "inactive application releases only; not database restoration"
+}

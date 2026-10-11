@@ -183,18 +183,12 @@ export default function StockDetail({
   </section>;
   return (
     <section className="mk-detail">
-      {!preview && (
-        <button className="mk-back" onClick={onBack}>
-          <ArrowLeft size={17} />
-          목록으로 돌아가기
-        </button>
-      )}
       <div className="mk-security-header">
         <div>
           <div className="mk-eyebrow">
             {s.market} · {s.code}
           </div>
-          <h1 className="mk-company-title"><CompanyLogo url={s.logo_url} name={s.name} large/>{s.name}</h1>
+          <div className="mk-security-title-row">{!preview && <button className="mk-back" aria-label="목록으로 돌아가기" title="목록으로 돌아가기" onClick={onBack}><ArrowLeft size={20}/></button>}<h1 className="mk-company-title"><CompanyLogo url={s.logo_url} name={s.name} large/>{s.name}</h1></div>
           <div className="mk-security-price">
             {format(s.price)}
             <span>원</span>
@@ -246,8 +240,8 @@ export default function StockDetail({
       {(preview || tab === "요약" || tab === "차트") && (
         <div className="mk-detail-overview">
           <div className="mk-panel mk-chart-panel">
-            <div className="mk-workspace-chart-actions"><button className="mk-button" onClick={resetChart}>기본 차트로</button>{!preview && !wideWorkspace && <button className="mk-button" onClick={()=>setDepthOpen(true)}>호가·체결 보기</button>}</div>
             {selectionReady && (chartMode==='intraday'?<StockIntraday code={code} name={s.name} quoteDate={s.as_of} firstRequest={firstChart} onHistory={()=>setChartMode('history')} period={selection.period} kind={selection.kind} lineInterval={selection.lineInterval} onLineIntervalChange={lineInterval=>updateSelection({lineInterval})} onKindChange={kind=>updateSelection({kind,...(['candle','bar'].includes(kind)?{period:'day'}:{})})} onPeriodChange={period => updateSelection({period,...(period==='week'?{kind:'line'}:{})})}/>:<PriceChart code={code} firstRequest={firstChart} selection={selection} onSelectionChange={updateSelection} onIntraday={()=>setChartMode('intraday')}/>)}
+            <div className="mk-workspace-chart-actions">{!preview && !wideWorkspace && <button className="mk-button" onClick={()=>setDepthOpen(true)}>호가·체결 보기</button>}<details className="mk-chart-options"><summary>차트 추가 설정</summary><button className="mk-button" onClick={resetChart}>기본 차트로</button></details></div>
             {!preview && <PriceContextPanel key={code} code={code} name={s.name}/>}
           </div>
           {!preview && wideWorkspace && <aside className="mk-workspace-depth"><DepthPanel code={code}/></aside>}

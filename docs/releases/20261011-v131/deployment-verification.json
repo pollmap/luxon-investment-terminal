@@ -1,0 +1,79 @@
+{
+  "at": "2026-10-11T10:20:16.139610+00:00",
+  "release": "20261011-stock-shopping-v131",
+  "cloudflare_version": "83450bb0-7d1d-4eea-a3aa-0bb21a2f14fd",
+  "assets": [
+    {
+      "host": "stocks.62-171-141-206.sslip.io",
+      "path": "_next/static/css/56d4c3297aff6eef.css",
+      "bytes": 77313,
+      "expected_bytes": 77313,
+      "sha256_matches": true
+    },
+    {
+      "host": "stocks.62-171-141-206.sslip.io",
+      "path": "_next/static/css/56f922d9af7249ce.css",
+      "bytes": 27392,
+      "expected_bytes": 27392,
+      "sha256_matches": true
+    },
+    {
+      "host": "stocks.62-171-141-206.sslip.io",
+      "path": "_next/static/css/79c213b045563466.css",
+      "bytes": 192009,
+      "expected_bytes": 192009,
+      "sha256_matches": true
+    },
+    {
+      "host": "stocks.62-171-141-206.sslip.io",
+      "path": "stocks.html",
+      "bytes": 12830,
+      "expected_bytes": 12830,
+      "sha256_matches": true
+    },
+    {
+      "host": "korea-stocks-edge.lch68-workers.workers.dev",
+      "path": "_next/static/css/56d4c3297aff6eef.css",
+      "bytes": 77313,
+      "expected_bytes": 77313,
+      "sha256_matches": true
+    },
+    {
+      "host": "korea-stocks-edge.lch68-workers.workers.dev",
+      "path": "_next/static/css/56f922d9af7249ce.css",
+      "bytes": 27392,
+      "expected_bytes": 27392,
+      "sha256_matches": true
+    },
+    {
+      "host": "korea-stocks-edge.lch68-workers.workers.dev",
+      "path": "_next/static/css/79c213b045563466.css",
+      "bytes": 192009,
+      "expected_bytes": 192009,
+      "sha256_matches": true
+    },
+    {
+      "host": "korea-stocks-edge.lch68-workers.workers.dev",
+      "path": "stocks.html",
+      "bytes": 12830,
+      "expected_bytes": 12830,
+      "sha256_matches": true
+    }
+  ],
+  "runtime": {
+    "disk_total_bytes": 154894188544,
+    "disk_used_bytes": 146334072832,
+    "disk_available_bytes": 8543338496,
+    "df_used_percent": 95,
+    "storage_profile": "default",
+    "bulk_resume": false
+  },
+  "public_browser": {
+    "code": "005930",
+    "period": "3개월",
+    "interval": "일봉",
+    "shape": "캔들",
+    "last_price_date": "2026-10-08",
+    "screenshot": "public-samsung.jpg"
+  }
+}

@@ -23,7 +23,7 @@ export function ExportStocks({ query, codes, notify }: {query: Query; codes?: st
         body: JSON.stringify({...query, ...(codes ? {codes} : {})}),
       });
       if (!response.ok) throw new Error("export");
-      saveFile(await response.blob(), "주식담-종목목록.csv");
+      saveFile(await response.blob(), "주식 장보기-종목목록.csv");
     } catch { notify("표를 내려받지 못했습니다. 다시 시도해 주세요."); }
     finally { setBusy(false); }
   }
@@ -63,7 +63,7 @@ export default function PortablePreferences({ prefs, update, notify }: {
       <button className="mk-button" onClick={() => saveFile(new Blob([JSON.stringify({
         format: "korea-stocks-preferences", version: 1,
         preferences: {favorites: prefs.favorites, groups: prefs.groups, views: prefs.views},
-      }, null, 2)], {type: "application/json"}), "주식담-관심종목.json")}>백업 파일 저장</button>
+      }, null, 2)], {type: "application/json"}), "주식 장보기-관심종목.json")}>백업 파일 저장</button>
       <label className="mk-button mk-file-control">{busy ? "가져오는 중…" : "백업 파일 가져오기"}
         <input aria-label="백업 파일 가져오기" type="file" accept=".json,application/json" disabled={busy} onChange={event => {
           void restore(event.target.files?.[0]); event.target.value = "";

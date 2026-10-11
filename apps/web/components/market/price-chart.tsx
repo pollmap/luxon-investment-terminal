@@ -143,7 +143,9 @@ export default function PriceChart({
           </div>
         </div></>
       )}
-      {!active ? <div className="mk-chart-empty" role="status">{loadError||(!windowData||windowData.key!==selectionKey?"차트를 불러오는 중이에요.":"이 기간의 가격 자료가 없어요.")}{loadError&&<button className="mk-button" onClick={()=>{firstRequest?.reset();setLoadError("");setRetry(v=>v+1);}}>다시 시도</button>}</div> : <><div className="mk-chart-caption">
+      {!active ? <div className="mk-chart-empty" role="status">{loadError||(!windowData||windowData.key!==selectionKey?"차트를 불러오는 중이에요.":"이 기간의 가격 자료가 없어요.")}{loadError&&<button className="mk-button" onClick={()=>{firstRequest?.reset();setLoadError("");setRetry(v=>v+1);}}>다시 시도</button>}</div> : <>
+      <FinancialChart rows={chartRows} kind={kind} rangeKey={`${code??'local'}:${intraday?'intraday':range}:${bar}`} movingAverage={ma} onSelect={setCursor} label={`${data[0].date}부터 ${data[data.length-1].date}까지 주가와 거래량`}/>
+      <div className="mk-chart-caption">
         <strong>{intraday?active.date.slice(0,16).replace("T"," "):active.date}</strong>
         <span>
           종가 <b>{format(active.close)}원</b>
@@ -151,7 +153,6 @@ export default function PriceChart({
         {(kind==='candle'||kind==='bar')&&<><span>시가 {format(active.valid?active.open:null)}</span><span>고가 {format(active.valid?active.high:null)}</span><span>저가 {format(active.valid?active.low:null)}</span></>}
         <span>거래량 {format(Number.isFinite(active.volume)?active.volume:null)}주</span>
       </div>
-      <FinancialChart rows={chartRows} kind={kind} rangeKey={`${code??'local'}:${intraday?'intraday':range}:${bar}`} movingAverage={ma} onSelect={setCursor} label={`${data[0].date}부터 ${data[data.length-1].date}까지 주가와 거래량`}/>
       {!small && !intraday && <label className="mk-price-extra-mobile mk-check"><input type="checkbox" checked={ma} onChange={event=>setMa(event.target.checked)}/>20{bar==='day'?'일':'봉'}선</label>}
 
       {!small && <div className="mk-segment" aria-label="차트 날짜 이동"><button disabled={(cursor??data.length-1)===0} onClick={() => setCursor(Math.max(0, (cursor ?? data.length-1)-1))}>{intraday?"이전 봉":"이전 날짜"}</button><button disabled={(cursor??data.length-1)>=data.length-1} onClick={() => setCursor(Math.min(data.length-1, (cursor ?? data.length-1)+1))}>{intraday?"다음 봉":"다음 날짜"}</button><button onClick={() => setCursor(null)}>최근</button></div>}

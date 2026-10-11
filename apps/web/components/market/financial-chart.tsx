@@ -24,7 +24,7 @@ export default function FinancialChart({rows,kind="line",rangeKey="",movingAvera
     const css=(key:string)=>getComputedStyle(host).getPropertyValue(key).trim();
     const chart=createChart(host,{autoSize:true,height:420,layout:{background:{type:ColorType.Solid,color:'transparent'},textColor:css('--mk-muted'),fontFamily:'Pretendard, sans-serif',fontSize:12,attributionLogo:true},grid:{vertLines:{visible:false},horzLines:{color:css('--mk-line')}},rightPriceScale:{borderVisible:false,scaleMargins:{top:.08,bottom:.24}},timeScale:{borderVisible:false,secondsVisible:false,tickMarkFormatter:(t:Time)=>typeof t==='number'?new Date(t*1000).toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false}):null},localization:{locale:'ko-KR',timeFormatter:(t:Time)=>typeof t==='number'?new Date(t*1000).toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}):timeKey(t),priceFormatter:(v:number)=>v.toLocaleString('ko-KR',{maximumFractionDigits:2})},handleScroll:{vertTouchDrag:false}});
     const price=addPrice(chart,'line');
-    const volume=chart.addSeries(HistogramSeries,{priceFormat:{type:'volume'},priceScaleId:'volume'});
+    const volume=chart.addSeries(HistogramSeries,{priceFormat:{type:'volume'},priceScaleId:'volume',priceLineVisible:false,lastValueVisible:false});
     volume.priceScale().applyOptions({scaleMargins:{top:.82,bottom:0}});
     const average=chart.addSeries(LineSeries,{lineWidth:1,priceLineVisible:false,lastValueVisible:false});
     const state:Runtime={chart,price,kind:'line',volume,average,overlays:[],rangeKey:'',times:[],indices:new Map()};

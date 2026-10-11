@@ -223,6 +223,14 @@ class Store:
                                   DateTime(timezone=True)), formatted), else_=None)
 
     def put(self, key, payload, *, _connection=None):
+        if key == 'quotes' and _connection is None:
+            book = self._snapshot_revisions(('quote-book',))
+            if book:
+                # Compatibility for a rollback's old whole-book writer. Once
+                # incremental storage is active it must not leave quote rows
+                # stale or rewrite the preserved legacy source snapshot.
+                self.update_quotes(payload)
+                return book != self._snapshot_revisions(('quote-book',))
         # Stable content revisions let every API process reuse unchanged responses.
         # Atomic upsert also avoids two workers racing between SELECT and INSERT.
         value = json.dumps(payload, ensure_ascii=False, allow_nan=False, sort_keys=True)
@@ -368,6 +376,26 @@ class Store:
     def revisions(self, keys):
         """Small cross-process revision check without fetching large JSON payloads."""
         keys = tuple(keys)
+        quote_keys = [key for key in keys if key.startswith('quote:')]
+        requested = tuple(dict.fromkeys((*keys, *(('quotes', 'quote-book')
+                              if 'quotes' in keys or quote_keys else ()))))
+        result = self._snapshot_revisions(requested)
+        legacy = result.get('quotes')
+        if 'quotes' in keys:
+            book = result.get('quote-book')
+            if book:
+                # Composite cache identity, not a source timestamp. max() could
+                # hide updates after a backwards wall clock or a future legacy
+                # revision; both independent storage heads must participate.
+                from .quote_store import book_revision
+                result['quotes'] = book_revision(legacy, book)
+        for key in quote_keys:
+            if key not in result and legacy:
+                result[key] = legacy
+        return {key: result[key] for key in keys if key in result}
+
+    def _snapshot_revisions(self, keys):
+        keys = tuple(keys)
         if not keys:
             return {}
         with self.read_connection() as db:
@@ -402,6 +430,26 @@ class Store:
             return codes
 
     def get(self, key, default=None, *, use_redis=True):
+        if key == 'quotes':
+            from .quote_store import read_all
+            return read_all(self, default)
+        return self._get_snapshot(key, default, use_redis=use_redis)
+
+    def get_quote(self, code, default=None):
+        from .quote_store import read_quote
+        with self.read_connection() as db:
+            result = read_quote(self, db, code)
+        return result if result else default if default is not None else {}
+
+    def update_quote(self, code, patch):
+        from .quote_store import update_quote
+        return update_quote(self, code, patch)
+
+    def update_quotes(self, patches):
+        from .quote_store import update_quotes
+        return update_quotes(self, patches)
+
+    def _get_snapshot(self, key, default=None, *, use_redis=True):
         # Read across worker/API processes; only decoding is cached by revision.
         if self.redis and use_redis:
             try:

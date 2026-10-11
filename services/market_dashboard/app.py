@@ -546,7 +546,7 @@ def universe_inputs(store, revision):
 def security_row(store, code, *, include_quote=True, revisions=None):
     """Reuse the identity index and assemble only the requested security."""
     from .enriched_view import read_item
-    source_keys = ('universe', 'enriched') + (('quotes',) if include_quote else ())
+    source_keys = ('universe', 'enriched') + ((f'quote:{code}',) if include_quote else ())
     heads = revisions if revisions is not None else timings.read_revisions(store, source_keys)
     source_revision = tuple((key, heads.get(key)) for key in source_keys)
     identity = (store, code, include_quote)
@@ -559,7 +559,7 @@ def security_row(store, code, *, include_quote=True, revisions=None):
     row = identities.get(code)
     if row is None:
         raise HTTPException(404, '수집된 종목 목록에서 찾을 수 없습니다.')
-    quote = store.get('quotes', {}, use_redis=False).get(code, {}) if include_quote else {}
+    quote = store.get_quote(code) if include_quote else {}
     selected, _ = assemble_rows(store, ({'rows': [row]}, {code: read_item(store, code)}, {code: quote}))
     with _security_rows_lock:
         _security_rows[identity] = (source_revision, selected[0])
@@ -717,7 +717,7 @@ async def security_chart(code: str, period: str = "day"):
     store = get_store()
     toss = store.get('toss-chart:'+code, {}) if period == 'day' else {}
     data = toss if toss.get('points') else await visuals.chart(store, code, period, "item")
-    quote = store.get('quotes', {}).get(code, {})
+    quote = store.get_quote(code)
     return visuals.chart_context(data, period, quote.get('as_of'))
 
 
@@ -966,7 +966,7 @@ async def security(code: str, request: Request, background_tasks: BackgroundTask
         dependencies=tuple(dict.fromkeys((*dependencies,*report_dependencies(store,code))))
     # Different symbols share the same source heads; collect only requests
     # already queued in this loop turn. No TTL or retained validation clock.
-    initial_heads = (await _revision_reads.read(store, (*dependencies, 'universe', 'enriched', 'quotes'))
+    initial_heads = (await _revision_reads.read(store, (*dependencies, 'universe', 'enriched', f'quote:{code}'))
                      if view == 'summary' else None)
     def read():
         observed = {}
@@ -974,7 +974,7 @@ async def security(code: str, request: Request, background_tasks: BackgroundTask
         def selected_revisions():
             nonlocal first_heads
             include_quote = view in ('full', 'summary')
-            source_keys = ('universe', 'enriched') + (('quotes',) if include_quote else ())
+            source_keys = ('universe', 'enriched') + ((f'quote:{code}',) if include_quote else ())
             heads = first_heads if first_heads is not None else timings.read_revisions(store, (*dependencies, *source_keys))
             first_heads = None
             row = security_row(store, code, include_quote=include_quote, revisions=heads)

@@ -1,0 +1,12 @@
+{
+  "fixture_non_production": true,
+  "schema": "quote_canary_4d32a261765a486082a437e4d3ca0b6d",
+  "status": "passed",
+  "schema_removed": true,
+  "elapsed_seconds": 1.288,
+  "postgres_major": 17,
+  "connections": 4,
+  "writes": 44,
+  "production_tables_changed": false,
+  "initial_attempt": "container non-root could not read staged /tmp source; reran isolated canary as root without changing service user"
+}

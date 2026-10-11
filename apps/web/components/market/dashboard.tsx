@@ -394,6 +394,12 @@ export default function Dashboard() {
     window.scrollTo(0, 0);
   };
   const returnFromComparison=()=>{const saved=comparisonReturn.current;setPage(saved.page);setOffset(saved.offset);requestAnimationFrame(()=>window.scrollTo(0,saved.scroll));};
+  // This workspace owns list restoration; browser restoration must not race it.
+  useEffect(() => {
+    const previous = history.scrollRestoration;
+    history.scrollRestoration = 'manual';
+    return () => { history.scrollRestoration = previous; };
+  }, []);
   const open = (c: string) => {
     if (c === code) return;
     if (!code) scrollRef.current = window.scrollY;
@@ -587,10 +593,10 @@ export default function Dashboard() {
           <button
             className="mk-brand"
             onClick={() => navigate("market")}
-            aria-label="주식담 홈"
+            aria-label="주식 장보기 홈"
           >
             <img src="/brand/jusikdam-symbol.png" width="36" height="36" alt="" />
-            주식담
+            주식 장보기
           </button>
           <nav className="mk-desktop-nav" aria-label="주 메뉴">
             {sections.map(([id, name]) => (
@@ -703,26 +709,27 @@ export default function Dashboard() {
               <>
                 <MarketPulse overview={overview}/>
                 <div className="mk-market-strip">
+                  {overview?.indices?.[0]?.as_of && <time className="mk-market-date" dateTime={overview.indices[0].as_of.slice(0,10)}>{overview.indices[0].as_of.slice(0,10)}</time>}
                   <span className="mk-market-status">
                     <i />
-                    {!overview?.indices.length ? "시장 확인 중" : overview.indices.every((i) => i.market_status === "CLOSE")
+                    {!overview?.indices?.length ? "시장 확인 중" : overview.indices.every((i) => i.market_status === "CLOSE")
                       ? "장 마감"
                       : overview.indices.some((i) => i.market_status === "OPEN") ? "장중" : "시장 확인 중"}
                   </span>
                   <span>
                     상승{" "}
                     <b className="mk-up">
-                      {overview?.breadth.up.toLocaleString() || "—"}
+                      {overview?.breadth?.up?.toLocaleString() || "—"}
                     </b>
                   </span>
                   <span>
                     하락{" "}
                     <b className="mk-down">
-                      {overview?.breadth.down.toLocaleString() || "—"}
+                      {overview?.breadth?.down?.toLocaleString() || "—"}
                     </b>
                   </span>
-                  <span>
-                    보합 <b>{overview?.breadth.flat.toLocaleString() || "—"}</b>
+                  <span className="mk-strip-flat">
+                    보합 <b>{overview?.breadth?.flat?.toLocaleString() || "—"}</b>
                   </span>
                   <span className="mk-strip-value">
                     거래대금 <b>{format(overview?.value, "value")}원</b>

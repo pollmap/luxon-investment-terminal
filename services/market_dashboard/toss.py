@@ -420,8 +420,7 @@ class TossCollector:
                 return
         except ValueError:
             return
-        quotes = self.store.get('quotes', {}) if batch is None else batch
-        previous = quotes.get(code, {})
+        previous = self.store.get_quote(code)
         if previous.get('as_of'):
             try:
                 if datetime.fromisoformat(previous['as_of']) > datetime.fromisoformat(stamp):
@@ -452,12 +451,20 @@ class TossCollector:
                 and previous.get('as_of') == stamp and previous.get('venue') == '통합'):
             # Re-reading the same last trade is not a new quote revision. Request
             # health/raw evidence is already tracked independently by TossClient.
+            # The collector may materialize a legacy quote once, preserving all
+            # original clocks and evidence. Reads never perform this migration.
+            if batch is None:
+                self.store.update_quote(code, {})
+            else:
+                batch[code] = {}
             return
         # Do not carry KRX-only change into an integrated quote.
-        quotes[code] = {**previous, 'price':price, 'change':change, 'as_of':stamp,
+        patch = {'price':price, 'change':change, 'as_of':stamp,
             'received_at':now(), 'venue':'통합', 'quote_trace':{**evidence,'period':stamp}, 'market_status':None}
         if batch is None:
-            self.store.put('quotes', quotes)
+            self.store.update_quote(code, patch)
+        else:
+            batch[code] = patch
 
     async def history(self, code, interval='1d', pages=1, resume=False, *, adjusted=True, compact=False, cover_session=False):
         if interval not in ('1d','1m'):
@@ -546,18 +553,14 @@ class TossCollector:
             self.previous_closes = {k:v for k,v in self.previous_closes.items() if k[0] != code}
             if not resume and observed_count and ordered[-1].get('volume') is not None:
                 latest = ordered[-1]
-                quotes = self.store.get('quotes', {})
-                previous_quote = quotes.get(code, {})
-                quotes[code] = {**previous_quote, 'daily_facts': {
-                    **previous_quote.get('daily_facts', {}),
+                self.store.update_quote(code, {'daily_facts': {
                     'volume': {'value': latest['volume'], 'period': latest['date'], 'unit': '주',
                                'venue': '통합', 'source_trace': {
                                    **latest.get('source_trace', evidence),
                                    'unit': '주', 'period': latest['date'],
                                    'venue': '통합', 'field': 'volume',
                                }},
-                }}
-                self.store.put('quotes', quotes)
+                }})
         if interval=='1m':
             latest = ordered[-1]['date']
             rows = [r for r in ordered if r['date']==latest]
@@ -604,7 +607,7 @@ class TossCollector:
                 self.store.put('toss-price-error:'+selected[0],{'status':'error','http_status':exc.response.status_code,
                     'received_at':now(),'retry_at_unix':time.time()+300})
             return
-        batch = self.store.get('quotes', {})
+        batch = {}
         for item in data:
             if item.get('symbol') in selected:
                 try:
@@ -612,7 +615,7 @@ class TossCollector:
                 except (ValueError,TypeError,KeyError) as exc:
                     self.store.put('toss-price-error:'+item['symbol'],{'status':'error','error':type(exc).__name__,
                         'received_at':now(),'retry_at_unix':time.time()+30})
-        self.store.put('quotes', batch)
+        self.store.update_quotes(batch)
 
     async def snapshot(self, code, *, include_price=True):
         async with self.snapshot_locks.setdefault(code, asyncio.Lock()):
@@ -963,7 +966,7 @@ class TossCollector:
                 if time.monotonic()-self.last_history.get(code, 0) <= 60:
                     return False
                 daily = self.store.metadata(f'bars:{code}:통합:day', {})
-                quote = self.store.get('quotes', {}).get(code, {})
+                quote = self.store.get_quote(code)
                 quote_day = trading_day(quote.get('as_of'))
                 current_day = datetime.now(ZoneInfo('Asia/Seoul')).date().isoformat()
                 volume = quote.get('daily_facts', {}).get('volume', {})

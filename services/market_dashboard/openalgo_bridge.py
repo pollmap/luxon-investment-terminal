@@ -56,7 +56,7 @@ def canonical(code: str, kind: str, request: Request, interval: str = 'D', start
     if code not in store.listed_codes():
         raise HTTPException(404, 'Unknown security')
     if kind == 'quotes':
-        quote = store.get('quotes', {}).get(code, {})
+        quote = store.get_quote(code)
         if quote.get('venue') != '통합':
             raise HTTPException(404, 'Integrated quote not collected')
         return {'ltp': quote.get('price'), 'timestamp': quote.get('as_of'), 'venue': '통합'}

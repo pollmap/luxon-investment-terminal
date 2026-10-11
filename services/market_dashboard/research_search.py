@@ -44,12 +44,15 @@ from .market_context import (
     insert_ignore,
     public_url,
     securities,
+    verified_document_codes,
+    verified_document_filter,
 )
 from .research_embeddings import EmbeddingUnavailable, load_from_env, normalized_vector
 from .store import now
 
 VERSION = "research-search-v1"
-LEXICAL_VERSION = "lexical_only:unicode-word-v1:320:48"
+ASSOCIATION_VERSION = ":associations-v2"
+LEXICAL_VERSION = "lexical_only:unicode-word-v1:320:48" + ASSOCIATION_VERSION
 KINDS = {"news", "filing", "ir", "evidence"}
 META = MetaData()
 HEADS = Table(
@@ -250,6 +253,12 @@ def safe_document(payload, *, document_id, revision, kind):
         "review_status": payload.get("review_status")
         if payload.get("review_status") in {"verified", "candidate", "source_observed"}
         else "source_observed",
+        "association_basis": payload.get("association_basis")
+        if payload.get("association_basis") in {
+            "provider_stock_news", "document_issuer", "reviewed_document_subject"
+        }
+        else None,
+        "verified_security_codes": sorted(verified_document_codes(payload)),
     }
 
 
@@ -354,7 +363,10 @@ class ResearchRepository:
             raise ValueError("Body evidence requires source hash")
         if not isinstance(sections, list) or len(sections) > 1000:
             raise ValueError("Section count limit")
-        version = (self.adapter.version + ":320:48") if self.adapter else LEXICAL_VERSION
+        version = (
+            self.adapter.version + ":320:48" + ASSOCIATION_VERSION
+            if self.adapter else LEXICAL_VERSION
+        )
         indexed = []
         for section in sections:
             for chunk in chunk_section(section, self.adapter):
@@ -578,6 +590,9 @@ class ResearchRepository:
                         select(LINKS.c.document_id).where(LINKS.c.code == code)
                     )
                 )
+                q = q.where(verified_document_filter(
+                    q.selected_columns.payload, code, self.store.engine.dialect.name
+                ))
             if kind:
                 q = q.where(q.selected_columns.kind == kind)
             if from_day:
@@ -633,7 +648,10 @@ class ResearchRepository:
                     if indexed
                     else []
                 )
-                preferred = self.adapter.version + ":320:48" if self.adapter else LEXICAL_VERSION
+                preferred = (
+                    self.adapter.version + ":320:48" + ASSOCIATION_VERSION
+                    if self.adapter else LEXICAL_VERSION
+                )
                 chosen = preferred if preferred in versions else versions[0] if versions else ""
                 chunk_base = chunk_base.where(CHUNKS.c.index_version == chosen)
             chunk_base = chunk_base.where(
@@ -736,21 +754,30 @@ class ResearchRepository:
                 )
         result, covered = [], set()
         current = {(r["document_id"], r["revision"]) for r in records}
+        documents = {(r["document_id"], r["revision"]): r for r in records}
         for row in chunks[: self.candidate_limit]:
             if (row["document_id"], row["revision"]) not in current:
                 continue  # Stale projection never hides a newer title/correction.
             try:
                 metadata = json.loads(row["metadata"])
                 checked = safe_document(
-                    metadata,
+                    json.loads(documents[(row["document_id"], row["revision"])]["payload"]),
                     document_id=row["document_id"],
                     revision=row["revision"],
-                    kind=metadata.get("kind"),
+                    kind=documents[(row["document_id"], row["revision"])]["kind"],
                 )
+                names = {
+                    r.get("code"): r.get("company")
+                    for r in metadata.get("securities", []) if isinstance(r, dict)
+                } if isinstance(metadata.get("securities"), list) else {}
                 result.append(
                     {
                         **metadata,
                         **checked,
+                        "securities": [
+                            {"code": c, "company": names.get(c)}
+                            for c in links.get(row["document_id"], [])
+                        ],
                         "excerpt": checked["title"]
                         if checked["kind"] == "news"
                         else row["search_text"],
@@ -904,6 +931,7 @@ def public_item(row, code=None):
         "kind",
         "issuer",
         "review_status",
+        "association_basis",
         "section",
         "page",
         "table",
@@ -931,6 +959,12 @@ def public_item(row, code=None):
         and isinstance(r.get("code"), str)
         and re.fullmatch(r"[A-Z0-9]{6}", r["code"])
     ]
+    verified = verified_document_codes(row)
+    candidates = [
+        {**r, "review_status": "candidate", "association_basis": row.get("association_basis")}
+        for r in associations if r["code"] not in verified
+    ]
+    associations = [r for r in associations if r["code"] in verified]
     for key in (
         "page",
         "row",
@@ -952,7 +986,9 @@ def public_item(row, code=None):
         (r for r in associations if r.get("code") == code), associations[0] if associations else {}
     )
     result.update(
-        code=selected.get("code"), company=selected.get("company"), securities=associations
+        code=selected.get("code"), company=selected.get("company"), securities=associations,
+        candidate_securities=candidates,
+        association_status="verified" if associations else "unverified",
     )
     if row.get("kind") == "news":
         result["excerpt"] = row["title"]

@@ -423,7 +423,7 @@ class PublicProvider:
         return rows
 
     async def quote(self, code):
-        previous = self.store.get("quotes", {}).get(code, {})
+        previous = self.store.get_quote(code)
         if previous.get('quote_trace', {}).get('source') in ('toss', 'toss_websocket'):
             return previous  # Do not overwrite integrated prices with another venue.
         url = f"https://m.stock.naver.com/api/stock/{code}/basic"
@@ -435,8 +435,7 @@ class PublicProvider:
         change = number(item.get("fluctuationsRatio"))
         if price is None or price <= 0 or change is None:
             raise ValueError("Invalid quote price")
-        current = self.store.get("quotes", {})
-        previous = current.get(code, {})
+        previous = self.store.get_quote(code)
         as_of = item.get("localTradedAt")
         if as_of and previous.get("as_of") and as_of < previous["as_of"]:
             return
@@ -450,8 +449,7 @@ class PublicProvider:
             "received_at": now(),
             "quote_trace": fact,
         }
-        self.store.put("quotes", {**current, code: {**previous, **quote}})
-        return quote
+        return self.store.update_quote(code, quote)
 
     async def indices(self):
         rows = []

@@ -262,7 +262,7 @@ export default function MarketPulse({
     <section className="mk-pulse" aria-label="시장 지수 차트">
       <div className="mk-index-choices">
         {Object.entries(names).map(([indexCode, name]) => {
-          const index = overview?.indices.find((item) => item.code === indexCode);
+          const index = overview?.indices?.find((item) => item.code === indexCode);
           return (
             <button
               key={indexCode}

@@ -1,8 +1,8 @@
-# 주식담 Agent Rules
+# 주식 장보기 Agent Rules
 
 ## Mission
 
-Maintain 주식담, a public Korean-stock information service with no login.
+Maintain 주식 장보기, a public Korean-stock information service with no login.
 Support KOSPI/KOSDAQ common and preferred shares on PC and mobile. Toss is the
 only brokerage connection; DART/XBRL, KIND, company IR and verified public
 sources complement its market data. Preserve existing links, watchlists,
@@ -91,6 +91,6 @@ Recommended audit fields:
 
 ## Research Boundary
 
-주식담 presents observed facts and deterministic comparisons. User assumptions,
+주식 장보기 presents observed facts and deterministic comparisons. User assumptions,
 company forecasts and reported actuals remain distinct. Do not add trading,
 account operations or investment scores to complete an unrelated task.

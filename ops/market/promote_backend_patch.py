@@ -317,6 +317,55 @@ def smoke(version):
     raise RuntimeError('Backend readiness deadline exceeded')
 
 
+def prepare_quote_rollback(previous, release, version, image):
+    """Build the previous app with only the new quote storage compatibility layer.
+
+    Prepared and rehearsed before any candidate collector may create quote rows.
+    The old image tag, old release files and persistent database remain unchanged.
+    """
+    relative = Path('services/market_dashboard')
+    if not (release/relative/'quote_store.py').is_file():
+        return None
+    if (previous/relative/'quote_store.py').is_file():
+        return None  # Previous release already contains the compatible storage API.
+    for name in ('store.py', 'quote_store.py'):
+        path = release/relative/name
+        if not path.is_file() or _is_link(path) or path.stat().st_size > 1024**2:
+            raise RuntimeError('Invalid quote rollback compatibility source')
+    rollback_image = f'korea-stocks-api:{version}-quote-rollback'
+    dockerfile = release/'Dockerfile.quote-rollback'
+    dockerfile.write_text(
+        f'FROM {image}\nUSER root\n'
+        'COPY --chown=market:market services/market_dashboard/store.py '
+        '/app/services/market_dashboard/store.py\n'
+        'COPY --chown=market:market services/market_dashboard/quote_store.py '
+        '/app/services/market_dashboard/quote_store.py\nUSER market\n', encoding='utf-8')
+    run('docker', 'build', '-q', '-t', rollback_image, '-f', str(dockerfile), str(release))
+    check = (
+        'import tempfile; from services.market_dashboard.store import Store; '
+        's=Store("sqlite://",tempfile.mkdtemp()); '
+        'q={"price":100,"as_of":"2026-10-08T15:30:00+09:00",'
+        '"quote_trace":{"source":"toss"}}; '
+        's.put("quotes",{"005930":q}); s.update_quote("005930",{}); '
+        'assert s.get("quotes")["005930"]==q; '
+        's.put("quotes",{"005930":dict(q,price=110,as_of="2026-10-08T15:31:00+09:00")}); '
+        'assert s.get_quote("005930")["price"]==110; '
+        'assert s.metadata("quotes")["005930"]["price"]==100'
+    )
+    run('docker', 'run', '--rm', '--network', 'none', '--read-only',
+        '--memory', '256m', '--cpus', '0.5', '--tmpfs', '/tmp:rw,size=32m',
+        '--env', 'MARKET_REDIS_URL=',
+        '--entrypoint', 'python', rollback_image, '-c', check, timeout=60)
+    override = release/'compose.quote-rollback.json'
+    override.write_text(json.dumps({'services': {
+        service: {'image': rollback_image} for service in BACKEND}}, indent=2), encoding='utf-8')
+    record = {'image': rollback_image, 'base_image': image, 'override': str(override),
+              'previous_release': str(previous), 'state': 'prepared',
+              'requires_override_for_manual_rollback': True}
+    (release/'quote-rollback.json').write_text(json.dumps(record, indent=2), encoding='utf-8')
+    return record
+
+
 def promote(version, expected, archive_path, frontend=False):
     if any(not re.fullmatch(r'[A-Za-z0-9-]{5,80}', name) for name in (version, expected)):
         raise ValueError('Invalid release name')
@@ -344,6 +393,8 @@ def promote(version, expected, archive_path, frontend=False):
         omitted_static_snapshots = copy_release(previous, release, frontend)
         safe_extract(archive_path, release, frontend)
         validate_storage_reader(release)
+        quote_rollback = prepare_quote_rollback(previous, release, version,
+                                               before['market-api']['image'])
         dockerfile = release / 'Dockerfile.backend-patch'
         dockerfile.write_text(
             f'FROM {before["market-api"]["image"]}\n'
@@ -429,6 +480,8 @@ def promote(version, expected, archive_path, frontend=False):
                       'updated_services': list(updated_services), 'health': health,
                       'omitted_static_snapshots': omitted_static_snapshots,
                       'prior_worker_state': before['market-worker']['state']}
+            if quote_rollback:
+                report['quote_rollback'] = quote_rollback
             (release / 'deployment.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
             print(json.dumps({'release': version, 'status': 'activated',
                               'updated_services': list(updated_services),
@@ -444,10 +497,20 @@ def promote(version, expected, archive_path, frontend=False):
                 restore_env(env, old_env)
                 rollback = ['docker', 'compose', '--env-file', str(env), '-f',
                             str(previous / 'ops/market/compose.desktop.yml')]
+                if quote_rollback:
+                    rollback.extend(('-f', quote_rollback['override']))
                 # expected-version tags may lag a separately deployed frontend.
                 # Restore the image that was actually running before this change.
                 run('docker', 'tag', protected['market-web']['image'], f'korea-stocks-web:{expected}')
                 run(*rollback, 'up', '-d', '--no-deps', *updated_services)
+                if quote_rollback:
+                    for service in BACKEND:
+                        if container_state(service)['image'] != quote_rollback['image']:
+                            raise RuntimeError(
+                                'Quote-compatible rollback image did not activate') from None
+                    quote_rollback['state'] = 'activated_after_candidate_failure'
+                    (release/'quote-rollback.json').write_text(
+                        json.dumps(quote_rollback, indent=2), encoding='utf-8')
             raise
 
 
