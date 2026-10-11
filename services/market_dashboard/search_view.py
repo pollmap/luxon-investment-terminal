@@ -4,9 +4,10 @@ import json
 import threading
 from collections import OrderedDict
 
-from sqlalchemy import String, case, cast, column, func, literal, select, text, values
+from sqlalchemy import String, bindparam, case, cast, column, func, literal, select, text, values
 from sqlalchemy.dialects.postgresql import JSONB
 
+from . import request_timings as timings
 from .models import Query, apply_query, matches_security
 from .quote_metrics import select_daily_measures
 
@@ -20,73 +21,149 @@ _lock = threading.Lock()
 _cache = OrderedDict()
 
 
+def _columns(sqlite):
+    columns = ['code']
+    for path in PATHS:
+        if sqlite:
+            location = '$.' + '.'.join(path)
+            columns.extend((f"json_extract(value, '{location}')",
+                            f"json_type(value, '{location}')"))
+        else:
+            location = '{' + ','.join(path) + '}'
+            columns.extend((f"value #> '{location}'",
+                            f"jsonb_typeof(value #> '{location}')"))
+    return columns
+
+
+def _records(store, statement, params=None):
+    with store.read_connection() as db:
+        # Execute includes driver/server round trips, not just server CPU time.
+        with timings.stage('search_sql'):
+            result = db.execute(statement, params or {})
+        with timings.stage('search_result'):
+            return result.all()
+
+
+@timings.timed('search_decode')
+def _decode(records, sqlite):
+    projected = {}
+    for record in records:
+        if record[0] is None:
+            continue
+        item = {}
+        for index, path in enumerate(PATHS):
+            value, kind = record[1 + index * 2:3 + index * 2]
+            if kind is None:
+                continue
+            if sqlite and kind in ('array', 'object'):
+                value = json.loads(value)
+            target = item
+            for part in path[:-1]:
+                target = target.setdefault(part, {})
+            target[path[-1]] = value
+        projected[record[0]] = item
+    return projected
+
+
+def _quote_heads(store):
+    # Read only small version columns. No legacy JSON or quote payloads cross
+    # this boundary, even when every listed company has a live quote.
+    return dict(_records(store, text(
+        "SELECT key, updated_at FROM market_snapshots "
+        "WHERE key IN ('quotes', 'quote-book') OR key LIKE 'quote:%'")))
+
+
+def _quote_delta(store, cached):
+    """Reuse unchanged rows; abandon the delta if any concurrent writer intervenes."""
+    previous = cached[2]
+    heads = _quote_heads(store)
+    if heads.get('quotes') != previous.get('quotes') or previous.keys() - heads.keys():
+        return None
+    changed = [key for key, revision in heads.items()
+               if key.startswith('quote:') and previous.get(key) != revision]
+    # Large bursts use one full projection rather than expanding a huge IN list.
+    if len(changed) > 30:
+        return None
+    sqlite = store.engine.dialect.name == 'sqlite'
+    rows = []
+    if changed:
+        value = 'payload' if sqlite else 'payload::jsonb'
+        materialized = '' if sqlite else 'MATERIALIZED '
+        statement = text(
+            f"WITH entries AS {materialized}(SELECT substr(key, 7) AS code, {value} AS value "
+            "FROM market_snapshots WHERE key IN :keys) SELECT "
+            + ', '.join(_columns(sqlite)) + ' FROM entries'
+        ).bindparams(bindparam('keys', expanding=True))
+        rows = _records(store, statement, {'keys': changed})
+    # The heads before and after the selected read must match, including absent
+    # and removed rows. A changed global source never labels old values as fresh.
+    if _quote_heads(store) != heads:
+        return None
+    from .quote_store import book_revision
+    revision = book_revision(heads.get('quotes'), heads.get('quote-book'))
+    projected = dict(cached[1])
+    projected.update(_decode(rows, sqlite))
+    timings.count('search_delta')
+    timings.count('search_delta_rows', len(rows))
+    return revision, projected, heads
+
+
 def _light_map(store, key, revision):
     identity = (store, key)
-    with _lock:
+    with timings.timed_lock(_lock, 'search_lock'):
         cached = _cache.get(identity)
         if revision is not None and cached and cached[0] == revision:
             _cache.move_to_end(identity)
             return cached[1]
+        if key == 'quotes' and cached:
+            incremental = _quote_delta(store, cached)
+            if incremental is not None:
+                _cache[identity] = incremental
+                _cache.move_to_end(identity)
+                return incremental[1]
+            timings.count('search_fallback')
         sqlite = store.engine.dialect.name == 'sqlite'
-        entries = ("SELECT e.key AS code, e.value AS value, 0 AS priority "
+        entries = ("SELECT e.key AS code, e.value AS value, 0 AS priority, NULL AS item_revision "
                    "FROM market_snapshots s JOIN json_each(s.payload) e ON true "
                    "WHERE s.key = :key" if sqlite else
-                   "SELECT e.key AS code, e.value AS value, 0 AS priority "
+                   "SELECT e.key AS code, e.value AS value, 0 AS priority, NULL AS item_revision "
                    "FROM market_snapshots s CROSS JOIN LATERAL "
                    "jsonb_each(s.payload::jsonb) e WHERE s.key = :key")
         if key == 'quotes':
             value = 'payload' if sqlite else 'payload::jsonb'
-            entries += (f" UNION ALL SELECT substr(key, 7), {value}, 1 "
+            entries += (f" UNION ALL SELECT substr(key, 7), {value}, 1, updated_at "
                         "FROM market_snapshots WHERE key LIKE 'quote:%'")
         # Include an empty sentinel so even an empty/deleted source has a head
         # observation in this very SELECT, without a second revision query.
         empty = "'{}'" if sqlite else "'{}'::jsonb"
-        entries += f' UNION ALL SELECT NULL, {empty}, -1'
-        columns = ['code']
-        for path in PATHS:
-            if sqlite:
-                location = '$.' + '.'.join(path)
-                columns.extend((f"json_extract(value, '{location}')",
-                                f"json_type(value, '{location}')"))
-            else:
-                location = '{' + ','.join(path) + '}'
-                columns.extend((f"value #> '{location}'",
-                                f"jsonb_typeof(value #> '{location}')"))
+        entries += f' UNION ALL SELECT NULL, {empty}, -1, NULL'
+        columns = _columns(sqlite)
         columns.extend(("(SELECT updated_at FROM heads WHERE key = :key)",
-                        "(SELECT updated_at FROM heads WHERE key = 'quote-book')"))
+                        "(SELECT updated_at FROM heads WHERE key = 'quote-book')",
+                        'item_revision'))
         statement = text("WITH heads AS (SELECT key, updated_at FROM market_snapshots "
                          "WHERE key IN (:key, 'quote-book')), entries AS (" + entries
                          + ') SELECT ' + ', '.join(columns)
                          + ' FROM entries ORDER BY priority')
-        with store.read_connection() as db:
-            records = db.execute(statement, {'key': key}).all()
-        values = {}
-        for record in records:
-            if record[0] is None:
-                continue
-            item = {}
-            for index, path in enumerate(PATHS):
-                value, kind = record[1 + index * 2:3 + index * 2]
-                if kind is None:
-                    continue
-                if sqlite and kind in ('array', 'object'):
-                    value = json.loads(value)
-                target = item
-                for part in path[:-1]:
-                    target = target.setdefault(part, {})
-                target[path[-1]] = value
-            values[record[0]] = item
-        observed_revision = records[0][-2]
+        records = _records(store, statement, {'key': key})
+        timings.count('search_full')
+        projected = _decode(records, sqlite)
+        observed_revision = records[0][-3]
+        heads = {}
         if key == 'quotes':
             from .quote_store import book_revision
-            observed_revision = book_revision(observed_revision, records[0][-1])
+            heads = {key: value for key, value in (('quotes', observed_revision),
+                     ('quote-book', records[0][-2])) if value is not None}
+            heads.update({'quote:' + record[0]: record[-1] for record in records
+                          if record[-1] is not None})
+            observed_revision = book_revision(observed_revision, records[0][-2])
         # Attach only the source heads observed with the actual projected values.
         if observed_revision is not None:
-            _cache[identity] = (observed_revision, values)
+            _cache[identity] = (observed_revision, projected, heads)
             _cache.move_to_end(identity)
             while len(_cache) > 4:
                 _cache.popitem(last=False)
-        return values
+        return projected
 
 
 def candidates(store, universe, query, limit, revisions):
@@ -153,10 +230,11 @@ def selected_inputs(store, codes):
         .outerjoin(detail, detail.c.key == literal(PREFIX) + requested.c.code)
         .outerjoin(legacy, legacy.c.key == 'quotes')
         .outerjoin(quote, quote.c.key == literal('quote:') + requested.c.code))
-    with store.read_connection() as db:
-        records = db.execute(query).all()
+    records = _records(store, query)
     details, quotes = {}, {}
-    for code, detail_raw, quote_raw in records:
-        details[code] = json.loads(detail_raw) if isinstance(detail_raw, str) else detail_raw or {}
-        quotes[code] = json.loads(quote_raw) if isinstance(quote_raw, str) else quote_raw or {}
+    with timings.stage('search_decode'):
+        for code, detail_raw, quote_raw in records:
+            details[code] = (json.loads(detail_raw) if isinstance(detail_raw, str)
+                             else detail_raw or {})
+            quotes[code] = json.loads(quote_raw) if isinstance(quote_raw, str) else quote_raw or {}
     return details, quotes

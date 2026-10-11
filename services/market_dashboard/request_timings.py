@@ -8,11 +8,15 @@ from contextvars import ContextVar
 from functools import wraps
 
 STAGES = (
-    'revision_wait', 'revision_db', 'executor_wait', 'rows_lock', 'rows_inputs',
+    'revision_wait', 'revision_db', 'revision_sql', 'revision_result',
+    'read_guard', 'db_checkout', 'executor_wait', 'rows_lock', 'rows_inputs',
     'rows_build', 'selected_read',
-    'response_lock', 'response_build', 'response_encode', 'flight_wait',
+    'search_lock', 'search_sql', 'search_result', 'search_decode',
+    'response_lock', 'response_build', 'response_encode', 'response_json',
+    'response_gzip', 'flight_wait',
 )
-COUNTERS = (*STAGES, 'rows_built', 'rows_reused', 'response_hit', 'flight_join', 'revision_join')
+COUNTERS = (*STAGES, 'rows_built', 'rows_reused', 'response_hit', 'flight_join', 'revision_join',
+            'search_full', 'search_delta', 'search_delta_rows', 'search_fallback')
 _current = ContextVar('market_request_timings', default=None)
 
 

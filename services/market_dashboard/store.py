@@ -405,6 +405,8 @@ class Store:
         return {key: result[key] for key in keys if key in result}
 
     def _snapshot_revisions(self, keys):
+        from . import request_timings as timings
+
         keys = tuple(keys)
         if not keys:
             return {}
@@ -412,20 +414,22 @@ class Store:
             if self.url.startswith("sqlite"):
                 # SQLite otherwise prefers the unique PK and reads the large row.
                 placeholders = ",".join("?" for _ in keys)
-                return dict(
-                    db.exec_driver_sql(
+                with timings.stage('revision_sql'):
+                    rows = db.exec_driver_sql(
                         "SELECT key, updated_at FROM market_snapshots "
                         "INDEXED BY market_snapshot_revision_idx "
                         f"WHERE key IN ({placeholders})",
                         keys,
-                    ).all()
-                )
-            rows = db.execute(
-                select(self.snapshots.c.key, self.snapshots.c.updated_at).where(
-                    self.snapshots.c.key.in_(keys)
-                )
-            )
-            return dict(rows.all())
+                    )
+            else:
+                with timings.stage('revision_sql'):
+                    rows = db.execute(
+                        select(self.snapshots.c.key, self.snapshots.c.updated_at).where(
+                            self.snapshots.c.key.in_(keys)
+                        )
+                    )
+            with timings.stage('revision_result'):
+                return dict(rows.all())
 
     def listed_codes(self):
         """Share only small security identities between background queue loops."""
@@ -606,9 +610,20 @@ class Store:
 
     @contextmanager
     def read_connection(self):
+        from . import request_timings as timings
+
         # StaticPool uses one DBAPI connection for isolated in-memory runs.
         # A concurrent reader closing its transaction can otherwise roll back
         # another thread's write. File SQLite/PostgreSQL retain parallel reads.
         guard = self.lock if self.url == "sqlite://" else nullcontext()
-        with guard, self.engine.connect() as connection:
-            yield connection
+        # Separate the in-memory SQLite guard from pool acquisition. Checkout
+        # includes connect/pre-ping work, so it is not pure pool queue latency.
+        with timings.stage('read_guard'):
+            guard.__enter__()
+        try:
+            with timings.stage('db_checkout'):
+                connection = self.engine.connect()
+            with connection:
+                yield connection
+        finally:
+            guard.__exit__(None, None, None)

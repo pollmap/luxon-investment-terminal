@@ -363,8 +363,16 @@ def next_target(store):
     return code
 
 async def corporate_events_loop(source):
-    repair_related_events(source.store)
+    from .storage_budget import collection_capacity
+
+    repaired = False
     while True:
+        if collection_capacity(source.store, 'corporate-events')['limited']:
+            await asyncio.sleep(60)
+            continue
+        if not repaired:
+            repair_related_events(source.store)
+            repaired = True
         if source.dart:
             code=next_target(source.store)
             if code:

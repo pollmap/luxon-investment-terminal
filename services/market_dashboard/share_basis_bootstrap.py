@@ -20,7 +20,7 @@ from .share_basis import valid_evidence
 from .share_basis_review_store import review_index_key
 from .store import now
 
-VERSION = "first-share-basis-evidence-v1"
+VERSION = "first-share-basis-evidence-v2"
 REPLAY_VERSION = "eps-input-archive-replay-v1"
 
 
@@ -201,6 +201,89 @@ def _statement_identity(row, company, report_code, digest):
     )
 
 
+def _archived_index_reports(store, code, company, index, inputs):
+    """Discover at most four missing annual/half-year reports from exact list bytes.
+
+    A filing index entry alone is not a verified company/report identity. The
+    saved DART response must bind the company, receipt, title and publication.
+    Quarterly report codes still require an actual financial response; months
+    never decide Q1/Q3, including for non-December fiscal years.
+    """
+    from .raw_archive import read_original_verified
+
+    begin = (inputs.get("candidate_window") or {}).get("start")
+    candidates = []
+    for row in sorted(index.values(), key=lambda item: str(item.get("receipt", "")), reverse=True):
+        receipt, title = str(row.get("receipt", "")), str(row.get("title", ""))
+        normalized = re.sub(r"^\[(?:기재)?정정\]\s*", "", title).strip()
+        kind = re.fullmatch(r"(사업보고서|반기보고서)\s*\((\d{4})\.(\d{2})\)", normalized)
+        trace = row.get("source_trace") or {}
+        digest = trace.get("sha256")
+        if (
+            not kind
+            or not 1 <= int(kind[3]) <= 12
+            or not re.fullmatch(r"\d{14}", receipt)
+            or receipt in inputs["filing_ids"]
+            or begin and kind[2] < begin[:4]
+            or trace.get("source") != "opendart"
+            or not re.fullmatch(r"[0-9a-f]{64}", str(digest or ""))
+        ):
+            continue
+        candidates.append((row, {"사업보고서": "11011", "반기보고서": "11012"}[kind[1]], digest))
+        if len(candidates) == 4:
+            break
+    payloads, reports = {}, []
+    for row, report_code, digest in candidates:
+        try:
+            if digest not in payloads:
+                directory = store.root / "raw/dart"
+                content = read_original_verified(directory, digest)
+                metadata = json.loads((directory / (digest + ".json")).read_bytes())
+                url = urlsplit(metadata.get("url") or "")
+                if (
+                    url.scheme != "https" or url.netloc != "opendart.fss.or.kr"
+                    or url.path != "/api/list.json"
+                    or parse_qs(url.query).get("corp_code") != [company]
+                ):
+                    raise ValueError("Archived filing-index request identity mismatch")
+                payloads[digest] = json.loads(content)
+            payload = payloads[digest]
+            publication = str(row.get("date", "")).replace("-", "")
+            datetime.strptime(publication, "%Y%m%d")
+            if (
+                payload.get("status") != "000"
+                or not isinstance(payload.get("list"), list)
+                or not any(
+                    original.get("corp_code") == company
+                    and original.get("rcept_no") == row["receipt"]
+                    and original.get("rcept_dt") == publication
+                    and original.get("report_nm") == row["title"]
+                    for original in payload["list"]
+                    if isinstance(original, dict)
+                )
+            ):
+                continue
+        except (OSError, ValueError, KeyError, TypeError, AttributeError):
+            # Invalid/missing local proof is not permission to refetch or queue
+            # an unverified identity. The regular collector remains responsible.
+            continue
+        state = store.get("xbrl-job:" + row["receipt"], {})
+        reports.append({
+            "filing_id": row["receipt"],
+            "report_code": report_code,
+            "source_snapshot": "filing-index:" + code,
+            "source_hash": digest,
+            "publication": row["date"],
+            "title": row["title"],
+            "document_url": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=" + row["receipt"],
+            "xbrl_status": state.get("status", "not_collected"),
+            "error": state.get("error"),
+            "retry_after": state.get("retry_after"),
+            "raw_hash": state.get("raw_hash"),
+        })
+    return reports
+
+
 def missing_reports(store, code, company, official, inputs):
     """Use real response receipts/codes, never guess Q1/Q3 from a month."""
     index = {
@@ -247,6 +330,11 @@ def missing_reports(store, code, company, official, inputs):
                 "retry_after": state.get("retry_after"),
                 "raw_hash": state.get("raw_hash"),
             }
+    # A stored index may predate/full outlive a financial-response projection.
+    # Reuse verified original list rows without waiting for a new financial API
+    # response. The existing statement path keeps priority for quarterly codes.
+    for report in _archived_index_reports(store, code, company, index, inputs):
+        found.setdefault(report["filing_id"], report)
     # A bootstrap owns a small missing-input budget, not a second full collector.
     return sorted(found.values(), key=lambda r: r["filing_id"], reverse=True)[:4]
 
@@ -324,7 +412,8 @@ def prepare_bootstrap(store, code, *, day=None):
         keys + ["xbrl-job:" + r["filing_id"] for r in previous.get("reports", [])]
     )
     if (
-        previous.get("company_id") == company
+        previous.get("version") == VERSION
+        and previous.get("company_id") == company
         and previous.get("input_revisions") == revisions
         and previous.get("checked_day") == today
     ):

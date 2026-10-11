@@ -152,13 +152,12 @@ class RevisionResponseCache:
             with timings.stage('response_build'):
                 payload = build()
             with timings.stage('response_encode'):
-                body = gzip.compress(
-                    json.dumps(
+                with timings.stage('response_json'):
+                    encoded = json.dumps(
                         payload, ensure_ascii=False, allow_nan=False, separators=(",", ":")
-                    ).encode("utf-8"),
-                    compresslevel=6,
-                    mtime=0,
-                )
+                    ).encode("utf-8")
+                with timings.stage('response_gzip'):
+                    body = gzip.compress(encoded, compresslevel=6, mtime=0)
             # A writer may have updated a dependency while the response was built.
             # Serve this observed snapshot, but never cache it under the newer revision.
             if revisions() == revision:

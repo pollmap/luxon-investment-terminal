@@ -164,8 +164,50 @@ def test_response_cache_keeps_bytes_and_rechecks_without_replaying_build_timings
             raise AssertionError("cached content must be reused")
         assert cache.response(store, "summary", ("private-key",), unexpected) == expected
     assert first.counts["response_build"] == first.counts["response_encode"] == 1
+    assert first.counts['response_json'] == first.counts['response_gzip'] == 1
     assert second.counts == {"response_lock": 1, "revision_db": 1, "response_hit": 1}
     assert "response_encode" not in second.durations
+
+
+def test_checkout_sql_and_result_timings_have_separate_boundaries(monkeypatch):
+    clock = [1.0]
+    monkeypatch.setattr(timings.time, 'perf_counter', lambda: clock[0])
+
+    class Result:
+        def all(self):
+            clock[0] += 0.03
+            return [('universe', 'fixture-revision')]
+
+    class Connection:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            clock[0] += 0.5
+
+        def exec_driver_sql(self, statement, keys):
+            assert keys == ('universe',)
+            assert 'payload' not in statement
+            clock[0] += 0.02
+            return Result()
+
+    class Engine:
+        def connect(self):
+            clock[0] += 0.01
+            return Connection()
+
+    store = Store.__new__(Store)
+    store.url = 'sqlite:///fixture-only.db'
+    store.engine = Engine()
+    with timings.collect() as record:
+        assert timings.read_revisions(store, ('universe',)) == {'universe': 'fixture-revision'}
+    assert record.durations['db_checkout'] == pytest.approx(10)
+    assert record.durations['revision_sql'] == pytest.approx(20)
+    assert record.durations['revision_result'] == pytest.approx(30)
+    assert record.durations['read_guard'] == 0
+    assert record.durations['revision_db'] == pytest.approx(560)
+    # Total includes connection return; nested stages are not added to the total.
+    assert all(count == 1 for count in record.counts.values())
 
 
 def test_failed_build_records_stage_but_never_enters_cache():

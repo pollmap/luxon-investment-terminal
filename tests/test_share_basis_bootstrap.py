@@ -2,6 +2,7 @@
 
 import asyncio
 import io
+import json
 import zipfile
 from types import SimpleNamespace
 
@@ -237,6 +238,123 @@ def test_corrected_receipt_gets_separate_intent(store):
     prepare_bootstrap(store, CODE)
     assert store.get("xbrl-bootstrap-intent:" + first)
     assert store.get("xbrl-bootstrap-intent:" + corrected)
+
+
+def archived_index(store, rows, *, company=COMPANY):
+    """fixture_non_production DART list response with auditable row identity."""
+    content = json.dumps({"status": "000", "list": [
+        {"corp_code": company, "rcept_no": r["receipt"], "rcept_dt": r["date"],
+         "report_nm": r["title"]}
+        for r in rows
+    ]}).encode()
+    digest = store.raw(
+        "dart", "https://opendart.fss.or.kr/api/list.json?corp_code=" + company, content
+    )
+    store.put("filing-index:" + CODE, {"rows": [
+        {**r, "source_trace": {"source": "opendart", "sha256": digest,
+                                "available_at": r["date"]}}
+        for r in rows
+    ]})
+    return digest
+
+
+def test_archived_index_without_financial_projection_queues_bounded_real_reports(
+    store, monkeypatch
+):
+    rows = [
+        {"receipt": "20260814000001", "date": "20260814", "title": "반기보고서 (2026.06)"},
+        {"receipt": "20260706000001", "date": "20260706",
+         "title": "[기재정정]사업보고서 (2025.12)"},
+        {"receipt": "20260515000001", "date": "20260515", "title": "분기보고서 (2026.03)"},
+        {"receipt": "20260313000001", "date": "20260313", "title": "사업보고서 (2025.12)"},
+        {"receipt": "20260201000001", "date": "20260201",
+         "title": "[첨부정정]사업보고서 (2025.12)"},
+        {"receipt": "20251114000001", "date": "20251114", "title": "분기보고서 (2025.09)"},
+        {"receipt": "20250814000001", "date": "20250814", "title": "반기보고서 (2025.06)"},
+        {"receipt": "20250317000001", "date": "20250317", "title": "사업보고서 (2024.12)"},
+    ]
+    digest = archived_index(store, rows)
+    task = prepare_bootstrap(store, CODE)
+    reports = task["reports"]
+    assert task["status"] == "awaiting_inputs"
+    assert [r["filing_id"] for r in reports] == [
+        "20260814000001", "20260706000001", "20260313000001", "20250814000001"
+    ]
+    assert [r["report_code"] for r in reports] == ["11012", "11011", "11011", "11012"]
+    for report in reports:
+        intent = store.get("xbrl-bootstrap-intent:" + report["filing_id"])
+        assert intent["source_hash"] == digest
+        assert intent["source_snapshot"] == "filing-index:" + CODE
+        assert intent["status"] == "requested"
+        assert intent["mode"] == "collect"
+    for receipt in ["20260515000001", "20260201000001", "20251114000001", "20250317000001"]:
+        assert not store.get("xbrl-request:" + receipt)
+    assert not task["inputs"]["period_inputs_complete"]
+    assert not store.get("share-basis:" + CODE)
+    assert not store.get("share-basis-promotion:" + CODE)
+
+    collected = []
+
+    async def fixture_collector(source, code, receipt, report_code, **options):
+        collected.append((code, receipt, report_code, options))
+        return {"status": "ready", "source": "fixture_non_production"}
+
+    monkeypatch.setattr("services.market_dashboard.xbrl_facts.collect_xbrl", fixture_collector)
+    source = SimpleNamespace(store=store, dart="fixture_non_production")
+    for expected_count in range(1, 5):
+        assert asyncio.run(service_xbrl_intent(source))
+        assert len(collected) == expected_count
+    assert not asyncio.run(service_xbrl_intent(source))
+    assert len({item[1] for item in collected}) == 4
+    by_receipt = {r["filing_id"]: r for r in reports}
+    for code, receipt, report_code, options in collected:
+        assert code == CODE and report_code == by_receipt[receipt]["report_code"]
+        assert options["publication"] == by_receipt[receipt]["publication"]
+        assert options["replay_revision"] is None
+        assert store.get("xbrl-bootstrap-intent:" + receipt)["status"] == "processed"
+    assert not store.get("share-basis:" + CODE)
+    assert not store.get("share-basis-promotion:" + CODE)
+
+
+@pytest.mark.parametrize("damage", ["company", "title", "date", "hash", "missing", "url"])
+def test_index_only_report_requires_exact_archived_company_and_publication(store, damage):
+    receipt = "20260313000001"
+    digest = archived_index(store, [
+        {"receipt": receipt, "date": "20260313", "title": "사업보고서 (2025.12)"}
+    ], company="00000000" if damage == "company" else COMPANY)
+    if damage in ("title", "date", "hash"):
+        index = store.get("filing-index:" + CODE)
+        row = index["rows"][0]
+        if damage == "title":
+            row["title"] = "[기재정정]사업보고서 (2025.12)"
+        elif damage == "date":
+            row["date"] = "20260314"
+        else:
+            row["source_trace"]["sha256"] = "0" * 64
+        store.put("filing-index:" + CODE, index)
+    if damage == "missing":
+        directory = store.root / "raw/dart"
+        for suffix in (".bin", ".bin.gz", ".json"):
+            (directory / (digest + suffix)).unlink(missing_ok=True)
+    if damage == "url":
+        envelope = store.root / "raw/dart" / (digest + ".json")
+        metadata = json.loads(envelope.read_bytes())
+        metadata["url"] = "https://example.invalid/api/list.json?corp_code=" + COMPANY
+        envelope.write_text(json.dumps(metadata), encoding="utf8")
+    assert not prepare_bootstrap(store, CODE)["reports"]
+    assert not store.get("xbrl-request:" + receipt)
+    assert not store.get("share-basis:" + CODE)
+
+
+def test_bootstrap_revisits_old_discovery_version_without_new_source(store):
+    first = prepare_bootstrap(store, CODE, day="2026-10-12")
+    store.put("share-basis-bootstrap:" + CODE, {
+        **first, "version": "first-share-basis-evidence-v1"
+    })
+    updated = prepare_bootstrap(store, CODE, day="2026-10-12")
+    assert updated["version"] != "first-share-basis-evidence-v1"
+    assert updated["status"] == "awaiting_inputs"
+    assert not store.get("share-basis:" + CODE)
 
 
 def test_intent_obeys_global_and_filing_backoff_and_only_uses_one_slot(store, monkeypatch):
