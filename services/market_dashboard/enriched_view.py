@@ -2,7 +2,8 @@
 import json
 import threading
 
-from sqlalchemy import select
+from sqlalchemy import case, cast, func, select
+from sqlalchemy.dialects.postgresql import JSONB
 
 PREFIX = 'enriched-item:'
 STATE = 'enriched-items-state'
@@ -30,16 +31,48 @@ def read_item(store, code):
     source = store.snapshots.alias('enrichment_source')
     state = store.snapshots.alias('enrichment_state')
     item = store.snapshots.alias('enrichment_item')
-    query = select(source.c.updated_at, state.c.payload, item.c.payload).select_from(
+    if store.engine.dialect.name == 'sqlite':
+        state_revision = func.json_extract(state.c.payload, '$.source_revision')
+        fallback = func.json_extract(source.c.payload, '$."' + code + '"')
+        projected = item.c.payload
+    else:
+        state_revision = cast(state.c.payload, JSONB)['source_revision'].astext
+        fallback = cast(source.c.payload, JSONB)[code]
+        projected = cast(item.c.payload, JSONB)
+    value = case((state_revision == source.c.updated_at, projected), else_=fallback)
+    query = select(value).select_from(
         source.outerjoin(state, state.c.key == STATE).outerjoin(item, item.c.key == PREFIX + code)
     ).where(source.c.key == 'enriched')
     with store.read_connection() as db:
-        row = db.execute(query).first()
-    if row is None:
+        raw = db.execute(query).scalar()
+    return json.loads(raw) if isinstance(raw, str) else raw or {}
+
+
+def item_revisions(store, keys, heads):
+    """Resolve atomically sampled heads without reading financial payloads.
+
+    The tiny projection-generation document is read once per changed revision.
+    Warm summary requests need only Store's single covering-index heads query.
+    """
+    revision, state_revision = heads.get('enriched'), heads.get(STATE)
+    if revision is None:
         return {}
-    if row[1] and json.loads(row[1]).get('source_revision') == row[0]:
-        return json.loads(row[2]) if row[2] else {}
-    return store.get('enriched', {}, use_redis=False).get(code, {})
+    cached = getattr(store, '_enriched_revision_state', None)
+    if state_revision and (not cached or cached[0] != state_revision):
+        table = store.snapshots
+        with store.read_connection() as db:
+            row = db.execute(select(table.c.updated_at, table.c.payload)
+                             .where(table.c.key == STATE)).first()
+        # An intervening writer must not label a new generation with an old head.
+        if row and row[0] == state_revision:
+            cached = (state_revision, json.loads(row[1]).get('source_revision'))
+            store._enriched_revision_state = cached
+        else:
+            cached = None
+    if state_revision and cached and cached == (state_revision, revision):
+        # A missing item stays missing when another company's enrichment changes.
+        return {key: heads.get(key, 'enriched-item:missing') for key in keys}
+    return {key: revision for key in keys}
 
 
 def publish(store, detail):
@@ -60,7 +93,8 @@ def publish(store, detail):
         changed = store.put('enriched', values, _connection=db)
         if changed and ready:
             store.put(PREFIX + code, values[code], _connection=db)
-            revision = db.execute(select(table.c.updated_at).where(table.c.key == 'enriched')).scalar_one()
+            revision = db.execute(select(table.c.updated_at)
+                                  .where(table.c.key == 'enriched')).scalar_one()
             store.put(STATE, {'source_revision': revision}, _connection=db)
     if changed:
         store.notify_changed('enriched')
@@ -77,7 +111,8 @@ def rebuild(store):
         values = json.loads(source[0])
         for code, value in values.items():
             store.put(PREFIX + code, value, _connection=db)
-        existing = db.execute(select(table.c.key).where(table.c.key.like(PREFIX + '%'))).scalars().all()
+        existing = db.execute(select(table.c.key)
+                              .where(table.c.key.like(PREFIX + '%'))).scalars().all()
         removed = set(existing) - {PREFIX + code for code in values}
         if removed:
             db.execute(table.delete().where(table.c.key.in_(removed)))
@@ -95,7 +130,8 @@ def read(store, default=None):
                                     .where(table.c.key.in_(['enriched', STATE]))).all())
             state_raw = db.execute(select(table.c.payload).where(table.c.key == STATE)).scalar()
             state = json.loads(state_raw) if state_raw else {}
-            valid = bool(heads.get('enriched') and state.get('source_revision') == heads['enriched'])
+            valid = bool(heads.get('enriched')
+                         and state.get('source_revision') == heads['enriched'])
             if valid:
                 previous = getattr(store, '_enriched_view', None)
                 if previous and previous[0] == heads:

@@ -208,3 +208,39 @@ def test_cleanup_inspection_failure_does_not_prevent_new_backup(tmp_path, monkey
     monkeypatch.setattr(module, "cleanup_partials_locked", denied)
     monkeypatch.setattr(module, "_backup_locked", run)
     assert module.backup(tmp_path, "fixture_no_process") == "backup can proceed"
+
+
+def test_absent_partials_do_not_require_local_recovery_file(tmp_path, monkeypatch):
+    monkeypatch.setattr(module, "verified_recovery", lambda *a: pytest.fail("no candidates"))
+    assert module.partial_cleanup_plan(tmp_path, NOW) == {"state": "ready", "candidates": []}
+
+
+def test_offsite_only_receipt_does_not_attempt_missing_local_dump(backup_tree, monkeypatch):
+    failed = partial(backup_tree)
+    monkeypatch.setattr(module, "verified_recovery", lambda *a: {
+        "state": "verified", "source_available_on_server": False,
+        "source": "market-20261009T153042Z.dump"})
+    result = module.cleanup_partials_locked(backup_tree, apply=True, now=NOW)
+    assert result["state"] == "blocked_recovery" and failed.exists()
+    assert result["reason"] == "offsite_only_recovery"
+
+
+@pytest.mark.parametrize("phase", ["inventory", "recheck", "unlink"])
+def test_partial_disappearance_is_idempotent_not_false_removed(backup_tree, monkeypatch, phase):
+    failed = partial(backup_tree)
+    original, calls = module.file_identity, []
+
+    def identity(path):
+        if path == failed:
+            calls.append(path)
+            threshold = {"inventory": 1, "recheck": 2, "unlink": 3}[phase]
+            if len(calls) == threshold:
+                failed.unlink()
+        return original(path)
+
+    monkeypatch.setattr(module, "file_identity", identity)
+    result = module.cleanup_partials_locked(backup_tree, apply=True, now=NOW)
+    assert not failed.exists()
+    assert result.get("allocated_bytes_removed", 0) == 0
+    if phase != "inventory":
+        assert result["already_absent"] == [failed.name]

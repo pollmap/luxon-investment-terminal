@@ -12,9 +12,11 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import socket
 import stat
 import threading
+import time
 import uuid
 from contextlib import contextmanager
 from pathlib import Path
@@ -23,6 +25,8 @@ from . import checkpoint as cp
 from . import local_restore as local
 from . import restore_supervisor as supervisor
 from .replay_batch import ReplayBatchSink
+
+MIN_FREE = 4 * 1024**3
 
 
 def cluster_bytes(data, check, maximum):
@@ -67,10 +71,22 @@ class ResumeBudget(cp.Budget):
     are accumulated between sweeps, never silently reset on a failed write.
     """
 
-    def __init__(self, data, *, max_total_cluster_bytes, **kwargs):
+    def __init__(self, data, *, max_total_cluster_bytes, max_growth_bytes, max_seconds,
+                 free_for_data=None, monotonic=time.monotonic):
         if type(max_total_cluster_bytes) is not int or max_total_cluster_bytes <= 0:
             raise local.Refused("explicit_total_cluster_budget_required")
-        super().__init__(data, **kwargs)
+        # checkpoint.py is part of the frozen codec identity. Keep its existing
+        # contract intact; this resume coordinator owns the revised budget.
+        if (type(max_growth_bytes) is not int or max_growth_bytes <= 0
+                or type(max_seconds) is not int or not 1 <= max_seconds <= 21600):
+            raise cp.codec.Refused("Explicit positive growth/time budgets required")
+        self.clock, self.started = monotonic, monotonic()
+        self.max_seconds, self.max_growth = max_seconds, max_growth_bytes
+        self.data_directory = Path(data).resolve()
+        self.free = free_for_data or (lambda: shutil.disk_usage(self.data_directory).free)
+        self.initial_free = self.free()
+        if self.initial_free < MIN_FREE + self.max_growth:
+            raise cp.codec.Refused("Full compact restore growth budget plus reserve unavailable")
         self.max_total = max_total_cluster_bytes
         self.measure_lock = threading.RLock()
         self.failure_diagnostic = None
@@ -102,6 +118,9 @@ class ResumeBudget(cp.Budget):
             free = None
         return {"code": code, "free_bytes": free, "initial_free_bytes": self.initial_free,
                 "drive_growth_bytes": self.initial_free-free if free is not None else None,
+                "own_directory_growth_bytes": max(
+                    0, self.last_cluster_bytes-getattr(self, "initial_cluster_bytes", 0)),
+                "minimum_free_bytes": MIN_FREE,
                 "last_cluster_bytes": self.last_cluster_bytes,
                 "initial_cluster_bytes": getattr(self, "initial_cluster_bytes", None),
                 "reserved_bytes": self.reserved_bytes, "incoming_bytes": incoming,
@@ -110,18 +129,22 @@ class ResumeBudget(cp.Budget):
 
     def _base_check(self, incoming=0):
         try:
-            return cp.Budget.check(self, incoming)
+            if type(incoming) is not int or incoming < 0:
+                raise cp.codec.Refused("Invalid next-write budget")
+            remaining = self.max_seconds - (self.clock() - self.started)
+            if remaining <= 0:
+                raise cp.codec.Refused("Restore elapsed-time budget exhausted")
+            if self.free() < MIN_FREE + incoming:
+                raise cp.codec.Refused("Restore disk reserve exhausted; committed prefix preserved")
+            return max(1, min(30000, int(remaining * 1000)))
         except Exception:
             if self.failure_diagnostic is None:
                 values = self.diagnostic("volume_guard_refused", incoming)
                 if values["elapsed_seconds"] >= self.max_seconds:
                     values["code"] = "deadline_exhausted"
                 elif (values["free_bytes"] is not None
-                      and values["free_bytes"] < cp.MIN_FREE+incoming):
+                      and values["free_bytes"] < MIN_FREE+incoming):
                     values["code"] = "disk_reserve_exhausted"
-                elif (values["drive_growth_bytes"] is not None
-                      and values["drive_growth_bytes"]+incoming > self.max_growth):
-                    values["code"] = "drive_growth_exhausted"
                 self.failure_diagnostic = values
             raise
 
@@ -178,6 +201,11 @@ class ResumeSink(ReplayBatchSink):
         super().__init__(ExistingConnection(db), manifest, budget)
         self.report = report
         self.report.update(self.replay_stats())
+        self.report.setdefault("row_progress", {
+            "processed": {"trace_rows": 0, "series_rows": 0},
+            "committed": None, "verified_prefix": {"trace_rows": 0, "series_rows": 0},
+            "ordered_hash_verified": False, "checkpoint_reload_required": True,
+        })
 
     def _record(self, error, phase, state=None):
         value = {"code": failure_code(error), "phase": phase}
@@ -191,17 +219,32 @@ class ResumeSink(ReplayBatchSink):
 
     def open(self):
         try:
-            return super().open()
+            state = super().open()
+            self.report["row_progress"].update(
+                committed={"trace_rows": state.trace_rows, "series_rows": state.series_rows},
+                checkpoint_reload_required=False,
+            )
+            return state
         except BaseException as error:
             self._record(error, "checkpoint_open")
             raise
 
     def consume(self, event, before, after, *, replay):
+        progress = self.report["row_progress"]
+        progress["processed"] = {"trace_rows": after.trace_rows,
+                                 "series_rows": after.series_rows}
         try:
             result = super().consume(event, before, after, replay=replay)
             self.report.update(self.replay_stats())
+            if replay:
+                progress["verified_prefix"] = dict(progress["processed"])
+            else:
+                progress["committed"] = dict(progress["processed"])
             return result
         except BaseException as error:
+            # COMMIT may have completed immediately before a deadline. Require
+            # an authoritative DB reload rather than claiming an acknowledged row.
+            progress["checkpoint_reload_required"] = True
             self._record(error, "prefix_replay" if replay else "append_batch", before)
             raise
 
@@ -342,6 +385,8 @@ class ResumeRestore(local.LocalRestore):
             "initial_cluster_bytes": self.budget.initial_cluster_bytes,
             "max_total_cluster_bytes": max_total_cluster_bytes,
             "max_growth_bytes": max_growth_bytes, "max_seconds": max_seconds,
+            "minimum_free_bytes": MIN_FREE,
+            "space_preflight": self.budget.diagnostic("ready"),
             "cluster_stopped": False, "production_contacted": False,
             "input_paths_modified": False, "processes": [],
         }
@@ -466,6 +511,7 @@ class ResumeRestore(local.LocalRestore):
                 self.restore(manifest)
                 self.report["phase"] = "final_ordered_verification"
                 self.final_verify(manifest)
+                self.report.setdefault("row_progress", {})["ordered_hash_verified"] = True
                 self.budget.check(force=True)
                 self.guard.check()
                 completed = True
@@ -510,18 +556,22 @@ class ResumeRestore(local.LocalRestore):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--run", action="store_true")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--run", action="store_true")
+    mode.add_argument("--preflight", action="store_true",
+                      help="Read metadata and bounded directory sizes only; no process or writes")
     for name in ("work-directory", "archive", "archive-receipt", "source-report"):
         parser.add_argument("--" + name, type=Path)
     parser.add_argument("--max-total-cluster-bytes", type=int)
     parser.add_argument("--max-growth-bytes", type=int)
-    parser.add_argument("--max-seconds", type=int, default=21600)
+    parser.add_argument("--max-seconds", type=int, default=14400)
     args = parser.parse_args(argv)
-    if not args.run:
+    if not args.run and not args.preflight:
         print(json.dumps({"executed": False, "restore_verified": False,
                           "current_fence_valid": False, "production_proof": False,
                           "port": local.PORT, "database": local.DATABASE,
-                          "minimum_free_bytes": cp.MIN_FREE, "maximum_seconds": 21600}))
+                          "minimum_free_bytes": MIN_FREE, "maximum_seconds": 21600,
+                          "default_seconds": 14400}))
         return 0
     if not all((args.work_directory, args.archive, args.archive_receipt, args.source_report,
                 args.max_total_cluster_bytes, args.max_growth_bytes)):
@@ -532,9 +582,18 @@ def main(argv=None):
         runner = ResumeRestore(inputs, args.work_directory, max_growth_bytes=args.max_growth_bytes,
                                max_total_cluster_bytes=args.max_total_cluster_bytes,
                                max_seconds=args.max_seconds)
+        if args.preflight:
+            print(json.dumps({"executed": False, "state": "preflight_passed",
+                              "archive_sha256": runner.saved_manifest.archive_sha256,
+                              "expected_rows": runner.saved_manifest.counts(),
+                              "space": runner.budget.diagnostic("ready"),
+                              "checkpoint_reload_required": True,
+                              "archive_content_verified": False,
+                              "restore_verified": False, "production_contacted": False}))
+            return 0
         report = runner.run()
     except (Exception, KeyboardInterrupt):
-        print(json.dumps({"executed": runner is not None, "restore_verified": False,
+        print(json.dumps({"executed": runner is not None and args.run, "restore_verified": False,
                           "current_fence_valid": False, "production_proof": False,
                           "error_code": "resume_refused_or_evidence_failed"}))
         return 1

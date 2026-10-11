@@ -72,7 +72,10 @@ def test_no_rows_cache_still_reads_database(source, monkeypatch):
     heads = source.revisions(KEYS)
     calls = count_revisions(source, monkeypatch)
     assert market.search_payload("100000", 12, known_revisions=heads)["rows"][0]["price"] == 100
-    assert KEYS in calls
+    # Search reads compact identities/ranking facts and selected results directly;
+    # it no longer builds the full rows cache or repeats already supplied heads.
+    assert not calls
+    assert id(source) not in market._rows_cache
 
 
 @pytest.mark.parametrize("change", ["quote", "empty_quotes", "delete_quotes", "empty_universe"])
@@ -93,7 +96,7 @@ def test_changed_or_deleted_inputs_do_not_reuse_old_rows(source, monkeypatch, ch
     heads = source.revisions(KEYS)
     calls = count_revisions(source, monkeypatch)
     result = market.search_payload("100000", 12, known_revisions=heads)
-    assert KEYS in calls
+    assert not calls
     if change == "empty_universe":
         assert result == {"total": 0, "rows": []}
     else:

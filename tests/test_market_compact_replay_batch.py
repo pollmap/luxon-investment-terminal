@@ -265,11 +265,14 @@ def test_resume_report_counts_only_completed_prefix_batches():
     sink.consume(event, before, after, replay=True)
     assert report["replay_validated_series_rows"] == 3
     assert report["replay_validated_series_batches"] == 1
+    assert report["row_progress"]["verified_prefix"]["series_rows"] == after.series_rows
+    assert report["row_progress"]["ordered_hash_verified"] is False
     db.stored.pop()
     with pytest.raises(c.Refused):
         sink.consume(event, before, after, replay=True)
     assert report["replay_validated_series_rows"] == 3
     assert report["replay_validated_series_batches"] == 1
+    assert report["row_progress"]["checkpoint_reload_required"] is True
 
 
 def test_oversized_saved_payload_is_blocked_before_transfer():

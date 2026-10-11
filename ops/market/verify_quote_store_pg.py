@@ -76,6 +76,35 @@ def run():
             assert stores[0].revisions(('quote:005930',)) == before
             assert stores[1].get('quotes')['005930']['price'] == 100
             assert len(stores[2].get_quote('005930')['daily_facts']) == 40
+            # The production dialect must exercise JSONB projection, not just
+            # SQLite fixtures. Everything below remains in this owned schema.
+            import importlib
+            from services.market_dashboard.enriched_view import rebuild, publish
+            from services.market_dashboard.models import Query, apply_query
+            market = importlib.import_module('services.market_dashboard.app')
+            market.get_store = lambda: stores[0]
+            stores[0].put('universe', {'rows': [
+                {'code': str(100000+i), 'name': f'fixture company {i}',
+                 'aliases': [f'alias{i}'], 'market': 'KOSPI', 'value': 1000-i,
+                 'price': 100+i, 'as_of': '2026-10-08',
+                 'source_trace': {'source': 'fixture_non_production'}}
+                for i in range(80)]})
+            stores[0].put('enriched', {'100079': {'facts': {
+                'value': {'value': 9000, 'period': '2026-10-08'}},
+                'large_financial_history': ['fixture_non_production'] * 10000}})
+            rebuild(stores[0])
+            for query in ('fixture', 'alias79', '100001', 'missing'):
+                expected = apply_query(market.rows_with_details(check_revision=True)[0],
+                                       Query(q=query, limit=30))
+                actual = market.search_payload(query, 30)
+                assert actual['total'] == expected['total']
+                assert [r['code'] for r in actual['rows']] == [r['code'] for r in expected['rows']]
+                assert [r['price'] for r in actual['rows']] == [r['price'] for r in expected['rows']]
+            first = market.security_row(stores[0], '100000')
+            publish(stores[0], {'code': '100001', 'facts': {'per': {'value': 21}}})
+            assert market.security_row(stores[0], '100000') is first
+            report['search_projection'] = 'passed'
+            report['enrichment_revision_isolation'] = 'passed'
             report['status'] = 'passed'
     except Exception as exc:
         # SQL/connection exception messages can contain connection information.

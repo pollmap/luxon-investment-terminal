@@ -11,8 +11,9 @@ from bs4 import BeautifulSoup
 
 from .analysis import numeric
 from .store import now
+from .dividend_evidence import with_field_availability
 
-PARSER_VERSION = 'dividend-dates-v3'
+PARSER_VERSION = 'dividend-dates-v4'
 
 def is_issuer_action(title):
     # A listed holding company also files decisions about its subsidiaries.
@@ -131,13 +132,13 @@ def parse_dividend_document(content,*,code,filing_id,published_at,evidence,share
     share_class='ordinary' if share_label=='보통주식' else 'preferred'
     identity=hashlib.sha256(f'{code}:{filing_id}:{share_class}:dividend'.encode()).hexdigest()
     verified=bool(records.get('ex_date') and confirmed)
-    return [{'id':identity,'security_code':code,'share_class':share_class,'share_label':share_label,'kind':'dividend',
+    return [with_field_availability({'id':identity,'security_code':code,'share_class':share_class,'share_label':share_label,'kind':'dividend',
         'amount':str(amount),'currency':'KRW',**records,'date':records.get('payment_date') or records['record_date'],
         'date_kind':'payment' if records.get('payment_date') else 'record',
         'payment_status':'confirmed' if confirmed else 'announced',
         'filing_id':filing_id,'published_at':published_at,'verified':verified,
         'status':'verified' if verified else 'ex_date_required' if not records.get('ex_date') else 'payment_confirmation_required',
-        'source_trace':evidence,'parser_version':PARSER_VERSION}]
+        'source_trace':evidence,'parser_version':PARSER_VERSION})]
 
 async def collect_events(source,code,*,archive_only=False):
     store=source.store

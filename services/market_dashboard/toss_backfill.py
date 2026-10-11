@@ -16,6 +16,7 @@ import httpx
 
 from .service_scope import REVIEWED_NON_SHARE_INSTRUMENTS
 from .store import now
+from .request_fairness import request_workload
 
 KINDS = ('history', 'investor-trading', 'program-trades', 'short-selling',
          'credit-trades', 'securities-lending', 'raw-history')
@@ -359,7 +360,8 @@ class TossBackfill:
                     # Old pages/new archives can use a bounded burst rather than
                     # waiting for another entire seven-kind universe sweep.
                     pages = burst_pages('MARKET_TOSS_HISTORY_BURST') if resume or not (snapshot.get('row_count') or rows) else 1
-                    result = await self.collector.history(code, pages=pages, resume=resume, compact=True, **({} if adjusted else {'adjusted':False}))
+                    with request_workload('history' if resume or pages > 1 else 'latest'):
+                        result = await self.collector.history(code, pages=pages, resume=resume, compact=True, **({} if adjusted else {'adjusted':False}))
                     rows = result.get('rows', [])
                     covered = result.get('backfill_complete') and not result.get('next_before')
                     count=result.get('row_count',len(rows))
@@ -393,7 +395,8 @@ class TossBackfill:
                 if not fresh or not covered:
                     resume = resume_history(snapshot, 'next_until', clock, int(state.get('visits', 0)))
                     pages = burst_pages('MARKET_TOSS_TRADING_BURST') if resume or not (snapshot.get('row_count') or rows) else 1
-                    await self.collector.fundamentals_of_trading(code, endpoints=(kind,), resume=resume, pages=pages)
+                    with request_workload('history' if resume or pages > 1 else 'latest'):
+                        await self.collector.fundamentals_of_trading(code, endpoints=(kind,), resume=resume, pages=pages)
                     latest = self.store.metadata(f'toss:{kind}:{code}', {})
                     status = trading_collection_status(latest)
                     self.store.put(key, {'status': status, 'rows': latest.get('row_count',len(latest.get('rows', []))),

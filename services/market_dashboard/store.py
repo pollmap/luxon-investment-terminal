@@ -377,8 +377,10 @@ class Store:
         """Small cross-process revision check without fetching large JSON payloads."""
         keys = tuple(keys)
         quote_keys = [key for key in keys if key.startswith('quote:')]
+        enriched_keys = [key for key in keys if key.startswith('enriched-item:')]
         requested = tuple(dict.fromkeys((*keys, *(('quotes', 'quote-book')
-                              if 'quotes' in keys or quote_keys else ()))))
+                              if 'quotes' in keys or quote_keys else ()),
+                              *(('enriched', 'enriched-items-state') if enriched_keys else ()))))
         result = self._snapshot_revisions(requested)
         legacy = result.get('quotes')
         if 'quotes' in keys:
@@ -392,6 +394,14 @@ class Store:
         for key in quote_keys:
             if key not in result and legacy:
                 result[key] = legacy
+        if enriched_keys:
+            from .enriched_view import item_revisions
+            # A compatibility writer may update only the original enriched blob.
+            # Validate the projection before trusting its independent item heads.
+            resolved = item_revisions(self, enriched_keys, result)
+            for key in enriched_keys:
+                result.pop(key, None)
+            result.update(resolved)
         return {key: result[key] for key in keys if key in result}
 
     def _snapshot_revisions(self, keys):

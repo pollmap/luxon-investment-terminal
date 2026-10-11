@@ -374,8 +374,13 @@ def security_bars(code: str, request: Request, interval: str = "day", start: str
 
 @app.get(BASE + "/securities/{code}/events")
 def security_events(code: str, request: Request):
-    return analysis_response(code, request, ("events-v1",), lambda store: store.get("events:"+code,
-        {"code": code, "rows": [], "status": "not_collected", "coverage": {"verified": False}}), ["events:"+code])
+    from .dividend_evidence import with_field_availability
+
+    def build(store):
+        data = store.get("events:"+code, {"code": code, "rows": [],
+            "status": "not_collected", "coverage": {"verified": False}})
+        return {**data, "rows": [with_field_availability(row) for row in data.get("rows", [])]}
+    return analysis_response(code, request, ("events-v2",), build, ["events:"+code])
 
 
 @app.get(BASE + "/securities/{code}/analysis/price-context")
@@ -546,7 +551,7 @@ def universe_inputs(store, revision):
 def security_row(store, code, *, include_quote=True, revisions=None):
     """Reuse the identity index and assemble only the requested security."""
     from .enriched_view import read_item
-    source_keys = ('universe', 'enriched') + ((f'quote:{code}',) if include_quote else ())
+    source_keys = ('universe', f'enriched-item:{code}') + ((f'quote:{code}',) if include_quote else ())
     heads = revisions if revisions is not None else timings.read_revisions(store, source_keys)
     source_revision = tuple((key, heads.get(key)) for key in source_keys)
     identity = (store, code, include_quote)
@@ -920,8 +925,19 @@ async def search(request: Request, q: str = "", limit: int = 12):
 
 
 def search_payload(query, limit, *, known_revisions=None):
-    rows, _ = rows_with_details(check_revision=True, known_revisions=known_revisions)
-    result = apply_query(rows, Query(q=query, limit=limit))
+    from .search_view import candidates, selected_inputs
+    store = get_store()
+    heads = known_revisions if known_revisions is not None else timings.read_revisions(
+        store, ('universe', 'enriched', 'quotes'))
+    universe, identities = universe_inputs(store, heads.get('universe'))
+    result = candidates(store, universe, query, limit, heads)
+    codes = [row['code'] for row in result['rows']]
+    details, quotes = selected_inputs(store, codes)
+    selected, _ = assemble_rows(store, (
+        {'rows': [identities[code] for code in codes]},
+        details, quotes,
+    ))
+    result['rows'] = selected
     compact_rows = []
     for row in result["rows"]:
         compact = {
@@ -966,7 +982,7 @@ async def security(code: str, request: Request, background_tasks: BackgroundTask
         dependencies=tuple(dict.fromkeys((*dependencies,*report_dependencies(store,code))))
     # Different symbols share the same source heads; collect only requests
     # already queued in this loop turn. No TTL or retained validation clock.
-    initial_heads = (await _revision_reads.read(store, (*dependencies, 'universe', 'enriched', f'quote:{code}'))
+    initial_heads = (await _revision_reads.read(store, (*dependencies, 'universe', f'enriched-item:{code}', f'quote:{code}'))
                      if view == 'summary' else None)
     def read():
         observed = {}
@@ -974,7 +990,7 @@ async def security(code: str, request: Request, background_tasks: BackgroundTask
         def selected_revisions():
             nonlocal first_heads
             include_quote = view in ('full', 'summary')
-            source_keys = ('universe', 'enriched') + ((f'quote:{code}',) if include_quote else ())
+            source_keys = ('universe', f'enriched-item:{code}') + ((f'quote:{code}',) if include_quote else ())
             heads = first_heads if first_heads is not None else timings.read_revisions(store, (*dependencies, *source_keys))
             first_heads = None
             row = security_row(store, code, include_quote=include_quote, revisions=heads)

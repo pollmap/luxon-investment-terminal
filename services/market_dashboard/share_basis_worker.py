@@ -211,6 +211,8 @@ async def share_basis_review_loop(source):
     while True:
         try:
             if source.dart and not collection_capacity(source.store, 'share-basis')['limited']:
+                from .share_basis_promotion import process_one_review
+                await asyncio.to_thread(process_one_review, source.store)
                 if time.monotonic() >= refresh_at:
                     targets = review_targets(source.store)
                     refresh_at = time.monotonic() + 300

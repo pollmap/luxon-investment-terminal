@@ -135,9 +135,9 @@ def test_existing_logical_total_and_volume_growth_remain_independent(owned):
         budget.check(force=True)
     assert budget.failure_diagnostic["code"] == "logical_inventory_refused"
     (data / "fixture.dat").write_bytes(b"fixture_non_production")
-    free[0] -= 1001  # Unrelated volume consumption is still conservatively charged.
-    with pytest.raises(m.local.codec.Refused):
-        budget.check()
+    free[0] -= 1001  # External consumers do not count as this directory's growth.
+    budget.check(force=True)
+    assert budget.diagnostic("observed")["drive_growth_bytes"] == 1001
 
 
 def test_logical_sweep_is_bounded_and_incoming_reservations_cannot_hide_growth(owned, monkeypatch):
@@ -166,24 +166,39 @@ def test_logical_sweep_is_bounded_and_incoming_reservations_cannot_hide_growth(o
     assert budget.failure_diagnostic["incoming_bytes"] == 1
 
 
-@pytest.mark.parametrize("failure", ["deadline", "drive", "reserve"])
+@pytest.mark.parametrize("failure", ["deadline", "reserve"])
 def test_budget_retains_numeric_failure_cause(owned, failure):
-    clock, free = [0], [m.cp.MIN_FREE+10000]
+    clock, free = [0], [m.MIN_FREE+10000]
     budget = m.ResumeBudget(owned[0]/"cluster-data", max_growth_bytes=1000,
                             max_total_cluster_bytes=2000, max_seconds=10,
                             monotonic=lambda: clock[0], free_for_data=lambda: free[0])
     if failure == "deadline":
         clock[0] = 10
     else:
-        free[0] -= 1001 if failure == "drive" else 10001
+        free[0] -= 10001
     with pytest.raises(m.local.codec.Refused):
         budget.check()
     assert budget.failure_diagnostic["code"] == {
-        "deadline": "deadline_exhausted", "drive": "drive_growth_exhausted",
+        "deadline": "deadline_exhausted",
         "reserve": "disk_reserve_exhausted",
     }[failure]
     assert budget.failure_diagnostic["free_bytes"] == free[0]
     assert budget.failure_diagnostic["elapsed_seconds"] == clock[0]
+
+
+def test_resume_preflight_does_not_hash_archive_start_cluster_or_write(owned, monkeypatch, capsys):
+    item = runner(owned)
+    monkeypatch.setattr(m.local, "validate_inputs", lambda *a: item.inputs)
+    monkeypatch.setattr(m, "ResumeRestore", lambda *a, **k: item)
+    monkeypatch.setattr(item, "run", lambda: pytest.fail("preflight must not run"))
+    monkeypatch.setattr(m.cp, "verify_archive", lambda *a: pytest.fail("no full hash"))
+    assert m.main(["--preflight", "--work-directory", str(owned[0]), "--archive", "unused",
+                   "--archive-receipt", "unused", "--source-report", "unused",
+                   "--max-growth-bytes", "1000", "--max-total-cluster-bytes", "2000"]) == 0
+    value = json.loads(capsys.readouterr().out)
+    assert value["state"] == "preflight_passed" and value["executed"] is False
+    assert value["checkpoint_reload_required"] and not value["archive_content_verified"]
+    assert not item.attempt.exists()
 
 
 @pytest.mark.parametrize("operation,message,code", [
@@ -270,7 +285,7 @@ def test_total_space_time_and_reserve_rejected(owned):
             m.ResumeBudget(data, max_seconds=limits.pop("max_seconds", 60), **limits)
     with pytest.raises(m.local.codec.Refused):
         m.ResumeBudget(data, max_growth_bytes=1000, max_total_cluster_bytes=2000,
-                       max_seconds=60, free_for_data=lambda: m.cp.MIN_FREE+999)
+                       max_seconds=60, free_for_data=lambda: m.MIN_FREE+999)
 
 
 def mocked_run(item, monkeypatch, *, failure=None):

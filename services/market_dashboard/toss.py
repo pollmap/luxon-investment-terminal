@@ -19,6 +19,7 @@ from .providers import trace
 from .store import now
 from .time_series import put_series
 from .toss_contract import contract_path, request_group, source_scope
+from .request_fairness import FairRequestGate, current_workload, request_workload
 
 BASE = 'https://openapi.tossinvest.com'
 
@@ -226,6 +227,7 @@ class TossClient:
                 'session_id': self.metrics_session,
                 'session_started_at': self.metrics_started_at,
                 **metrics,
+                'request_scheduler': self.group_locks[group].snapshot() if group in self.group_locks else None,
                 'last_upstream_ms': upstream_ms,
                 'last_budget_wait_ms': budget_wait_ms,
                 'last_response_rows': response_rows,
@@ -289,7 +291,7 @@ class TossClient:
     async def get(self, path, params=None):
         template = contract_path(path)
         group = request_group(path)
-        lock = self.group_locks.setdefault(group, asyncio.Lock())
+        lock = self.group_locks.setdefault(group, FairRequestGate())
         metrics = self._metrics(template)
         last_upstream_ms = None
         last_budget_wait_ms = None
@@ -298,16 +300,20 @@ class TossClient:
             try:
                 token = await self.token()
             except Exception as exc:
+                lock.reset()
                 self._save_request_metrics(template, group, 'auth_error',
                     last_error=type(exc).__name__)
                 raise
-            async with lock:
+            async with lock.slot():
                 budget_wait = max(0, self.group_deadlines.get(group, 0)-time.monotonic())
                 await asyncio.sleep(budget_wait)
                 # Pace request starts, not response completions. Slow upstream
                 # round trips already consume the interval; adding it again
                 # unnecessarily delays every historical page.
                 started = time.monotonic()
+                by_workload = metrics.setdefault('requests_by_workload', {})
+                kind = current_workload()
+                by_workload[kind] = by_workload.get(kind, 0) + 1
                 try:
                     response = await self.client.get(BASE+path, params=params, headers={'Authorization':'Bearer '+token})
                 except httpx.HTTPError as exc:
@@ -332,12 +338,14 @@ class TossClient:
                 metrics['http_status_counts'][status_key] = metrics['http_status_counts'].get(status_key, 0) + 1
                 self.group_deadlines[group] = started+max(.1, float(os.getenv('TOSS_REQUEST_INTERVAL', '.5')))
                 if response.status_code == 429:
+                    lock.reset()
                     metrics['rate_limit_responses'] += 1
                     delay = retry_after_seconds(response.headers.get('Retry-After', '5'))
                     self.group_deadlines[group] = time.monotonic()+max(1, delay)
             if response.status_code == 429 and attempt < 2:
                 continue
             if response.status_code == 401 and attempt == 0:
+                lock.reset()
                 metrics['auth_retries'] += 1
                 await self.invalidate_token(token)
                 continue
@@ -936,6 +944,10 @@ class TossCollector:
             await asyncio.sleep(5)
 
     async def refresh_active_once(self):
+        with request_workload('interactive'):
+            return await self._refresh_active_once()
+
+    async def _refresh_active_once(self):
         """Refresh each due endpoint independently within the existing active set."""
         from .quote_metrics import trading_day
         provider_failures = 0

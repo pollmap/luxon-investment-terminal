@@ -34,6 +34,7 @@ import {detailRouteKeys, writeMarketHistory} from "./market-history";
 import StockTable from "./stock-table";
 import WorkspaceList from "./workspace-list";
 import HeaderSearch from "./header-search";
+import ReleaseNotice from "./release-notice";
 import {useStockSearch} from "./use-stock-search";
 import type {SearchIdentity} from "./search-index";
 import MobileList from "./mobile-list";
@@ -146,6 +147,7 @@ export default function Dashboard() {
     routeSearch = useRef(""),
     rowsRef = useRef<Stock[]>([]),
     scrollRef = useRef(0),
+    reloadScroll = useRef<number | null>(null),
     requestId = useRef(0),
     loadedListKey = useRef(""),
     dataRef = useRef<Result | null>(null),
@@ -173,6 +175,18 @@ export default function Dashboard() {
     setCode(r.code);
     setQuery(r.query);
     setSelected(r.selected);
+    const resume = history.state?.marketReleaseRestore;
+    if (resume && resume.url === location.href && Date.now() - resume.savedAt >= 0 && Date.now() - resume.savedAt < 600_000) {
+      if (["market", "screener", "watchlist", "compare"].includes(resume.page)) setPage(resume.page);
+      setQuery(restoreQuery(resume.query));
+      if (Number.isInteger(resume.offset) && resume.offset >= 0) setOffset(resume.offset);
+      if (typeof resume.group === "string") setGroup(resume.group);
+      if (Number.isFinite(resume.listScroll)) scrollRef.current = Math.max(0, resume.listScroll);
+      if (Number.isFinite(resume.scroll)) reloadScroll.current = Math.max(0, resume.scroll);
+      const nextState = {...history.state};
+      delete nextState.marketReleaseRestore;
+      history.replaceState(nextState, "", location.href);
+    }
     routeSearch.current = location.search;
     setReady(true);
     setOffline(!navigator.onLine);
@@ -207,6 +221,34 @@ export default function Dashboard() {
       window.removeEventListener("market-route-change", detailRoute);
     };
   }, [notify]);
+  useEffect(() => {
+    if (!ready || loading || reloadScroll.current === null) return;
+    const position = reloadScroll.current;
+    reloadScroll.current = null;
+    let attempts = 0;
+    const restore = () => {
+      window.scrollTo(0, position);
+      if (++attempts >= 40 || Math.abs(window.scrollY - position) < 2) stop();
+    };
+    const timer = setInterval(restore, 125);
+    const stop = () => {
+      clearInterval(timer);
+      window.removeEventListener("pointerdown", stop);
+      window.removeEventListener("wheel", stop);
+      window.removeEventListener("keydown", stop);
+    };
+    window.addEventListener("pointerdown", stop, {once:true});
+    window.addEventListener("wheel", stop, {once:true});
+    window.addEventListener("keydown", stop, {once:true});
+    return stop;
+  }, [ready, loading]);
+  const reloadRelease = () => {
+    history.replaceState({...history.state, marketReleaseRestore: {
+      url: location.href, savedAt: Date.now(), page, query, offset, group,
+      scroll: window.scrollY, listScroll: scrollRef.current,
+    }}, "", location.href);
+    location.reload();
+  };
   useEffect(() => {
     if (!ready) return;
     try {
@@ -624,6 +666,7 @@ export default function Dashboard() {
           </button>
         </div>
       </header>
+      <ReleaseNotice onReload={reloadRelease}/>
       {(offline || error) && (
         <div className="mk-connection" role="status">
           <WifiOff size={16} />

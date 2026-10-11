@@ -25,6 +25,57 @@ def test_declared_payment_cannot_become_cash_even_after_the_calendar_date():
     confirmed=parse(document('<tr><td>실제 지급일</td><td>2026-08-31</td></tr>'))[0]
     assert confirmed['payment_date']=='2026-08-31' and confirmed['scheduled_payment_date']=='2026-08-28'
     assert confirmed['payment_status']=='confirmed' and confirmed['verified']
+    assert row['field_availability'] == {'amount':'reported', 'record_date':'reported',
+        'ex_date':'reported', 'payment_date':'announced'}
+    assert confirmed['field_availability']['payment_date'] == 'confirmed'
+
+
+def test_missing_payment_and_conflicts_do_not_erase_reported_amount():
+    from services.market_dashboard.dividend_evidence import enrich_dividends
+    row = parse(document())[0]
+    row.pop('payment_date')
+    row.pop('ex_date')
+    result = enrich_dividends([row], [])[0]
+    assert result['amount'] == '374' and not result['verified']
+    assert result['field_availability'] == {'amount':'reported', 'record_date':'reported',
+        'ex_date':'missing', 'payment_date':'missing'}
+    row.update(payment_date='2026-08-28', payment_status='confirmed',
+               evidence_conflicts=['confirmed_payment_date'])
+    result = enrich_dividends([row], [])[0]
+    assert result['field_availability']['payment_date'] == 'conflicting'
+    assert result['field_availability']['amount'] == 'reported'
+    row['ex_date'] = '2026-07-01'
+    result = enrich_dividends([row], [])[0]
+    assert result['field_availability']['ex_date'] == 'invalid'
+
+
+@pytest.mark.parametrize('record', [{}, {'record_date': None}, {'record_date': ''},
+                                   {'record_date': 'invalid-date'}])
+def test_missing_or_invalid_record_date_does_not_invalidate_independent_dates(record):
+    from services.market_dashboard.dividend_evidence import with_field_availability
+    row = {'kind': 'dividend', 'amount': '374', 'ex_date': '2026-06-29',
+           'payment_date': '2026-08-31', 'payment_status': 'confirmed', **record}
+    result = with_field_availability(row)
+    assert result['field_availability'] == {
+        'amount': 'reported',
+        'record_date': 'invalid' if record.get('record_date') == 'invalid-date' else 'missing',
+        'ex_date': 'reported', 'payment_date': 'confirmed',
+    }
+    assert 'field_availability' not in row
+
+
+def test_invalid_independent_date_and_comparable_chronology_remain_invalid():
+    from services.market_dashboard.dividend_evidence import with_field_availability
+    invalid = with_field_availability({'kind': 'dividend', 'ex_date': '2026-02-30',
+                                      'payment_date': '2026-08-31'})
+    assert invalid['field_availability']['ex_date'] == 'invalid'
+    assert invalid['field_availability']['record_date'] == 'missing'
+    assert invalid['field_availability']['payment_date'] == 'announced'
+    contradictory = with_field_availability({'kind': 'dividend', 'record_date': '2026-06-30',
+                                             'ex_date': '2026-07-01', 'payment_date': '2026-06-29'})
+    assert contradictory['field_availability']['record_date'] == 'reported'
+    assert contradictory['field_availability']['ex_date'] == 'invalid'
+    assert contradictory['field_availability']['payment_date'] == 'invalid'
 
 def test_share_class_is_exact_and_unknown_preferred_issue_is_not_guessed():
     assert parse(document())[0]['amount']=='374'

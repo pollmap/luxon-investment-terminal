@@ -310,9 +310,15 @@ def partial_cleanup_plan(root, now=None):
     Caller holds .backup.lock. No complete dump or predeploy file is a candidate.
     """
     now = now or dt.datetime.now(dt.UTC)
+    partials = [path for path in sorted(root.iterdir()) if PARTIAL.fullmatch(path.name)]
+    if not partials:
+        return {"state": "ready", "candidates": []}
     recovery = verified_recovery(root, now)
     if recovery.get("state") != "verified":
         return {"state": "blocked_recovery", "candidates": []}
+    if recovery.get("source_available_on_server") is False:
+        return {"state": "blocked_recovery", "reason": "offsite_only_recovery",
+                "candidates": []}
     source = root / recovery["source"]
     saved = metadata(root / (source.name + ".manifest.json"))
     original = file_identity(source)
@@ -329,14 +335,14 @@ def partial_cleanup_plan(root, now=None):
         tzinfo=dt.UTC
     )
     candidates = []
-    for path in sorted(root.iterdir()):
+    for path in partials:
         match = PARTIAL.fullmatch(path.name)
         if not match:
             continue
         try:
             stamp = dt.datetime.strptime(match[1], "%Y%m%dT%H%M%SZ").replace(tzinfo=dt.UTC)
             identity = file_identity(path)
-        except ValueError:
+        except (ValueError, FileNotFoundError):
             continue
         modified = dt.datetime.fromtimestamp(identity["mtime_ns"] / 1e9, dt.UTC)
         if (
@@ -372,9 +378,16 @@ def cleanup_partials_locked(root, *, apply=False, now=None):
     identities = {row["name"]: row for row in plan["candidates"]}
     if open_backup_files(identities):
         raise ValueError("A partial backup became active")
+    present, missing = [], []
     for row in plan["candidates"]:
-        if file_identity(root / row["name"]) != {k: v for k, v in row.items() if k != "name"}:
+        try:
+            identity = file_identity(root / row["name"])
+        except FileNotFoundError:
+            missing.append(row["name"])
+            continue
+        if identity != {k: v for k, v in row.items() if k != "name"}:
             raise ValueError("Partial backup changed during cleanup planning")
+        present.append(row)
     stamp = dt.datetime.now(dt.UTC).strftime("%Y%m%dT%H%M%S%fZ")
     audit = root / ("partial-cleanup-" + stamp + ".json")
     before = shutil.disk_usage(root).free
@@ -382,16 +395,24 @@ def cleanup_partials_locked(root, *, apply=False, now=None):
         json.dump({**plan, "state": "planned", "planned_at": stamp}, stream)
         stream.flush()
         os.fsync(stream.fileno())
-    for row in plan["candidates"]:
+    removed = []
+    for row in present:
         path = root / row["name"]
-        if file_identity(path) != {k: v for k, v in row.items() if k != "name"}:
-            raise ValueError("Partial backup changed before unlink")
-        path.unlink()
+        try:
+            if file_identity(path) != {k: v for k, v in row.items() if k != "name"}:
+                raise ValueError("Partial backup changed before unlink")
+            path.unlink()
+        except FileNotFoundError:
+            missing.append(row["name"])
+            continue
+        removed.append(row)
     result = {
         **plan,
         "applied": True,
         "audit": audit.name,
-        "allocated_bytes_removed": sum(row["allocated_bytes"] for row in plan["candidates"]),
+        "removed": [row["name"] for row in removed],
+        "already_absent": missing,
+        "allocated_bytes_removed": sum(row["allocated_bytes"] for row in removed),
         "free_before": before,
         "free_after": shutil.disk_usage(root).free,
     }

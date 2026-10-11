@@ -202,10 +202,10 @@ def test_current_read_consumers_do_not_mutate_retained_input_or_combined_rows(st
 def test_late_old_revision_read_cannot_keep_new_value_hidden(store, monkeypatch):
     from services.market_dashboard import enriched_view
     market.security_row(store, '005930')
-    old_heads = store.revisions(('universe', 'enriched', 'quotes'))
+    old_heads = store.revisions(('universe', 'enriched-item:005930', 'quote:005930'))
     # Force an older, already-running read to finish after the newer one.
     store.put('enriched', {'005930': {'per': 11}})
-    delayed_heads = store.revisions(('universe', 'enriched', 'quotes'))
+    delayed_heads = store.revisions(('universe', 'enriched-item:005930', 'quote:005930'))
     entered, release = threading.Event(), threading.Event()
     original = enriched_view.read_item
 

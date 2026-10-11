@@ -50,15 +50,17 @@ try {
   const next = path.join(source, 'node_modules', 'next', 'dist', 'bin', 'next');
   const status = await new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [next, 'build', '--webpack'], { cwd: stage, stdio: 'inherit',
-      env: { ...process.env, MARKET_WEB_OUTPUT: 'static', NEXT_BUILD_DIR: '.next', NEXT_TELEMETRY_DISABLED: '1' } });
+      env: { ...process.env, NEXT_PUBLIC_MARKET_RELEASE: process.env.MARKET_RELEASE || 'local', MARKET_WEB_OUTPUT: 'static', NEXT_BUILD_DIR: '.next', NEXT_TELEMETRY_DISABLED: '1' } });
     child.once('error', reject); child.once('exit', resolve);
   });
   if (status !== 0) throw new Error(`Static build failed (${status}); previous output is preserved`);
   const built = path.join(stage, 'out');
+  await mkdir(path.join(built, 'stocks'), {recursive: true});
+  await writeFile(path.join(built, 'stocks', 'version.json'), JSON.stringify({release: process.env.MARKET_RELEASE || 'local'}));
   await cp(path.join(repo, 'ops', 'cloudflare', 'legacy-routes.mjs'), path.join(built, 'legacy-routes.mjs'));
   await writeFile(path.join(built, 'legacy-entry.mjs'), 'import { legacyDestination } from "/legacy-routes.mjs";\nconst target = legacyDestination(new URL(location.href));\nif (target) location.replace(target);\n');
   await writeFile(path.join(built, 'legacy.html'), '<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>주식 장보기</title><script type="module" src="/legacy-entry.mjs"></script><a href="/stocks">주식 장보기 열기</a></html>');
-  await writeFile(path.join(built, '_headers'), '/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n/_next/static/*\n  Cache-Control: public, max-age=31536000, immutable\n/stocks\n  Cache-Control: no-cache\n/stocks/sw.js\n  Cache-Control: no-cache\n/legacy*\n  Cache-Control: no-cache\n');
+  await writeFile(path.join(built, '_headers'), '/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n/_next/static/*\n  Cache-Control: public, max-age=31536000, immutable\n/stocks\n  Cache-Control: no-cache\n/stocks/sw.js\n  Cache-Control: no-cache\n/stocks/version.json\n  Cache-Control: no-store\n/legacy*\n  Cache-Control: no-cache\n');
   const files = await digestFiles(built);
   await writeFile(path.join(built, 'build-manifest.json'), JSON.stringify({ profile: 'static', release: process.env.MARKET_RELEASE || 'local',
     built_at: new Date().toISOString(), files, bytes: files.reduce((total, file) => total + file.bytes, 0) }, null, 2));

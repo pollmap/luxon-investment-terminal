@@ -1,10 +1,52 @@
 """Reconcile dated dividend observations without turning announcements into cash."""
-from copy import deepcopy
-from datetime import date
 import re
+from copy import copy, deepcopy
+from datetime import date
 
 from .analysis import numeric
 from .financial_dates import publication_date
+
+
+def with_field_availability(event):
+    """Missing date evidence does not hide an independently reported dividend.
+
+    Statuses describe source observations, not universal event verification.
+    In particular a past scheduled payment remains announced, not confirmed.
+    """
+    if event.get('kind') != 'dividend':
+        return event
+    result = copy(event)
+    conflicts = set(event.get('evidence_conflicts') or [])
+    dates = {}
+    for field in ('record_date', 'ex_date', 'payment_date'):
+        try:
+            dates[field] = date.fromisoformat(event.get(field))
+        except (TypeError, ValueError):
+            dates[field] = None
+    fields = {}
+    for field in ('amount', 'record_date', 'ex_date', 'payment_date'):
+        value = event.get(field)
+        status = 'reported' if value is not None and value != '' else 'missing'
+        if field == 'amount' and numeric(value) is None:
+            status = 'missing'
+        if field.endswith('_date') and status != 'missing':
+            day, record = dates[field], dates['record_date']
+            if day is None:
+                status = 'invalid'
+            elif record is not None and (
+                    (field == 'ex_date' and day > record)
+                    or (field == 'payment_date' and day < record)):
+                status = 'invalid'
+        if field == 'payment_date' and status == 'reported':
+            status = 'confirmed' if event.get('payment_status') == 'confirmed' else 'announced'
+        if (field in conflicts
+                or (field == 'payment_date' and 'confirmed_payment_date' in conflicts)):
+            status = 'conflicting'
+        if event.get('superseded_by'):
+            status = 'superseded'
+        fields[field] = status
+    result['field_availability'] = fields
+    return result
 
 
 def enrich_dividends(events, observations):
@@ -79,4 +121,4 @@ def enrich_dividends(events, observations):
                          'ex_date_required' if not event.get('ex_date') else 'payment_confirmation_required')
         if event.get('payment_date'):
             event.update(date=event['payment_date'], date_kind='payment')
-    return result
+    return [with_field_availability(event) for event in result]
