@@ -173,6 +173,7 @@ class ResumeBudget(cp.Budget):
 
 
 KNOWN_FAILURES = {
+    "command_deadline_exceeded": "control_command_timeout",
     "Previously committed logical row differs": "prefix_row_differs",
     "Previously committed original trace differs": "prefix_original_trace_differs",
     "Stored prefix row count differs from atomic checkpoint": "checkpoint_count_differs",
@@ -192,6 +193,16 @@ def failure_code(error):
     if isinstance(error, supervisor.SupervisorError):
         return "restore_child_failed"
     return "cancelled" if isinstance(error, KeyboardInterrupt) else "restore_operation_failed"
+
+
+def safe_error_detail(error):
+    """No exception messages, SQL, tool output or credential-bearing arguments."""
+    result = {"type": type(error).__name__}
+    for field in ("errno", "winerror"):
+        value = getattr(error, field, None)
+        if type(value) is int:
+            result[field] = value
+    return result
 
 
 class ResumeSink(ReplayBatchSink):
@@ -386,6 +397,7 @@ class ResumeRestore(local.LocalRestore):
             "max_total_cluster_bytes": max_total_cluster_bytes,
             "max_growth_bytes": max_growth_bytes, "max_seconds": max_seconds,
             "minimum_free_bytes": MIN_FREE,
+            "archive_content_verified": False,
             "space_preflight": self.budget.diagnostic("ready"),
             "cluster_stopped": False, "production_contacted": False,
             "input_paths_modified": False, "processes": [],
@@ -397,22 +409,30 @@ class ResumeRestore(local.LocalRestore):
         return super().tool(name)
 
     def preflight(self):
+        self.report["preflight_step"] = "target_contract"
         if local.PORT != cp.PORT or local.DATABASE != cp.DATABASE:
             raise local.Refused("local_target_contract_changed")
         _, secret, hashes = validate_existing(self.work, self.inputs)
         if hashes != self.evidence_hashes or secret != self.secret:
             raise local.Refused("existing_evidence_changed")
         for name in ("postgres", "pg_restore"):
-            _, version = self.command(name, ["--version"], seconds=5)
+            self.report["preflight_step"] = name + "_version"
+            # The control deadline includes the directory-budget check. On a
+            # busy Windows volume that check alone can exceed five seconds.
+            # The overall restore deadline and all space limits still apply.
+            _, version = self.command(name, ["--version"], seconds=30)
             if re.fullmatch(rb"[^\r\n]+ \(PostgreSQL\) 17(?:\.[0-9]+)*\s*", version) is None:
                 raise local.Refused("local_pg17_required")
+        self.report["preflight_step"] = "cluster_status"
         status, _ = self.command("pg_ctl", ["-D", str(self.data), "status"], accepted=(0, 3))
         if status != 3:
             raise local.Refused("existing_cluster_active")
+        self.report["preflight_step"] = "port_binding"
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
             if os.name == "nt":
                 probe.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
             probe.bind(("127.0.0.1", local.PORT))
+        self.report["preflight_step"] = "attempt_directory"
         self.attempt.mkdir(mode=0o700, exist_ok=False)
         self.created = True
         local._report_file(
@@ -502,6 +522,7 @@ class ResumeRestore(local.LocalRestore):
                 manifest = self.saved_manifest
                 self.report["phase"] = "archive_verification"
                 cp.verify_archive(self.inputs["archive"], manifest, self.budget)
+                self.report["archive_content_verified"] = True
                 local.check_input_metadata(self.inputs)
                 self.report["phase"] = "preflight"
                 self.preflight()
@@ -516,7 +537,8 @@ class ResumeRestore(local.LocalRestore):
                 self.guard.check()
                 completed = True
             except (Exception, KeyboardInterrupt) as error:
-                self.report.update(state="interrupted", error_code=failure_code(error))
+                self.report.update(state="interrupted", error_code=failure_code(error),
+                                   error_detail=safe_error_detail(error))
             finally:
                 try:
                     self.guard.close()

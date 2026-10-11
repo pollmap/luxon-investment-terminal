@@ -237,6 +237,8 @@ def test_occupied_port_is_checked_only_when_execution_preflight_runs(owned, monk
     item = runner(owned)
     calls = []
     def command(name, args, **kwargs):
+        if name in ("postgres", "pg_restore"):
+            assert kwargs["seconds"] == 30
         calls.append((name, args))
         return (3, b"") if name == "pg_ctl" else (0, b"fixture (PostgreSQL) 17.11\n")
     item.command = command
@@ -255,6 +257,7 @@ def test_occupied_port_is_checked_only_when_execution_preflight_runs(owned, monk
         item.preflight()
     assert not item.attempt.exists() and not item.start_attempted
     assert calls[-1][0] == "pg_ctl" and calls[-1][1][-1] == "status"
+    assert item.report["preflight_step"] == "port_binding"
 
 
 def test_start_existing_never_initializes_or_creates_database(owned):
@@ -341,6 +344,26 @@ def test_failure_still_stops_and_saves_only_fixed_diagnostics(owned, monkeypatch
     assert result["restore_verified"] is False and result["data_equal"] is False
     assert "fixture_secret_never_emit" not in json.dumps(result)
     assert json.loads((item.attempt / "RESULT.json").read_text()) == result
+
+
+def test_safe_control_failure_diagnostic_does_not_publish_exception_text(owned, monkeypatch):
+    item = runner(owned)
+    mocked_run(item, monkeypatch)
+    error = OSError(12, "fixture_secret_never_emit")
+    error.winerror = 1455
+
+    def failed_preflight():
+        item.report["preflight_step"] = "postgres_version"
+        raise error
+
+    item.preflight = failed_preflight
+    result = item.run()
+    assert result["error_detail"] == {"type": "OSError", "errno": 12, "winerror": 1455}
+    assert result["preflight_step"] == "postgres_version"
+    assert result["archive_content_verified"] is True
+    assert result["restore_verified"] is False
+    assert "fixture_secret_never_emit" not in json.dumps(result)
+    assert m.failure_code(m.local.Refused("command_deadline_exceeded")) == "control_command_timeout"
 
 
 def test_failed_prefix_is_saved_before_child_exit_and_safe_status_after_exit(owned, monkeypatch):

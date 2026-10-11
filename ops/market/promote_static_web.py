@@ -161,6 +161,7 @@ def static_locations(root):
  location = /legacy-entry.mjs {{ default_type application/javascript; add_header Cache-Control no-cache; }}
  location = /legacy-routes.mjs {{ default_type application/javascript; add_header Cache-Control no-cache; }}
  location = /stocks/sw.js {{ add_header Cache-Control no-cache; }}
+ location = /stocks/version.json {{ try_files $uri =404; add_header Cache-Control no-store always; }}
  location = /stocks {{ try_files /stocks.html =404; add_header Cache-Control no-cache; }}
  location = /stocks/ {{ return 302 /stocks$is_args$args; }}
  location ^~ /_next/static/ {{ try_files $uri =404; add_header Cache-Control "public, max-age=31536000, immutable"; }}
@@ -173,7 +174,22 @@ def rewrite_nginx(original, root):
     if MARKER in original:
         if ' root ' + str(root).replace('\\', '/') + ';' not in original:
             raise ValueError('Different static root already configured')
-        return original
+        end_marker = '# END KOREA STOCKS STATIC WEB'
+        if original.count(MARKER) != 1 or original.count(end_marker) != 1:
+            raise ValueError('Ambiguous static configuration markers')
+        start, end = original.index(MARKER), original.index(end_marker)
+        if start >= end:
+            raise ValueError('Invalid static configuration markers')
+        section = original[start:end]
+        version_location = (
+            'location = /stocks/version.json { try_files $uri =404; '
+            'add_header Cache-Control no-store always; }'
+        )
+        if '/stocks/version.json' in original:
+            if section.count(version_location) != 1 or original.count('/stocks/version.json') != 1:
+                raise ValueError('Unexpected release version location')
+            return original
+        return original[:end] + version_location + '\n ' + original[end:]
     servers = []
     for match in re.finditer(r'(?m)^server\s*\{', original):
         end = block_end(original, match.start())

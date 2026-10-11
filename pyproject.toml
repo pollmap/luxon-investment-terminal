@@ -43,17 +43,20 @@ ingestion = [
   "lxml>=6.0.0",
   "openpyxl>=3.1.0",
   "pandas>=2.2.0,<3.0",
-  "pykrx>=1.2.8"
+  "pykrx>=1.2.8",
+  "urllib3>=2.8.0,<3"
 ]
 warehouse = [
   "duckdb>=1.5.0",
   "pyarrow>=23.0.0"
 ]
 migration = [
-  "alembic>=1.18.0"
+  "alembic>=1.18.0",
+  "mako>=1.4.2,<2"
 ]
 dev = [
   "alembic>=1.18.0",
+  "mako>=1.4.2,<2",
   "cryptography>=50.0.2,<51",
   "beautifulsoup4>=4.14.0",
   "duckdb>=1.5.0",
@@ -64,6 +67,7 @@ dev = [
   "pandas>=2.2.0,<3.0",
   "pyarrow>=23.0.0",
   "pykrx>=1.2.8",
+  "urllib3>=2.8.0,<3",
   "pytest>=9.0.0",
   "pytest-asyncio>=1.3.0",
   "ruff>=0.14.0"

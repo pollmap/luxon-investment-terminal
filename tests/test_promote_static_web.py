@@ -64,6 +64,31 @@ def test_transform_preserves_api_ws_tls_and_other_servers():
     assert m.rewrite_nginx(transformed, Path('/srv/services/korea-stocks/current/static-web')) == transformed
 
 
+def test_existing_static_config_gets_version_cache_header_only():
+    root = Path('/var/www/korea-stocks/current')
+    expected = m.rewrite_nginx(CONFIG, root)
+    line = (
+        ' location = /stocks/version.json { try_files $uri =404; '
+        'add_header Cache-Control no-store always; }\n'
+    )
+    legacy = expected.replace(line, '')
+    assert legacy != expected
+    updated = m.rewrite_nginx(legacy, root)
+    assert updated.count('/stocks/version.json') == 1
+    assert updated.replace(line, '') == legacy
+    assert m.rewrite_nginx(updated, root) == updated
+    assert m.rewrite_nginx(expected, root) == expected
+    with pytest.raises(ValueError, match='Unexpected release version'):
+        m.rewrite_nginx(expected.replace('no-store always', 'max-age=3600'), root)
+
+
+def test_existing_static_markers_must_be_unique_and_ordered():
+    root = Path('/var/www/korea-stocks/current')
+    expected = m.rewrite_nginx(CONFIG, root)
+    with pytest.raises(ValueError, match='Ambiguous'):
+        m.rewrite_nginx(expected + '\n' + m.MARKER, root)
+
+
 @pytest.mark.parametrize('name', ['../x', '/etc/passwd', 'a/../../x', 'a\\..\\x', 'C:/x', '.env', './.git/config'])
 def test_rejects_unsafe_member_names(name):
     with pytest.raises(ValueError):
