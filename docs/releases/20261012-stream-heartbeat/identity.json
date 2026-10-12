@@ -1,0 +1,13 @@
+{
+  "captured_at": "2026-10-12T14:01:10.620984+00:00",
+  "release": "20261012-incremental-evidence-v133",
+  "readonly": true,
+  "expected_keys": [
+    "toss-stream-evidence:2026-10-12:005930:trade",
+    "toss-stream-evidence:2026-10-12:005930:orderbook",
+    "toss-stream-evidence:2026-10-12:000660:trade",
+    "toss-stream-evidence:2026-10-12:000660:orderbook"
+  ],
+  "present_keys": 0,
+  "rows": []
+}

@@ -1,0 +1,209 @@
+{
+  "automation_id": "automation-2",
+  "trigger_at": "2026-10-12T13:56:21.411Z",
+  "started_at": "2026-10-12T13:58:23.498819+00:00",
+  "capture_script_sha256": "f144a74b187577cafb94ecfe026d702e8e8384401797f663d2971dab735134ff",
+  "scope": "existing shared worker paired read-only observation",
+  "worker_restarted": false,
+  "new_provider_connections": 0,
+  "account_or_order_calls": 0,
+  "exit_code": 0,
+  "capture": {
+    "mode": "readonly_shared_worker",
+    "day": "2026-10-12",
+    "keys": [
+      "provider-toss-stream",
+      "toss-calendar:KR",
+      "toss-calendar:KR:2026-10-12",
+      "toss-recovery:005930",
+      "toss-recovery:000660",
+      "toss-stream-evidence:2026-10-12:005930:trade",
+      "toss-stream-evidence:2026-10-12:005930:orderbook",
+      "toss-stream-evidence:2026-10-12:000660:trade",
+      "toss-stream-evidence:2026-10-12:000660:orderbook"
+    ],
+    "samples": 2,
+    "interval_seconds": 20,
+    "provider_requests": 0,
+    "provider_connections": 0,
+    "database_writes": 0,
+    "limitations": [
+      "two_latest_raw_samples_not_every_tick",
+      "no_provider_sequence",
+      "separate_browser_and_forced_disconnect_verification_required"
+    ],
+    "release": "20261012-incremental-evidence-v133",
+    "observations": [
+      {
+        "captured_at": "2026-10-12T13:58:31.241805+00:00",
+        "calendar": {
+          "status": "open_day",
+          "day": "2026-10-12",
+          "source_sha256": "17bfd6de280a63b8ce855d9312ab776661d271ca9aa16ebd0684dc7536648cad",
+          "scope": "KRX+NXT integrated",
+          "sessions": [
+            {
+              "name": "preMarket",
+              "start": "2026-10-12T08:00:00+09:00",
+              "end": "2026-10-12T09:00:00+09:00"
+            },
+            {
+              "name": "regularMarket",
+              "start": "2026-10-12T09:00:00+09:00",
+              "end": "2026-10-12T15:30:00+09:00"
+            },
+            {
+              "name": "afterMarket",
+              "start": "2026-10-12T15:30:00+09:00",
+              "end": "2026-10-12T20:00:00+09:00"
+            }
+          ],
+          "open_at_capture": false,
+          "provider_next_business_day": "2026-10-13"
+        },
+        "worker": {
+          "epoch": "3adb8934f5f140b981408d703b09a7a2",
+          "status": "subscribed"
+        },
+        "evidence": [
+          {
+            "code": "005930",
+            "kind": "trade",
+            "verified_raw": false,
+            "fresh_at_capture": false,
+            "reason": "evidence_identity"
+          },
+          {
+            "code": "005930",
+            "kind": "orderbook",
+            "verified_raw": false,
+            "fresh_at_capture": false,
+            "reason": "evidence_identity"
+          },
+          {
+            "code": "000660",
+            "kind": "trade",
+            "verified_raw": false,
+            "fresh_at_capture": false,
+            "reason": "evidence_identity"
+          },
+          {
+            "code": "000660",
+            "kind": "orderbook",
+            "verified_raw": false,
+            "fresh_at_capture": false,
+            "reason": "evidence_identity"
+          }
+        ],
+        "recovery": {
+          "005930": null,
+          "000660": null
+        }
+      },
+      {
+        "captured_at": "2026-10-12T13:58:51.304594+00:00",
+        "calendar": {
+          "status": "open_day",
+          "day": "2026-10-12",
+          "source_sha256": "17bfd6de280a63b8ce855d9312ab776661d271ca9aa16ebd0684dc7536648cad",
+          "scope": "KRX+NXT integrated",
+          "sessions": [
+            {
+              "name": "preMarket",
+              "start": "2026-10-12T08:00:00+09:00",
+              "end": "2026-10-12T09:00:00+09:00"
+            },
+            {
+              "name": "regularMarket",
+              "start": "2026-10-12T09:00:00+09:00",
+              "end": "2026-10-12T15:30:00+09:00"
+            },
+            {
+              "name": "afterMarket",
+              "start": "2026-10-12T15:30:00+09:00",
+              "end": "2026-10-12T20:00:00+09:00"
+            }
+          ],
+          "open_at_capture": false,
+          "provider_next_business_day": "2026-10-13"
+        },
+        "worker": {
+          "epoch": "3adb8934f5f140b981408d703b09a7a2",
+          "status": "subscribed"
+        },
+        "evidence": [
+          {
+            "code": "005930",
+            "kind": "trade",
+            "verified_raw": false,
+            "fresh_at_capture": false,
+            "reason": "evidence_identity"
+          },
+          {
+            "code": "005930",
+            "kind": "orderbook",
+            "verified_raw": false,
+            "fresh_at_capture": false,
+            "reason": "evidence_identity"
+          },
+          {
+            "code": "000660",
+            "kind": "trade",
+            "verified_raw": false,
+            "fresh_at_capture": false,
+            "reason": "evidence_identity"
+          },
+          {
+            "code": "000660",
+            "kind": "orderbook",
+            "verified_raw": false,
+            "fresh_at_capture": false,
+            "reason": "evidence_identity"
+          }
+        ],
+        "recovery": {
+          "005930": null,
+          "000660": null
+        }
+      }
+    ],
+    "gates": {
+      "rows": [
+        {
+          "code": "005930",
+          "kind": "trade",
+          "message_count_delta": 0,
+          "fresh_message_observed": false,
+          "epoch_recovery_observed": false
+        },
+        {
+          "code": "005930",
+          "kind": "orderbook",
+          "message_count_delta": 0,
+          "fresh_message_observed": false,
+          "epoch_recovery_observed": false
+        },
+        {
+          "code": "000660",
+          "kind": "trade",
+          "message_count_delta": 0,
+          "fresh_message_observed": false,
+          "epoch_recovery_observed": false
+        },
+        {
+          "code": "000660",
+          "kind": "orderbook",
+          "message_count_delta": 0,
+          "fresh_message_observed": false,
+          "epoch_recovery_observed": false
+        }
+      ],
+      "both_kinds_observed": false,
+      "epoch_recovery_observed": false,
+      "forced_disconnect_verified": false,
+      "browser_render_verified": false,
+      "gapless_delivery_verified": false
+    }
+  },
+  "finished_at": "2026-10-12T13:58:50.421944+00:00"
+}
