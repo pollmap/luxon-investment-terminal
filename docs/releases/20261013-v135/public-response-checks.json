@@ -1,0 +1,234 @@
+{
+  "at": "2026-10-12T16:31:44.846537+00:00",
+  "api_release": "20261013-evidence-bridge-v135",
+  "web_release": "20261012-reference-analysis-v134",
+  "passed": true,
+  "checks": 6,
+  "results": [
+    {
+      "code": "005930",
+      "http_status": 200,
+      "data_status": "partial",
+      "sha256": "c90b8f98311aec4fabff19d0c9ff13ac05dfb3f3930afe9a78d96984bad967d3",
+      "bytes": 8030,
+      "period_start": "2025-07-01",
+      "period_end": "2026-06-30",
+      "company_id": "00126380",
+      "issuer_link": null,
+      "formula_version": "financial-questions-v2",
+      "rows": [
+        {
+          "metric": "revenue",
+          "status": "ready",
+          "reason": null,
+          "exact_value": "485272032000000",
+          "input_fact_count": 11,
+          "input_model_version": "fundamental-metrics-v4"
+        },
+        {
+          "metric": "operating_income",
+          "status": "unavailable",
+          "reason": "company_identity_required",
+          "exact_value": null,
+          "input_fact_count": 0,
+          "input_model_version": null
+        },
+        {
+          "metric": "net_income",
+          "status": "unavailable",
+          "reason": "company_identity_required",
+          "exact_value": null,
+          "input_fact_count": 0,
+          "input_model_version": null
+        },
+        {
+          "metric": "operating_cash",
+          "status": "ready",
+          "reason": null,
+          "exact_value": "196729338000000",
+          "input_fact_count": 10,
+          "input_model_version": "fundamental-metrics-v4"
+        },
+        {
+          "metric": "capex",
+          "status": "unavailable",
+          "reason": "input_missing",
+          "exact_value": null,
+          "input_fact_count": 0,
+          "input_model_version": null
+        },
+        {
+          "metric": "free_cash",
+          "status": "unavailable",
+          "reason": "period_mismatch",
+          "exact_value": null,
+          "input_fact_count": 0,
+          "input_model_version": null
+        }
+      ]
+    },
+    {
+      "code": "005935",
+      "http_status": 200,
+      "data_status": "partial",
+      "sha256": "3614b5a03c1411bd5a1d6942d1cfd10efced2464dbec920273817dea6dbc1620",
+      "bytes": 8258,
+      "period_start": "2025-07-01",
+      "period_end": "2026-06-30",
+      "company_id": "00126380",
+      "issuer_link": {
+        "issuer_security_code": "005930",
+        "security_code": "005935",
+        "source_url": "https://www.samsung.com/global/ir/stock-information/listing-Info/",
+        "version": "samsung-listed-security-v1",
+        "scope": "company_financial_totals"
+      },
+      "formula_version": "financial-questions-v2",
+      "rows": [
+        {
+          "metric": "revenue",
+          "status": "ready",
+          "reason": null,
+          "exact_value": "485272032000000",
+          "input_fact_count": 11,
+          "input_model_version": "fundamental-metrics-v4"
+        },
+        {
+          "metric": "operating_income",
+          "status": "unavailable",
+          "reason": "company_identity_required",
+          "exact_value": null,
+          "input_fact_count": 0,
+          "input_model_version": null
+        },
+        {
+          "metric": "net_income",
+          "status": "unavailable",
+          "reason": "company_identity_required",
+          "exact_value": null,
+          "input_fact_count": 0,
+          "input_model_version": null
+        },
+        {
+          "metric": "operating_cash",
+          "status": "ready",
+          "reason": null,
+          "exact_value": "196729338000000",
+          "input_fact_count": 10,
+          "input_model_version": "fundamental-metrics-v4"
+        },
+        {
+          "metric": "capex",
+          "status": "unavailable",
+          "reason": "input_missing",
+          "exact_value": null,
+          "input_fact_count": 0,
+          "input_model_version": null
+        },
+        {
+          "metric": "free_cash",
+          "status": "unavailable",
+          "reason": "period_mismatch",
+          "exact_value": null,
+          "input_fact_count": 0,
+          "input_model_version": null
+        }
+      ]
+    },
+    {
+      "code": "000660",
+      "http_status": 200,
+      "data_status": "partial",
+      "sha256": "c6f96d256205e9b64cdafd9acfbf46bd929e13f0e60b3754383884fe7916b1b6",
+      "bytes": 8624,
+      "period_start": "2025-07-01",
+      "period_end": "2026-06-30",
+      "company_id": "00164779",
+      "issuer_link": null,
+      "formula_version": "financial-questions-v2",
+      "rows": [
+        {
+          "metric": "revenue",
+          "status": "ready",
+          "reason": null,
+          "exact_value": "189170615000000",
+          "input_fact_count": 17,
+          "input_model_version": "fundamental-metrics-v4"
+        },
+        {
+          "metric": "operating_income",
+          "status": "unavailable",
+          "reason": "company_identity_required",
+          "exact_value": null,
+          "input_fact_count": 0,
+          "input_model_version": null
+        },
+        {
+          "metric": "net_income",
+          "status": "unavailable",
+          "reason": "company_identity_required",
+          "exact_value": null,
+          "input_fact_count": 0,
+          "input_model_version": null
+        },
+        {
+          "metric": "operating_cash",
+          "status": "ready",
+          "reason": null,
+          "exact_value": "126925786000000",
+          "input_fact_count": 11,
+          "input_model_version": "fundamental-metrics-v4"
+        },
+        {
+          "metric": "capex",
+          "status": "unavailable",
+          "reason": "input_missing",
+          "exact_value": null,
+          "input_fact_count": 0,
+          "input_model_version": null
+        },
+        {
+          "metric": "free_cash",
+          "status": "unavailable",
+          "reason": "period_mismatch",
+          "exact_value": null,
+          "input_fact_count": 0,
+          "input_model_version": null
+        }
+      ]
+    },
+    {
+      "path": "/stocks/version.json",
+      "http_status": 200,
+      "sha256": "0227e9bfc416af6e254a9d37640bd5f7d5bee33cdcc69cc6af43704e184bea46",
+      "bytes": 46,
+      "release": "20261012-reference-analysis-v134"
+    },
+    {
+      "path": "/build-manifest.json",
+      "http_status": 200,
+      "sha256": "f26b1976d7a28ebfb47246ff689b9b93bcc317840e158dd420ea772ca9d46e87",
+      "bytes": 13178,
+      "release": "20261012-reference-analysis-v134"
+    },
+    {
+      "path": "/api/market/v1/securities/005930?view=summary",
+      "http_status": 200,
+      "sha256": "3fc0fd4acac72b21cdc26610676665a24d682bb386bff8a58c44a4e69b804610",
+      "bytes": 1871,
+      "quote": {
+        "code": "005930",
+        "price": 251000,
+        "change": -4.380952380952381,
+        "as_of": "2026-10-12T19:59:59.000+09:00",
+        "received_at": "2026-10-12T16:31:51.804790+00:00",
+        "venue": null
+      }
+    }
+  ],
+  "harness_error": {
+    "wrong_path": "/api/market/v1/securities/005930/summary",
+    "error": "HTTPError",
+    "corrected_path": "/api/market/v1/securities/005930?view=summary"
+  }
+}
