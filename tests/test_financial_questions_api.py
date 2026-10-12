@@ -93,6 +93,18 @@ def test_cfs_ofs_422_and_unlisted_404(tmp_path, monkeypatch):
     )
 
 
+def test_calculation_upgrade_does_not_reuse_old_response_etag(tmp_path, monkeypatch):
+    _, client = seeded(tmp_path, monkeypatch)
+    path = "/api/market/v1/securities/005930/analysis/financial-questions"
+    before = client.get(path)
+    questions = importlib.import_module("services.market_dashboard.financial_questions")
+    monkeypatch.setattr(questions, "VERSION", questions.VERSION + "-fixture-upgrade")
+    after = client.get(path, headers={"If-None-Match": before.headers["etag"]})
+    assert after.status_code == 200
+    assert after.headers["etag"] != before.headers["etag"]
+    assert after.json()["formula_version"].endswith("-fixture-upgrade")
+
+
 def test_preferred_gets_issuer_totals_without_copying_eps_or_dividends(tmp_path, monkeypatch):
     store, client = seeded(tmp_path, monkeypatch)
     path = "/api/market/v1/securities/005935/analysis/financial-questions"

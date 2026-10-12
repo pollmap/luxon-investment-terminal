@@ -13,7 +13,7 @@ from .analysis import numeric, trailing_twelve_months
 from .financial_dates import publication_date
 from .taxonomy import full_ifrs_account
 
-VERSION = "financial-questions-v1"
+VERSION = "financial-questions-v2"
 LABELS = {
     "revenue": "매출액",
     "operating_income": "영업이익",
@@ -187,6 +187,9 @@ def _evidence(row, company):
                 "input_period_end",
                 "input_published_at",
                 "input_company_id",
+                "period_kind",
+                "calculation_fact_id",
+                "calculation_version",
             )
             if k in trace
         } | {"input_kind": kind}
@@ -265,7 +268,7 @@ def _observed(metric, row, evidence):
     total_scope = (
         full_ifrs_account(account) and _local(account) in expected.get(metric, set())
     ) or (row.get("entity_scope") == "company_total" and row.get("entity_scope_verified") is True)
-    return {
+    result = {
         "metric": metric,
         "name": row.get("name") or LABELS.get(metric, metric),
         "value": float(amount),
@@ -282,6 +285,12 @@ def _observed(metric, row, evidence):
         "formula": formula,
         "formula_version": VERSION,
     }
+    if row.get("input_model_version"):
+        result["input_model_version"] = row["input_model_version"]
+        result["input_model_metric"] = row["input_model_metric"]
+        result["input_model_formula"] = row.get("input_model_formula")
+        result["input_model_fact_id"] = row.get("input_model_fact_id")
+    return result
 
 
 def _derived(metric, name, amount, inputs, formula, unit="원"):
@@ -347,6 +356,87 @@ def _capex_rows(dated_facts, basis, company):
     ]
 
 
+def _prepared_total_rows(model, basis, company):
+    """Reuse retained amounts, never invert a reported per-share value.
+
+    The existing v4 calculator already validates every monetary input, company,
+    dimension and quarter before retaining its exact company-total numerator.
+    EPS numerators represent ordinary equity attribution and are not accepted.
+    """
+    from .fundamental_metrics import VERSION as INPUT_VERSION
+
+    metrics = {
+        "OCF": ("operating_cash", "영업활동 현금흐름의 검증된 단독 분기 금액 합계"),
+        "SALES": ("revenue", "매출액의 검증된 단독 분기 금액 합계"),
+        "FCF": ("free_cash", "검증된 단독 분기 영업현금흐름 - 유형·무형자산 취득 지출의 금액 합계"),
+    }
+    results = []
+    for row in model.get("rows") or []:
+        metric = row.get("metric")
+        if metric not in metrics or row.get("basis") != basis or row.get("frequency") != "ttm":
+            continue
+        ids = row.get("input_fact_ids")
+        numerator = numeric(row.get("numerator"))
+        published, _ = publication_date({"published_at": row.get("published_at")})
+        if (
+            row.get("company_id") != company
+            or not company
+            or row.get("formula_version") != INPUT_VERSION
+            or row.get("period_verified") is not True
+            or row.get("currency") != "KRW"
+            or row.get("unit") != "원/주"
+            or row.get("attribution") != "company_total_per_weighted_ordinary_share"
+            or not isinstance(ids, list)
+            or any(not isinstance(identity, str) or not identity for identity in ids)
+            or len(set(ids)) < 4
+            or not _dimensions(row, basis)
+            or not re.fullmatch(r"[0-9a-f]{64}", str(row.get("fact_id") or ""))
+            or numerator is None
+            or not published
+            or published[:10] < str(row.get("period_end") or "9999")
+        ):
+            continue
+        name, formula = metrics[metric]
+        evidence = dict(row.get("source_trace") or {})
+        evidence.update(
+            input_fact_ids=list(ids),
+            input_company_id=company,
+            input_period_start=row.get("period_start"),
+            input_period_end=row.get("period_end"),
+            input_published_at=published,
+            formula=formula,
+            period_kind="prepared_calculation_window",
+            calculation_fact_id=row["fact_id"],
+            calculation_version=INPUT_VERSION,
+        )
+        results.append(
+            {
+                "metric": name,
+                "name": LABELS[name],
+                "company_id": company,
+                "basis": basis,
+                "currency": "KRW",
+                "unit": "원",
+                "frequency": "ttm",
+                "period_start": row.get("period_start"),
+                "period_end": row.get("period_end"),
+                "period_verified": True,
+                "value": float(numerator),
+                "exact_value": str(numerator),
+                "account_id": "prepared-company-total:" + metric,
+                "entity_scope": "company_total",
+                "entity_scope_verified": True,
+                "source_trace": evidence,
+                "formula": formula,
+                "input_model_version": INPUT_VERSION,
+                "input_model_metric": metric,
+                "input_model_formula": row.get("formula"),
+                "input_model_fact_id": row["fact_id"],
+            }
+        )
+    return results
+
+
 def build_financial_questions(analysis_view, basis="CFS", *, company_id=None, dated_facts=()):
     """Consume a prepared analysis projection and optional narrow CAPEX facts.
 
@@ -357,8 +447,14 @@ def build_financial_questions(analysis_view, basis="CFS", *, company_id=None, da
         raise ValueError("Invalid accounting basis")
     summary = (analysis_view.get("ttm") or {}).get(basis) or {}
     source_rows = list(summary.get("rows") or [])
-    companies = {row.get("company_id") for row in source_rows if row.get("company_id")}
+    prepared = analysis_view.get("fundamental_metrics") or {}
+    companies = {
+        row.get("company_id")
+        for row in [*source_rows, *(prepared.get("rows") or [])]
+        if row.get("basis") == basis and row.get("company_id")
+    }
     company = company_id or (next(iter(companies)) if len(companies) == 1 else None)
+    source_rows += _prepared_total_rows(prepared, basis, company)
     candidates = source_rows + _capex_rows(dated_facts, basis, company)
     # Keep an explicit reporting period, even when some inputs fail validation.
     eligible = [row for row in source_rows if not _validate(row, basis, company)]
@@ -443,10 +539,14 @@ def build_financial_questions(analysis_view, basis="CFS", *, company_id=None, da
         )
     elif values["capex"]["status"] == ocf["status"] == "ready":
         values["free_cash"] = _empty("free_cash", "entity_scope_unverified")
-    values["free_cash"]["required_inputs"] = ["operating_cash", "capex"]
-    values["free_cash"]["missing_inputs"] = [
-        key for key in ("operating_cash", "capex") if values[key]["status"] != "ready"
-    ]
+    if values["free_cash"].get("input_model_metric") == "FCF":
+        values["free_cash"]["required_inputs"] = ["verified_fcf_numerator"]
+        values["free_cash"]["missing_inputs"] = []
+    else:
+        values["free_cash"]["required_inputs"] = ["operating_cash", "capex"]
+        values["free_cash"]["missing_inputs"] = [
+            key for key in ("operating_cash", "capex") if values[key]["status"] != "ready"
+        ]
     comparisons = []
     for metric, label, numerator, denominator, invalid in (
         (

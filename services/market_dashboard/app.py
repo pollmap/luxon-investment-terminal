@@ -1303,7 +1303,7 @@ def security_ttm(code: str, request: Request, basis: str = 'CFS'):
 
 @app.get(BASE + "/securities/{code}/analysis/financial-questions")
 def security_financial_questions(code: str, request: Request, basis: str = 'CFS'):
-    from .financial_questions import build_financial_questions
+    from .financial_questions import VERSION, build_financial_questions
     from .official_views import read_view
     from .issuer_documents import company_link, report_dependencies
 
@@ -1321,7 +1321,7 @@ def security_financial_questions(code: str, request: Request, basis: str = 'CFS'
         return {**result, 'code': code,
                 **({'issuer_link': {**link, 'scope': 'company_financial_totals'}} if link else {})}
 
-    return analysis_response(code, request, ('financial-questions-v1', basis), build,
+    return analysis_response(code, request, (VERSION, basis), build,
         report_dependencies(store, code) + ['share-basis:' + issuer])
 
 

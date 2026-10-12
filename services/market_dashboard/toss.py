@@ -5,7 +5,7 @@ import json
 import os
 import re
 import time
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from email.utils import parsedate_to_datetime
 from pathlib import Path
@@ -22,6 +22,96 @@ from .toss_contract import contract_path, request_group, source_scope
 from .request_fairness import FairRequestGate, current_workload, request_workload
 
 BASE = 'https://openapi.tossinvest.com'
+
+
+def calendar_previous_close(store, keys, trade_day, prior_day):
+    """Confirm adjacent integrated sessions from archived official calendar slots."""
+    from .raw_archive import read_original_verified
+
+    def open_day(day):
+        periods = day.get('integrated')
+        if not isinstance(periods, dict):
+            return False
+        found = False
+        for name in ('preMarket', 'regularMarket', 'afterMarket'):
+            if name not in periods:
+                return False
+            period = periods[name]
+            if period is None:
+                continue
+            start = datetime.fromisoformat(period['startTime'])
+            end = datetime.fromisoformat(period['endTime'])
+            if (start.tzinfo is None or end.tzinfo is None or start >= end
+                    or start.astimezone(ZoneInfo('Asia/Seoul')).date().isoformat() != day['date']
+                    or end.astimezone(ZoneInfo('Asia/Seoul')).date().isoformat() != day['date']):
+                return False
+            found = True
+        return found
+
+    proven = False
+    for key in keys:
+        try:
+            snapshot = store.metadata(key, {})
+            # Legacy calendar snapshots have no status. An explicit review or
+            # collection failure must not keep certifying its retained raw proof.
+            if snapshot.get('status') not in (None, 'ready', 'verified'):
+                continue
+            evidence = snapshot.get('source_trace', {})
+            digest = evidence.get('source_document_id')
+            if (evidence.get('source') != 'toss' or not isinstance(digest, str)
+                    or not re.fullmatch('[0-9a-f]{64}', digest)
+                    or any(evidence.get(alias, digest) != digest
+                           for alias in ('sha256', 'filing_id'))):
+                continue
+            directory = store.root / 'raw/toss'
+            envelope = directory / (digest + '.json')
+            if envelope.is_symlink() or directory.is_symlink() or envelope.stat().st_size > 262144:
+                continue
+            metadata = json.loads(envelope.read_bytes())
+            if type(metadata.get('bytes')) is not int or not 0 < metadata['bytes'] <= 262144:
+                continue
+            calendar = json.loads(read_original_verified(directory, digest))['result']
+            today, before, after = (calendar[name] for name in
+                                    ('today', 'previousBusinessDay', 'nextBusinessDay'))
+            today_day, before_day, after_day = (date.fromisoformat(day['date'])
+                                                for day in (today, before, after))
+            if (not before_day < today_day < after_day or any(day_date.isoformat() != day['date']
+                    for day, day_date in ((today, today_day), (before, before_day),
+                                          (after, after_day)))):
+                continue
+            url = metadata.get('url')
+            if (url not in (BASE + '/api/v1/market-calendar/KR',
+                           BASE + '/api/v1/market-calendar/KR?date=' + today['date'])
+                    or evidence.get('source_url') != url):
+                continue
+            if key.startswith('market-session:'):
+                session = snapshot.get('session')
+                if (not isinstance(session, dict) or key != 'market-session:' + session['date']
+                        or session not in (today, before, after)):
+                    continue
+            elif (calendar != snapshot.get('calendar') or (key != 'toss-calendar:KR'
+                    and key != 'toss-calendar:KR:' + today['date'])):
+                continue
+            if not open_day(before) or not open_day(after):
+                continue
+            # A later official session inside the gap contradicts an older
+            # previous/next-business relation, even when that older raw is valid.
+            for day, day_date in ((before, before_day), (today, today_day), (after, after_day)):
+                if prior_day < day_date < trade_day and open_day(day):
+                    return False
+            if today_day == trade_day:
+                if before_day == prior_day and open_day(today):
+                    proven = True
+            elif after_day == trade_day:
+                if today_day == prior_day and open_day(today):
+                    proven = True
+                if (before_day == prior_day and 'integrated' in today
+                        and today['integrated'] is None):
+                    proven = True
+        except (OSError, ValueError, TypeError, KeyError, AttributeError):
+            # A missing/corrupt original cannot erase the observed current price.
+            continue
+    return proven
 
 
 TRADING_PROJECTION_FIELDS = {
@@ -443,7 +533,10 @@ class TossCollector:
         metadata = self.store.metadata(bar_key, {})
         revision = metadata.get('series_revision') or self.store.revisions((bar_key,)).get(bar_key)
         cached = self.previous_closes.get(close_key)
-        if cached is None or cached[0] != revision:
+        calendar_keys = cached[3] if cached is not None else ()
+        calendar_revision = (tuple(sorted(self.store.revisions(calendar_keys).items()))
+                             if calendar_keys else None)
+        if cached is None or cached[0] != revision or cached[2] != calendar_revision:
             if metadata.get('_series_ref'):
                 end = (trade_day - timedelta(days=1)).isoformat()+'T99'
                 past = self.store.time_series.rows(metadata['_series_ref'], reverse=True, end=end, limit=1)
@@ -451,15 +544,30 @@ class TossCollector:
             else:
                 past = [r for r in metadata.get('rows', []) if r['date'] < trade_day.isoformat()]
                 prior = max(past, key=lambda row: row['date']) if past else None
-            # Only weekends establish a deterministic gap here. A current or
-            # future bar head cannot distinguish a holiday/halt from missing
-            # history; receipt clocks cannot certify the previous session.
+            # A current head and receipt clock never establish a missing session.
+            # Wider gaps require an exact official previous/next-business relation.
             previous_weekday = trade_day - timedelta(days=1)
             while previous_weekday.weekday() >= 5:
                 previous_weekday -= timedelta(days=1)
             usable = prior and prior.get('date') == previous_weekday.isoformat()
+            calendar_keys, calendar_revision = (), None
+            if prior and not usable:
+                calendar_keys = (f'toss-calendar:KR:{trade_day}', f'market-session:{trade_day}',
+                                 f'market-session:{previous_weekday}',
+                                 f"market-session:{prior['date']}",
+                                 'toss-calendar:KR')
+                calendar_revision = tuple(sorted(self.store.revisions(calendar_keys).items()))
+                try:
+                    usable = calendar_previous_close(self.store, calendar_keys, trade_day,
+                                                     date.fromisoformat(prior['date']))
+                except (ValueError, TypeError):
+                    usable = False
+                # Retry on a later event if the calendar changed during this read.
+                if calendar_revision != tuple(sorted(self.store.revisions(calendar_keys).items())):
+                    usable = False
             prior_close = prior['close'] if usable else None
-            self.previous_closes[close_key] = (revision, prior_close)
+            self.previous_closes[close_key] = (
+                revision, prior_close, calendar_revision, calendar_keys)
         prior_close = self.previous_closes[close_key][1]
         change = float((Decimal(str(price))/Decimal(str(prior_close))-1)*100) if prior_close else None
         if (previous.get('quote_trace', {}).get('source') in ('toss', 'toss_websocket')
