@@ -98,5 +98,5 @@ jobs:
                       raise
                   time.sleep(0.2)
           PY
-          pnpm --dir apps/web exec playwright test --config playwright.market.config.ts first-chart.spec.ts request-efficiency.spec.ts --reporter=list --output=../../work/ci/browser-results
+          pnpm --dir apps/web exec playwright test --config playwright.market.config.ts first-chart.spec.ts request-efficiency.spec.ts multi-metric.spec.ts financial-questions.spec.ts --reporter=list --output=../../work/ci/browser-results
           OFFLINE

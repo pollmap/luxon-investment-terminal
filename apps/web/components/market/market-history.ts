@@ -25,5 +25,5 @@ export const detailRouteKeys = [
   "tab", "mode", "range", "kind", "bar", "period", "lineInterval",
   "analysis", "activity", "insight", "insight_years", "insight_date",
   "v_metric", "v_basis", "v_years", "v_multiple", "v_mode", "v_frequency",
-  "v_interval", "v_from", "v_to",
+  "v_interval", "v_from", "v_to", "v_chart",
 ];

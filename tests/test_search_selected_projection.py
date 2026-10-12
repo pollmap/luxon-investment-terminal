@@ -275,3 +275,101 @@ def test_missing_enrichment_item_is_stable_until_added(source):
     assert source.revisions(key) == missing
     publish(source, {'code': '100000', 'facts': {'per': {'value': 10}}})
     assert source.revisions(key) != missing
+
+
+@pytest.mark.parametrize('quote_kind', ['broker_old', 'public_stale', 'partial', 'zero_null'])
+def test_compact_hydration_preserves_response_and_nested_evidence(source, quote_kind):
+    trace = {'source': 'fixture_non_production', 'source_ref': 'original-reference',
+             'nested': {'labels': ['원본', None, True], 'quality': False}}
+    detail = {'name': '삼성 fixture enriched', 'aliases': ['검증별칭'], 'market': 'KOSPI',
+              'sector': None, 'logo_url': None, 'market_status': 'closed',
+              'source_trace': trace, 'unneeded_financial_history': ['fixture'] * 10000,
+              'facts': {'price': None, 'change': {'value': 0, 'source_trace': trace},
+                        'value': {'value': 9999, 'period': '2026-10-08', 'source_trace': trace},
+                        'unneeded_history': {'rows': ['fixture'] * 10000}}}
+    source.put('enriched', {'100000': detail})
+    rebuild(source)
+    quote = {'price': 201, 'change': 2, 'as_of': '2026-10-08',
+             'received_at': 'fixture-received', 'market_status': 'closed',
+             'quote_trace': {**trace, 'source': 'toss'},
+             'unneeded_trades': ['fixture'] * 10000,
+             'daily_facts': {'volume': {'value': 123, 'period': '2026-10-08',
+                                       'source_trace': trace},
+                             'value': {'value': 7777, 'period': '2026-10-08',
+                                       'source_trace': trace}}}
+    if quote_kind in ('broker_old', 'public_stale'):
+        quote['as_of'] = '2026-10-07'
+    if quote_kind == 'public_stale':
+        quote['quote_trace']['source'] = 'fixture_non_production'
+    if quote_kind == 'partial':
+        quote.pop('price')
+    if quote_kind == 'zero_null':
+        quote.update(price=0, change=None, source_trace=None)
+    source.put('quotes', {'100000': quote})
+    expected = apply_query(market.rows_with_details(check_revision=True)[0],
+                           Query(q='검증별칭', limit=30))
+    expected['rows'] = [compact(row) for row in expected['rows']]
+    actual = market.search_payload('검증별칭', 30)
+    assert actual == expected
+    all_details, all_quotes = selected_inputs(source, ['100000'])
+    details, quotes = selected_inputs(source, ['100000'], compact=True)
+    assert 'unneeded_financial_history' in all_details['100000']
+    assert 'unneeded_trades' in all_quotes['100000']
+    assert 'unneeded_financial_history' not in details['100000']
+    assert 'unneeded_trades' not in quotes['100000']
+    assert 'unneeded_history' not in details['100000']['facts']
+    assert details['100000']['facts']['price'] is None
+    assert details['100000']['source_trace'] == trace
+    assert quotes['100000']['quote_trace'] == quote['quote_trace']
+    assert details['100000']['sector'] is None
+    assert 'received_at' not in details['100000']
+    assert ('source_trace' in quotes['100000']) == ('source_trace' in quote)
+    if quote_kind == 'zero_null':
+        assert quotes['100000']['source_trace'] is None
+    import json
+    original_bytes = len(json.dumps((all_details, all_quotes), ensure_ascii=False))
+    compact_bytes = len(json.dumps((details, quotes), ensure_ascii=False))
+    assert compact_bytes < original_bytes / 20
+
+
+@pytest.mark.parametrize('value', [None, False, [], {}])
+def test_compact_hydration_preserves_container_null_and_type(source, value):
+    # Preserve malformed/null input too; projection must not silently turn an
+    # invalid source into a different valid value before existing validation.
+    source.put('enriched', {'100000': {'facts': value}})
+    source.put('quotes', {'100000': {'daily_facts': value}})
+    details, quotes = selected_inputs(source, ['100000', '100001'], compact=True)
+    assert details['100000'] == {'facts': value}
+    assert quotes['100000'] == {'daily_facts': value}
+    assert details['100001'] == quotes['100001'] == {}
+
+
+def test_postgres_compact_paths_bind_as_text_arrays(source, monkeypatch):
+    from types import SimpleNamespace
+
+    from sqlalchemy import Text
+    from sqlalchemy.dialects import postgresql
+    from sqlalchemy.dialects.postgresql import ARRAY
+
+    observed = []
+    store = SimpleNamespace(engine=SimpleNamespace(dialect=postgresql.dialect()),
+                            snapshots=source.snapshots)
+
+    def capture(_store, statement, params=None):
+        compiled = statement.compile(dialect=store.engine.dialect)
+        observed.append(compiled)
+        return []
+
+    monkeypatch.setattr(search_view, '_records', capture)
+    assert selected_inputs(store, ['100000'], compact=True) == ({}, {})
+    compiled = observed[0]
+    path_binds = [compiled.binds[name] for name in compiled.params
+                  if isinstance(compiled.binds[name].type, ARRAY)]
+    assert len(path_binds) == 2 * len(search_view.COMPACT_PATHS)
+    assert all(isinstance(bind.type.item_type, Text) for bind in path_binds)
+    assert all(isinstance(bind.value, list) for bind in path_binds)
+    sql = str(compiled)
+    assert sql.count('#> CAST(') == sql.count('#>')
+    assert all(f'%({name})s::TEXT[]' in sql for name in compiled.params
+               if isinstance(compiled.binds[name].type, ARRAY))
+    assert 'search_selected AS MATERIALIZED' in str(compiled)

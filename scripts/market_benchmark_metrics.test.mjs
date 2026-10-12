@@ -2,6 +2,26 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {applicationTiming, percentile95, responseDiagnostics} from './market_benchmark_metrics.mjs';
 
+test('preserve fixed search and revision handoff diagnostics in benchmark JSON', () => {
+  const measurements = {revision_dispatch:1.25, revision_worker:8, revision_handoff:2,
+    revision_delivery:0.5, revision_resume:3, revision_sql:4.25, revision_result:0.1,
+    read_guard:0, db_checkout:1.5, response_json:0.2, response_gzip:0.3,
+    search_lock:0.4, search_sql:5.5, search_result:0.6, search_decode:0.7};
+  const counts = {search_full:1, search_delta:2, search_delta_rows:3, search_fallback:4,
+    revision_dispatch:1, revision_worker:1, revision_handoff:1, revision_delivery:1,
+    revision_resume:1};
+  const headers = {'server-timing':'app;dur=30, '+Object.entries(measurements)
+      .map(([key,value])=>`${key};dur=${value}`).join(', '),
+    'x-market-work':Object.entries(counts).map(([key,value])=>`${key}=${value}`).join(', ')};
+  const result = responseDiagnostics(headers, 10000, 10030);
+  assert.deepEqual(result.stages_ms, {app:30, ...measurements});
+  assert.deepEqual(result.work_counts, counts);
+  assert.equal(result.timing_is_current, true);
+  const cached = responseDiagnostics({...headers, 'x-market-cache':'HIT'}, 10000, 10030);
+  assert.equal(cached.stages_ms, null);
+  assert.equal(cached.work_counts, null);
+});
+
 test('origin and edge hits do not count historical app processing as current', () => {
   for (const state of ['HIT', 'STALE', 'UPDATING', 'REVALIDATED']) {
     assert.equal(applicationTiming({'x-market-cache': state, 'server-timing': 'app;dur=680.12'}), null);

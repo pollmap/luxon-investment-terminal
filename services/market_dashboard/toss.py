@@ -447,10 +447,18 @@ class TossCollector:
             if metadata.get('_series_ref'):
                 end = (trade_day - timedelta(days=1)).isoformat()+'T99'
                 past = self.store.time_series.rows(metadata['_series_ref'], reverse=True, end=end, limit=1)
-                prior_close = past[0]['close'] if past else None
+                prior = past[0] if past else None
             else:
                 past = [r for r in metadata.get('rows', []) if r['date'] < trade_day.isoformat()]
-                prior_close = past[-1]['close'] if past else None
+                prior = max(past, key=lambda row: row['date']) if past else None
+            # Only weekends establish a deterministic gap here. A current or
+            # future bar head cannot distinguish a holiday/halt from missing
+            # history; receipt clocks cannot certify the previous session.
+            previous_weekday = trade_day - timedelta(days=1)
+            while previous_weekday.weekday() >= 5:
+                previous_weekday -= timedelta(days=1)
+            usable = prior and prior.get('date') == previous_weekday.isoformat()
+            prior_close = prior['close'] if usable else None
             self.previous_closes[close_key] = (revision, prior_close)
         prior_close = self.previous_closes[close_key][1]
         change = float((Decimal(str(price))/Decimal(str(prior_close))-1)*100) if prior_close else None

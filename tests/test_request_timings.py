@@ -328,3 +328,105 @@ def test_actual_routes_keep_data_and_etag_with_fresh_request_timings(tmp_path, m
                 assert "x-market-work" not in unmeasured.headers
     finally:
         store.engine.dispose()
+
+
+def test_revision_handoff_delay_is_separate_from_db_and_dispatch(monkeypatch):
+    clock = [1.0]
+    monkeypatch.setattr(timings.time, 'perf_counter', lambda: clock[0])
+    original_dispatch = RevisionReadBatcher._dispatch
+
+    def delayed_dispatch(self, identity, batch):
+        clock[0] += 0.02
+        original_dispatch(self, identity, batch)
+
+    async def delayed_thread(function, *args):
+        clock[0] += 0.03
+        result = function(*args)
+        # The executor already completed; asyncio has not resumed _load yet.
+        clock[0] += 0.4
+        return result
+
+    class Store:
+        def revisions(self, keys):
+            clock[0] += 0.04
+            return {key: 'fixture-revision' for key in keys}
+
+    monkeypatch.setattr(RevisionReadBatcher, '_dispatch', delayed_dispatch)
+    monkeypatch.setattr(timings, 'to_thread', delayed_thread)
+
+    async def scenario():
+        with timings.collect() as record:
+            assert await RevisionReadBatcher().read(Store(), ('private-key',)) == {
+                'private-key': 'fixture-revision'}
+        assert record.durations['revision_dispatch'] == pytest.approx(20)
+        assert record.durations['revision_worker'] == pytest.approx(70)
+        assert record.durations['revision_db'] == pytest.approx(40)
+        assert record.durations['revision_handoff'] == pytest.approx(400)
+        assert record.durations['revision_delivery'] == 0
+        assert record.durations['revision_resume'] == 0
+        assert record.durations['revision_wait'] == pytest.approx(490)
+        assert 'private-key' not in str(record.headers())
+
+    asyncio.run(scenario())
+
+
+def test_revision_failure_preserves_shared_error_and_diagnostic_ownership():
+    class FailedStore(RevisionStore):
+        def revisions(self, keys):
+            self.calls += 1
+            raise ValueError('fixture failure')
+
+    async def scenario():
+        batcher, store = RevisionReadBatcher(), FailedStore()
+
+        async def read():
+            with timings.collect() as record:
+                with pytest.raises(ValueError, match='fixture failure'):
+                    await batcher.read(store, ('private-key',))
+                return record
+
+        records = await asyncio.gather(*(read() for _ in range(3)))
+        assert store.calls == 1
+        for name in ('revision_worker', 'revision_handoff', 'revision_delivery'):
+            assert sum(record.counts.get(name, 0) for record in records) == 1
+        for record in records:
+            assert record.counts['revision_dispatch'] == record.counts['revision_resume'] == 1
+        assert not batcher.pending and not batcher.running
+
+    asyncio.run(scenario())
+
+
+def test_cancelled_revision_creator_keeps_follower_and_owner_timings():
+    entered, release = threading.Event(), threading.Event()
+
+    class SlowStore(RevisionStore):
+        def revisions(self, keys):
+            self.calls += 1
+            entered.set()
+            assert release.wait(3)
+            return {key: 'r1' for key in keys}
+
+    async def scenario():
+        batcher, store, records = RevisionReadBatcher(), SlowStore(), []
+
+        async def read():
+            with timings.collect() as record:
+                records.append(record)
+                return await batcher.read(store, ('private-key',))
+
+        creator, follower = asyncio.create_task(read()), asyncio.create_task(read())
+        assert await asyncio.to_thread(entered.wait, 2)
+        creator.cancel()
+        try:
+            with pytest.raises(asyncio.CancelledError):
+                await creator
+        finally:
+            release.set()
+        assert await follower == {'private-key': 'r1'}
+        assert store.calls == 1
+        assert records[0].counts['revision_worker'] == 1
+        assert 'revision_worker' not in records[1].counts
+        assert records[1].counts['revision_resume'] == 1
+        assert not batcher.pending and not batcher.running
+
+    asyncio.run(scenario())

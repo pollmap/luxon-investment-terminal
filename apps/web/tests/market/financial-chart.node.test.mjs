@@ -12,7 +12,7 @@ function harness(){
   const scale={getVisibleLogicalRange:()=>range,setVisibleLogicalRange:r=>{range={...r};},fitContent:()=>{fits++;range={from:0,to:3};}};
   const chart={addSeries(type,options){const s={type,options,data:[],setData(data){this.data=data;},applyOptions(o){this.options={...this.options,...o};},priceScale:()=>({applyOptions(){}})};series.push(s);return s;},removeSeries:s=>removed.push(s),timeScale:()=>scale,applyOptions(){},subscribeCrosshairMove(){},remove(){}};
   const react={useRef(value){return refs[index++]??=( {current:value} );},useEffect(fn,deps){const i=effectIndex++;if(!effects[i]||deps.some((v,n)=>v!==effects[i].deps[n]))pending.push(()=>{effects[i]?.cleanup?.();effects[i]={deps,cleanup:fn()};});}};
-  const lib={createChart:()=>{created++;return chart;},ColorType:{Solid:0},LineStyle:{Solid:0,Dashed:1},LineType:{WithSteps:1}};
+  const lib={createChart:()=>{created++;return chart;},ColorType:{Solid:0},LineStyle:{Solid:0,Dashed:1},LineType:{Simple:0,WithSteps:1}};
   for(const key of ['LineSeries','CandlestickSeries','BarSeries','HistogramSeries','AreaSeries'])lib[key]=key;
   const source=fs.readFileSync(new URL('../../components/market/financial-chart.tsx',import.meta.url),'utf8');
   const code=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX}}).outputText;
@@ -78,4 +78,29 @@ test('explicit period change or a new non-overlapping session fits once',()=>{
   h.render({rows,rangeKey:'005930:5years'});assert.equal(h.fits,2);
   h.render({rows:rows.map(row=>({...row,time:row.time.replace('2026','2027')})),rangeKey:'005930:5years'});
   assert.equal(h.fits,3);
+});
+
+test('unverified and nonfinite line values are whitespace, never zero or a made-up ratio',()=>{
+  const h=harness();h.render({rows:[{time:'2026-01-01',close:10},{time:'2026-01-02',close:20,valid:false},{time:'2026-01-03',close:NaN},{time:'2026-01-04',close:0}]});
+  const line=h.series[0];assert.deepEqual(Array.from(line.data,p=>p.value),[10,undefined,undefined,0]);
+  h.scale.setVisibleLogicalRange({from:1,to:2});
+  h.render({rows:[{time:'2026-01-01',close:100},{time:'2026-01-02',close:NaN,valid:false},{time:'2026-01-03',close:NaN},{time:'2026-01-04',close:5}]});
+  assert.equal(h.created,1);assert.deepEqual(h.scale.getVisibleLogicalRange(),{from:1,to:2});
+});
+
+test('breakGaps gives each contiguous main-line segment its own series without changing dates or zoom',()=>{
+  const gaps=rows.map((row,i)=>({...row,close:[10,NaN,0,-5][i]}));
+  const h=harness();h.render({rows:gaps,breakGaps:true,rangeKey:'same'});
+  assert.deepEqual(Array.from(h.series[0].data,p=>p.time),rows.map(r=>r.time));
+  assert.ok(h.series[0].data.every(p=>p.value===undefined));
+  const segments=h.series.slice(3);assert.equal(segments.length,2);
+  assert.deepEqual(Array.from(segments[0].data,p=>p.value),[10]);
+  assert.deepEqual(Array.from(segments[1].data,p=>p.value),[0,-5]);
+  assert.ok(segments.every(s=>s.options.lineType===0));
+  h.scale.setVisibleLogicalRange({from:1,to:2});
+  h.render({rows:gaps.map((r,i)=>({...r,close:i===0?NaN:r.close})),breakGaps:true,rangeKey:'same'});
+  assert.equal(h.removed[0],segments[1]);assert.deepEqual(Array.from(segments[0].data,p=>p.value),[0,-5]);
+  assert.equal(h.created,1);assert.equal(h.fits,1);assert.deepEqual(h.scale.getVisibleLogicalRange(),{from:1,to:2});
+  h.render({rows,breakGaps:false,rangeKey:'same'});
+  assert.equal(h.removed[1],segments[0]);assert.deepEqual(Array.from(h.series[0].data,p=>p.value),[100,101,102,103]);
 });

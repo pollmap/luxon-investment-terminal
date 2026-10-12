@@ -3,7 +3,7 @@ import {useEffect, useRef} from "react";
 import {createChart, LineSeries, CandlestickSeries, BarSeries, HistogramSeries, AreaSeries, LineStyle, LineType, ColorType, type Time, type UTCTimestamp, type ISeriesApi, type IChartApi, type SeriesType} from "lightweight-charts";
 
 export type ChartRow = {time:string;close:number;open?:number;high?:number;low?:number;volume?:number|null;ma20?:number|null;valid?:boolean};
-export type ComparisonLine={values:{time:string;value:number|null}[];color:string;area?:boolean;dashed?:boolean};
+export type ComparisonLine={values:{time:string;value:number|null}[];color:string;area?:boolean;dashed?:boolean;step?:boolean};
 const chartTime=(time:string):Time=>{
   if(/^\d{8,14}$/.test(time))time=time.slice(0,4)+'-'+time.slice(4,6)+'-'+time.slice(6,8)+'T'+(time.slice(8,10)||'00')+':'+(time.slice(10,12)||'00')+':'+(time.slice(12,14)||'00')+'+09:00';
   return time.length===10?time:Math.floor(Date.parse(time)/1000) as UTCTimestamp;
@@ -15,7 +15,7 @@ function addPrice(chart:IChartApi,kind:string):ISeriesApi<SeriesType>{
   return kind==='candle'?chart.addSeries(CandlestickSeries,{borderVisible:false}):kind==='bar'?chart.addSeries(BarSeries):kind==='area'?chart.addSeries(AreaSeries,{lineWidth:2,priceLineVisible:false}):chart.addSeries(LineSeries,{lineWidth:2,priceLineVisible:false});
 }
 
-export default function FinancialChart({rows,kind="line",rangeKey="",movingAverage=false,comparisons,onSelect,label="주가 차트"}:{rows:ChartRow[];kind?:string;rangeKey?:string;movingAverage?:boolean;comparisons?:ComparisonLine[];onSelect?:(index:number)=>void;label?:string}){
+export default function FinancialChart({rows,kind="line",rangeKey="",movingAverage=false,comparisons,breakGaps=false,onSelect,label="주가 차트"}:{rows:ChartRow[];kind?:string;rangeKey?:string;movingAverage?:boolean;comparisons?:ComparisonLine[];breakGaps?:boolean;onSelect?:(index:number)=>void;label?:string}){
   const container=useRef<HTMLDivElement>(null), select=useRef(onSelect), runtime=useRef<Runtime|null>(null);
   useEffect(()=>{select.current=onSelect;},[onSelect]);
   useEffect(()=>{
@@ -57,17 +57,21 @@ export default function FinancialChart({rows,kind="line",rangeKey="",movingAvera
     const timed=rows.map((r,index)=>({...r,index,time:chartTime(r.time)}));
     state.indices=new Map(timed.map(r=>[timeKey(r.time),r.index]));
     chart.applyOptions({timeScale:{timeVisible:rows.some(r=>r.time.length>10)}});
+    const segmented=breakGaps&&kind==='line';
     price.setData(kind==='candle'||kind==='bar'
       ? timed.map(r=>r.valid!==false&&[r.open,r.high,r.low,r.close].every(v=>Number.isFinite(v))?{time:r.time,open:r.open!,high:r.high!,low:r.low!,close:r.close}:{time:r.time})
-      : timed.map(r=>({time:r.time,value:r.close})));
+      : timed.map(r=>!segmented&&r.valid!==false&&Number.isFinite(r.close)?{time:r.time,value:r.close}:{time:r.time}));
     volume.setData(timed.filter(r=>r.volume!=null&&Number.isFinite(r.volume)).map(r=>({time:r.time,value:r.volume!,color:r.close>=(r.open??r.close)?css('--mk-up')+'66':css('--mk-down')+'66'})));
     average.setData(movingAverage?timed.map(r=>r.ma20!=null?{time:r.time,value:r.ma20}:{time:r.time}):[]);
     let overlayIndex=0;
-    for(const definition of comparisons??[]){
+    // Whitespace retains the time/index anchor, but a line library may join
+    // observations across it. Separate series make every invalid gap explicit.
+    const definitions:ComparisonLine[]=segmented?[{values:rows.map(r=>({time:r.time,value:r.valid!==false&&Number.isFinite(r.close)?r.close:null})),color:'--mk-accent',step:false},...(comparisons??[])]:comparisons??[];
+    for(const definition of definitions){
       let segment:{time:Time;value:number}[]=[];
       const flush=()=>{
         if(!segment.length)return;const color=css(definition.color)||definition.color;
-        const options={lineWidth:2 as const,lineType:LineType.WithSteps,priceLineVisible:false,lastValueVisible:false};
+        const options={lineWidth:2 as const,lineType:definition.step===false?LineType.Simple:LineType.WithSteps,priceLineVisible:false,lastValueVisible:false};
         const style=definition.area?{...options,lineColor:color,topColor:color+'18',bottomColor:color+'18'}:{...options,color,lineStyle:definition.dashed?LineStyle.Dashed:LineStyle.Solid};
         let overlay:Overlay|undefined=state.overlays[overlayIndex];
         if(overlay&&Boolean(overlay.definition.area)!==Boolean(definition.area)){
@@ -90,7 +94,7 @@ export default function FinancialChart({rows,kind="line",rangeKey="",movingAvera
     else if(previousRange){const offset=nextAnchor-anchor;chart.timeScale().setVisibleLogicalRange({from:previousRange.from+offset,to:previousRange.to+offset});}
     state.times=rows.map(row=>row.time);
     state.rangeKey=rangeKey;
-  },[rows,kind,rangeKey,movingAverage,comparisons]);
+  },[rows,kind,rangeKey,movingAverage,comparisons,breakGaps]);
   return <div ref={container} className="mk-financial-canvas" role="img" aria-label={label} style={{height:'var(--mk-chart-height, 420px)',width:'100%',minWidth:0}}/>;
 }
 

@@ -102,14 +102,14 @@ test('single, missing and invalid reference ranges never invent a comparison per
   assert.equal(periods.comparisonWindow([]),null);
 });
 
-function valuation(response){
+function valuation(response,overrides={}){
   const selection={metric:'EPS',basis:'auto',years:5,multiple:'15',mode:'as_known',frequency:'auto',interval:'week',from:'',to:''};
   const key=JSON.stringify([response.code,'EPS','auto',5,'as_known','auto','week','','']);
-  const h=hooks({0:selection,1:true,2:response,3:key,10:[response.metric_definition]});
+  const h=hooks({0:selection,1:true,2:response,3:key,10:[response.metric_definition],...overrides});
   let dynamicIndex=0,blob=null;
   class FixtureURL extends URL{static createObjectURL(value){blob=value;return 'blob:fixture';}static revokeObjectURL(){}}
   const Component=load('valuation-chart.tsx',{
-    react:h.react,'./types':types,'./analysis-periods':periods,'./market-history':{writeMarketHistory(){}},'next/dynamic':{default:()=>dynamicIndex++===0?'fixture-chart':'fixture-eps'},
+    react:h.react,'./types':types,'./analysis-periods':periods,'./valuation-series':load('valuation-series.ts'),'./market-history':{writeMarketHistory(){}},'next/dynamic':{default:()=>dynamicIndex++===0?'fixture-chart':'fixture-eps'},
   },{URL:FixtureURL,URLSearchParams,Blob,setTimeout:()=>0,localStorage:{setItem(){}},location:{href:'https://example.invalid/stocks?code=000001'},window:{dispatchEvent(){}},Event:class{},document:{createElement:()=>({click(){}})}}).default;
   return {tree:null,render(){h.reset();this.tree=Component({code:response.code});},get blob(){return blob;}};
 }
@@ -141,4 +141,21 @@ test('server-ineligible positive facts and negative metrics do not produce a ran
   const response=analysis();response.series=response.series.map((p,i)=>({...p,comparison_eligible:i===1,metric_value:i===1?-10:p.metric_value}));
   const h=valuation(response);h.render();assert.equal(elements(h.tree,n=>n.props?.['aria-label']==='비교 가능한 실적 구간').length,0);
   assert.deepEqual(Array.from(chart(h).props.comparisons[0].values,p=>p.value),[null,null,null,null,null]);
+});
+test('switching to actual multiples retains dates, range key and user scenario; CSV separates the two multiples',async()=>{
+  const response=analysis();response.series=response.series.map(p=>({...p,multiple:20}));
+  const h=valuation(response,{19:[{year:3,metric_value:100,reference_price:1500}]});h.render();
+  chart(h).props.onSelect(1);h.render();const rangeKey=chart(h).props.rangeKey;
+  button(h,'배수 흐름').props.onClick();h.render();
+  assert.equal(chart(h).props.rangeKey,rangeKey);
+  assert.deepEqual(Array.from(chart(h).props.rows,p=>p.valid),[false,true,false,true,false]);
+  assert.equal(chart(h).props.rows[1].close,20);
+  assert.equal(text(elements(h.tree,n=>n.props?.['aria-label']==='선택한 날짜의 숫자')[0].props.children[0]),'2024-02-01');
+  assert.match(text(h.tree),/사용자 가정 · 배당 제외/);
+  elements(h.tree,n=>n.type==='details'&&text(n.props.children[0])==='날짜별 숫자 보기')[0].props.onToggle({currentTarget:{open:true}});h.render();
+  button(h,'CSV 저장').props.onClick();const csv=await h.blob.text();
+  assert.match(csv,/'?선택 비교 배수/);assert.match(csv,/당시 실제 배수/);
+  assert.match(csv,/"2024-02-01","200","10","15","150","20"/);
+  assert.match(csv,/"2024-05-01","500","30","15","",""/);
+  button(h,'실적·주가').props.onClick();h.render();assert.equal(chart(h).props.rows[1].close,200);
 });

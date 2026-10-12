@@ -8,7 +8,8 @@ from contextvars import ContextVar
 from functools import wraps
 
 STAGES = (
-    'revision_wait', 'revision_db', 'revision_sql', 'revision_result',
+    'revision_wait', 'revision_dispatch', 'revision_worker', 'revision_handoff',
+    'revision_delivery', 'revision_resume', 'revision_db', 'revision_sql', 'revision_result',
     'read_guard', 'db_checkout', 'executor_wait', 'rows_lock', 'rows_inputs',
     'rows_build', 'selected_read',
     'search_lock', 'search_sql', 'search_result', 'search_decode',
@@ -70,6 +71,16 @@ def stage(name):
         yield
     finally:
         record.add(name, time.perf_counter() - started)
+
+
+def timestamp():
+    return time.perf_counter()
+
+
+def span(name, started, ended=None):
+    record = _current.get()
+    if record is not None:
+        record.add(name, (timestamp() if ended is None else ended) - started)
 
 
 def count(name, value=1):

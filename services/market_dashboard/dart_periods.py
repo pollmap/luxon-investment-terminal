@@ -112,7 +112,11 @@ class DartPeriodCollector:
         total = 0
         for code in batch:
             rows = [r for r in payload.get("list", []) if str(r.get("stock_code")) == code]
-            facts = normalize_period_accounts(rows, url, digest)
+            # Both the normalized fact table and the hot company snapshot must
+            # retain the same verified corporation mapping. Raw bytes and traces
+            # stay unchanged; a stock code is not a corporation identifier.
+            facts = [{**fact, 'company_id': mapping[code]}
+                     for fact in normalize_period_accounts(rows, url, digest)]
             self.facts.append(mapping[code], facts)
             official = self.store.get("official:" + code, {})
             existing = official.get("period_facts", [])

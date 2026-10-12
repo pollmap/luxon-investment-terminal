@@ -13,10 +13,14 @@ export function percentile95(values) {
   return sorted.length ? +sorted[Math.ceil(sorted.length * .95) - 1].toFixed(2) : null;
 }
 
-const timingNames=['app','revision_wait','revision_db','executor_wait','rows_lock','rows_inputs',
-  'rows_build','selected_read','response_lock','response_build','response_encode','flight_wait'];
+const timingNames=['app','revision_wait','revision_dispatch','revision_worker','revision_handoff',
+  'revision_delivery','revision_resume','revision_db','revision_sql','revision_result',
+  'executor_wait','read_guard','db_checkout','rows_lock','rows_inputs','rows_build',
+  'selected_read','response_lock','response_build','response_encode','response_json',
+  'response_gzip','flight_wait','search_lock','search_sql','search_result','search_decode'];
 const counterNames=[...timingNames.filter(name=>name!=='app'),'rows_built','rows_reused',
-  'response_hit','flight_join','revision_join'];
+  'response_hit','flight_join','revision_join','search_full','search_delta','search_delta_rows',
+  'search_fallback'];
 const rawHeaderNames=['server-timing','x-market-work','x-market-validated-at','date','age',
   'cache-control','x-market-cache','x-market-edge','x-market-edge-contract','x-market-coalesced','content-encoding'];
 

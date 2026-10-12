@@ -932,7 +932,7 @@ def search_payload(query, limit, *, known_revisions=None):
     universe, identities = universe_inputs(store, heads.get('universe'))
     result = candidates(store, universe, query, limit, heads)
     codes = [row['code'] for row in result['rows']]
-    details, quotes = selected_inputs(store, codes)
+    details, quotes = selected_inputs(store, codes, compact=True)
     selected, _ = assemble_rows(store, (
         {'rows': [identities[code] for code in codes]},
         details, quotes,
@@ -1299,6 +1299,30 @@ def security_ttm(code: str, request: Request, basis: str = 'CFS'):
         return {**result,'issuer_link':{**link,'scope':'company_financial_totals'}} if link else result
     return analysis_response(code, request, ('ttm-summary-v3', basis),build,
         report_dependencies(store,code)+['share-basis:'+issuer])
+
+
+@app.get(BASE + "/securities/{code}/analysis/financial-questions")
+def security_financial_questions(code: str, request: Request, basis: str = 'CFS'):
+    from .financial_questions import build_financial_questions
+    from .official_views import read_view
+    from .issuer_documents import company_link, report_dependencies
+
+    valid_code(code)
+    if basis not in ('CFS', 'OFS'):
+        raise HTTPException(422, 'Invalid accounting basis')
+    store = get_store()
+    link = company_link(store, code)
+    issuer = link['issuer_security_code'] if link else code
+
+    def build(store):
+        company = store.get('dart-corporations', {}).get('codes', {}).get(issuer)
+        result = build_financial_questions(read_view(store, issuer, 'analysis') or {}, basis,
+                                           company_id=company)
+        return {**result, 'code': code,
+                **({'issuer_link': {**link, 'scope': 'company_financial_totals'}} if link else {})}
+
+    return analysis_response(code, request, ('financial-questions-v1', basis), build,
+        report_dependencies(store, code) + ['share-basis:' + issuer])
 
 
 @app.get(BASE + "/securities/{code}/financials/timeline")

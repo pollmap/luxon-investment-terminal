@@ -42,12 +42,17 @@ class RevisionReadBatcher:
             batch['handle'] = loop.call_soon(self._dispatch, identity, batch)
         else:
             timings.count('revision_join')
+        registered = timings.timestamp()
         batch['keys'].update(keys)
         batch['waiters'] += 1
         try:
             revisions = await asyncio.shield(batch['future'])
             return {key: revisions[key] for key in keys if key in revisions}
         finally:
+            if 'dispatched_at' in batch:
+                timings.span('revision_dispatch', registered, batch['dispatched_at'])
+            if 'delivered_at' in batch:
+                timings.span('revision_resume', batch['delivered_at'])
             batch['waiters'] -= 1
             if not batch['waiters'] and not batch['dispatched']:
                 if self.pending.get(identity) is batch:
@@ -65,23 +70,45 @@ class RevisionReadBatcher:
             return
         self.pending.pop(identity)
         batch['dispatched'] = True
+        batch['dispatched_at'] = timings.timestamp()
         task = identity[0].create_task(self._load(identity[1], batch))
         self.running.add(task)
         task.add_done_callback(self.running.discard)
 
     async def _load(self, store, batch):
         future = batch['future']
+
+        def load():
+            try:
+                return timings.read_revisions(store, tuple(sorted(batch['keys'])))
+            finally:
+                # Set in the executor, before asyncio schedules the completion.
+                batch['thread_finished_at'] = timings.timestamp()
+
         try:
-            revisions = await timings.to_thread(
-                timings.read_revisions, store, tuple(sorted(batch['keys']))
-            )
+            revisions = await timings.to_thread(load)
         except asyncio.CancelledError:
+            self._completion(batch)
             future.cancel()
             raise
         except Exception as error:
+            self._completion(batch)
             future.set_exception(error)
         else:
+            self._completion(batch)
             future.set_result(revisions)
+
+    @staticmethod
+    def _completion(batch):
+        resumed = timings.timestamp()
+        finished = batch.get('thread_finished_at')
+        if finished is not None:
+            # Shared stages belong to the creator. Followers retain only their
+            # own dispatch/resume waits, never duplicated DB work.
+            timings.span('revision_worker', batch['dispatched_at'], finished)
+            timings.span('revision_handoff', finished, resumed)
+        batch['delivered_at'] = timings.timestamp()
+        timings.span('revision_delivery', resumed, batch['delivered_at'])
 
 
 class InFlightResponses:

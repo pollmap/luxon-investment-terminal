@@ -4,8 +4,8 @@ import json
 import threading
 from collections import OrderedDict
 
-from sqlalchemy import String, bindparam, case, cast, column, func, literal, select, text, values
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import Text, String, bindparam, case, cast, column, func, literal, select, text, values
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 
 from . import request_timings as timings
 from .models import Query, apply_query, matches_security
@@ -17,6 +17,15 @@ PATHS = (('code',), ('name',), ('aliases',), ('market',), ('sector',), ('value',
          ('as_of',), ('facts', 'value', 'value'), ('facts', 'value', 'period'),
          ('daily_facts', 'value', 'value'), ('daily_facts', 'value', 'period'),
          ('quote_trace', 'source'))
+# Fields consumed by assemble_rows before compact search serialization. Nested
+# trace objects stay intact: do not reconstruct or duplicate provenance fields.
+COMPACT_PATHS = tuple((key,) for key in (
+    'logo_url', 'code', 'name', 'aliases', 'market', 'sector', 'price', 'change',
+    'as_of', 'received_at', 'market_status', 'source_trace', 'quote_trace',
+    'facts', 'daily_facts',
+)) + tuple(('facts', key) for key in ('price', 'change', 'volume', 'value')) + (
+    ('daily_facts', 'volume'), ('daily_facts', 'value'),
+)
 _lock = threading.Lock()
 _cache = OrderedDict()
 
@@ -45,18 +54,20 @@ def _records(store, statement, params=None):
 
 
 @timings.timed('search_decode')
-def _decode(records, sqlite):
+def _decode(records, sqlite, paths=PATHS):
     projected = {}
     for record in records:
         if record[0] is None:
             continue
         item = {}
-        for index, path in enumerate(PATHS):
+        for index, path in enumerate(paths):
             value, kind = record[1 + index * 2:3 + index * 2]
             if kind is None:
                 continue
             if sqlite and kind in ('array', 'object'):
                 value = json.loads(value)
+            elif sqlite and kind in ('true', 'false'):
+                value = kind == 'true'
             target = item
             for part in path[:-1]:
                 target = target.setdefault(part, {})
@@ -194,7 +205,7 @@ def candidates(store, universe, query, limit, revisions):
     return apply_query(rows, Query(q=query, limit=min(30, max(1, limit))))
 
 
-def selected_inputs(store, codes):
+def selected_inputs(store, codes, *, compact=False):
     """Hydrate at most 30 companies in one snapshot, including legacy fallbacks."""
     from .enriched_view import PREFIX, STATE
 
@@ -224,12 +235,42 @@ def selected_inputs(store, codes):
     detail_value = case((source_revision == source.c.updated_at, projected_detail),
                         else_=fallback_detail)
     quote_value = case((quote.c.key.is_not(None), projected_quote), else_=fallback_quote)
-    query = select(requested.c.code, detail_value, quote_value).select_from(
+    query = select(requested.c.code, detail_value.label('detail'),
+                   quote_value.label('quote')).select_from(
         requested.outerjoin(source, source.c.key == 'enriched')
         .outerjoin(state, state.c.key == STATE)
         .outerjoin(detail, detail.c.key == literal(PREFIX) + requested.c.code)
         .outerjoin(legacy, legacy.c.key == 'quotes')
         .outerjoin(quote, quote.c.key == literal('quote:') + requested.c.code))
+    if compact:
+        selected = query.cte('search_selected')
+        if store.engine.dialect.name == 'postgresql':
+            # Evaluate the bounded legacy/projection choice once per selected
+            # company, not once for every JSON path in the compact projection.
+            selected = selected.prefix_with('MATERIALIZED')
+        sqlite = store.engine.dialect.name == 'sqlite'
+        columns = [selected.c.code]
+        for field in (selected.c.detail, selected.c.quote):
+            for path in COMPACT_PATHS:
+                if sqlite:
+                    location = '$.' + '.'.join(path)
+                    value = func.json_extract(field, location)
+                    kind = func.json_type(field, location)
+                    if path in (('facts',), ('daily_facts',)):
+                        value = case((kind == 'object', literal('{}')), else_=value)
+                    columns.extend((value, kind))
+                else:
+                    value = field.op('#>')(cast(list(path), ARRAY(Text)))
+                    kind = func.jsonb_typeof(value)
+                    if path in (('facts',), ('daily_facts',)):
+                        value = case((kind == 'object', cast(literal('{}'), JSONB)), else_=value)
+                    columns.extend((value, kind))
+        records = _records(store, select(*columns))
+        width = len(COMPACT_PATHS) * 2
+        return (
+            _decode([(row[0], *row[1:1 + width]) for row in records], sqlite, COMPACT_PATHS),
+            _decode([(row[0], *row[1 + width:]) for row in records], sqlite, COMPACT_PATHS),
+        )
     records = _records(store, query)
     details, quotes = {}, {}
     with timings.stage('search_decode'):

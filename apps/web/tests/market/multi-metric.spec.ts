@@ -1,6 +1,10 @@
 import {test,expect} from '@playwright/test';
+import {installAnalysisFixture,type AnalysisFixtureOptions} from './analysis-fixture';
 
-test('actual metric switching retains the chart, date, and source-backed numbers',async({page})=>{
+let fixtureOptions:AnalysisFixtureOptions;
+test.beforeEach(async({page})=>{fixtureOptions={};await installAnalysisFixture(page,fixtureOptions);});
+
+test('fixture metric switching retains the chart, date, and source-gated numbers',async({page})=>{
  await page.goto('/stocks?code=005930');
  await page.getByRole('tab',{name:'기업 분석',exact:true}).click();
  const panel=page.getByRole('region',{name:'실적과 주가',exact:true});
@@ -25,18 +29,35 @@ test('actual metric switching retains the chart, date, and source-backed numbers
 });
 
 test('an ineligible positive fact is never reconstructed as a comparison',async({page})=>{
- await page.route('**/analysis/valuation?**',async route=>{
-   const upstream=await route.fetch(); const value=await upstream.json();
-   value.availability.comparison=false;
-   for(const point of value.series){point.metric_value=100;point.reference_price=null;point.comparison_eligible=false;}
-   await route.fulfill({response:upstream,json:value});
- });
+ fixtureOptions.ineligible=true;
  await page.goto('/stocks?code=005930');
  await page.getByRole('tab',{name:'기업 분석',exact:true}).click();
  const panel=page.getByRole('region',{name:'실적과 주가',exact:true});
  await expect(panel.locator('.mk-financial-canvas canvas').first()).toBeVisible();
  await panel.getByLabel('이익 비교 배수').fill('20');
  await expect(panel.locator('.mk-legend-reference')).toHaveCount(0);
+ await panel.getByRole('button',{name:'배수 흐름',exact:true}).click();
+ await expect(panel.getByText('선택한 기간에 검증된 실제 배수가 없어요.',{exact:true})).toBeVisible();
+ await expect(panel.locator('.mk-legend-reference')).toHaveCount(0);
+});
+
+test('chart view switching reuses the request, canvas and selected date and restores its link',async({page})=>{
+ await page.goto('/stocks?code=005930&tab='+encodeURIComponent('기업·주주'));
+ const panel=page.getByRole('region',{name:'실적과 주가',exact:true});
+ await expect(panel.locator('.mk-financial-canvas canvas').first()).toBeVisible();
+ await expect(panel.getByRole('button',{name:'이전 날짜',exact:true})).toBeEnabled();
+ await panel.getByRole('button',{name:'이전 날짜',exact:true}).click();
+ const selected=await panel.locator('.mk-valuation-reading>strong').textContent();
+ const canvas=await panel.locator('.mk-financial-canvas canvas').first().elementHandle();
+ const requests:string[]=[];page.on('request',request=>{if(request.url().includes('/analysis/valuation?'))requests.push(request.url());});
+ await panel.getByRole('button',{name:'배수 흐름',exact:true}).click();
+ await expect(panel.getByRole('img',{name:/실제 배수 흐름 차트 · 배/})).toBeVisible();
+ await expect(panel.locator('.mk-valuation-reading>strong')).toHaveText(selected!);
+ expect(await canvas!.evaluate(node=>node.isConnected)).toBe(true);
+ expect(requests).toHaveLength(0);
+ await expect(page).toHaveURL(/v_chart=multiple/);
+ await page.reload();
+ await expect(page.getByRole('button',{name:'배수 흐름',exact:true})).toHaveAttribute('aria-pressed','true');
 });
 
 test('negative operating cash flow remains visible without inventing a positive-multiple line',async({page})=>{
@@ -50,11 +71,19 @@ test('negative operating cash flow remains visible without inventing a positive-
  await expect(panel.getByText('주식 수 기준은 2026-06-30까지 확인돼요.',{exact:true})).toBeVisible();
 });
 
-for(const width of [1024,1280,1440,1920])test(`analysis fits ${width}px`,async({page})=>{
+for(const width of [360,390,430,768,1024,1280,1440,1920])test(`analysis fits ${width}px`,async({page})=>{
  await page.setViewportSize({width,height:1000});
  await page.goto('/stocks?code=005930');
  await page.getByRole('tab',{name:'기업 분석',exact:true}).click();
  await expect(page.getByLabel('가치평가 지표')).toBeVisible();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+});
+
+test('200% text keeps the multiples view inside the page',async({page})=>{
+ await page.setViewportSize({width:1024,height:900});
+ await page.goto('/stocks?code=005930&tab='+encodeURIComponent('기업·주주')+'&v_chart=multiple');
+ await expect(page.getByRole('button',{name:'배수 흐름',exact:true})).toHaveAttribute('aria-pressed','true');
+ await page.evaluate(()=>{document.documentElement.style.fontSize='200%';});
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
 });
 
