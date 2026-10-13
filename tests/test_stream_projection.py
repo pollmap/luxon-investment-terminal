@@ -149,3 +149,23 @@ def test_book_and_each_trade_keep_exact_new_event_evidence(tmp_path):
     assert len(set(traces)) == 2 and all(len(digest) == 64 for digest in traces)
     assert depth['book_trace']['source'] == 'toss_websocket'
     assert depth['book_trace']['source_document_id'] not in traces
+
+
+def test_projection_reuses_received_byte_digest_without_serializing_again(tmp_path, monkeypatch):
+    from services.market_dashboard.raw_archive import read_original_verified
+    collector = source(tmp_path)
+    original = (' { "topic" : "trade:kr:005930", "type" : "message", "data" : '
+                '{"timestamp":"2026-10-13T10:00:00+09:00", "price":"101",'
+                ' "volume":"1", "currency":"KRW", "note":"원문"} }\n').encode('utf-8')
+    digest = collector.store.raw('toss-stream', 'wss://openapi-ws.tossinvest.com/ws/v1', original)
+    monkeypatch.setattr(collector.store, 'raw', lambda *_: (_ for _ in ()).throw(AssertionError('Second archive write')))
+    monitor = StreamProjection(collector)
+    monitor.record(json.loads(original), ['005930'], 'a' * 32,
+                   '2026-10-13T01:00:01+00:00', archived_digest=digest)
+    monitor.finish()
+    directory = collector.store.root / 'raw/toss-stream'
+    assert read_original_verified(directory, digest) == original
+    assert len(list(directory.iterdir())) == 1
+    trade = collector.store.get('depth:005930')['trades'][0]
+    assert trade['source_trace']['source_document_id'] == digest
+    assert collector.store.get_quote('005930')['quote_trace']['source_document_id'] == digest

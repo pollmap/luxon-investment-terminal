@@ -82,8 +82,8 @@ jobs:
         run: |
           sudo unshare --net bash -c '
             ip link set lo up
-            exec setpriv --reuid="$1" --regid="$2" --init-groups env PATH="$3" HOME="$4" bash -euo pipefail
-          ' market-ci "$(id -u)" "$(id -g)" "$PATH" "$HOME" <<'OFFLINE'
+            exec setpriv --reuid="$1" --regid="$2" --init-groups env PATH="$3" HOME="$4" MARKET_RELEASE="$5" bash -euo pipefail
+          ' market-ci "$(id -u)" "$(id -g)" "$PATH" "$HOME" "$MARKET_RELEASE" <<'OFFLINE'
           export NEXT_TELEMETRY_DISABLED=1
           export MARKET_WEB_URL=http://127.0.0.1:3219
           node --test apps/web/tests/market/*.node.test.mjs apps/web/tests/market/search-proxy.test.mjs

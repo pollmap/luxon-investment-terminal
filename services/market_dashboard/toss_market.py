@@ -7,7 +7,8 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from .store import now
-from .toss import numeric
+from .toss import history_terminal_receipt, numeric, proven_history_terminal
+from .candle_pages import candle_clock
 from .toss_contract import INDICATORS, RANK_TYPES, validate_ranking
 from .market_selection import calendar_selection,exchange_selection,listing_selection
 
@@ -119,7 +120,12 @@ class TossMarket:
         if resume and previous.get('next_before'):
             params['before'] = previous['next_before']
         data, trace = await self.client.get(f'/api/v1/market-indicators/{code}/candles',params)
+        if not isinstance(data, dict) or not isinstance(data.get('candles'), list):
+            raise ValueError('Index candles must be an array')
+        if data.get('symbol') and data['symbol'] != code:
+            raise ValueError('Index identity mismatch')
         merged = {r['time']:r for r in previous.get('rows',[])}
+        observed = []
         for item in data['candles']:
             stamp = datetime.fromisoformat(item['timestamp'])
             if stamp.tzinfo is None:
@@ -128,14 +134,37 @@ class TossMarket:
             if any(values[k] is None for k in ('open','high','low','close')) or values['low'] > min(values['open'],values['close']) or values['high'] < max(values['open'],values['close']):
                 raise ValueError('Invalid index OHLC')
             # Bond yields can be zero or negative; do not use equity price validators.
-            merged[stamp.isoformat()] = {**values, 'time':stamp.isoformat(), 'date':stamp.date().isoformat()}
+            if params.get('before') and candle_clock(stamp.isoformat()) > candle_clock(params['before']):
+                raise ValueError('Index observation exceeds requested cursor')
+            row = {**values, 'time':stamp.isoformat(), 'date':stamp.date().isoformat()}
+            observed.append(row)
+            merged[row['time']] = row
+        cursor_known = 'nextBefore' in data
         cursor = data.get('nextBefore')
-        if cursor and cursor == params.get('before'):
-            raise ValueError('Index cursor did not advance')
+        if cursor is not None:
+            target = candle_clock(cursor)
+            if params.get('before') and target >= candle_clock(params['before']):
+                raise ValueError('Index cursor did not advance')
+            if not observed or target > min(candle_clock(row['time']) for row in observed):
+                raise ValueError('Index cursor skips observations')
+        received_at = now()
+        context = {'code': code, 'kind': 'index_candles', 'interval': interval, 'venue': 'KRX'}
+        terminal = (history_terminal_receipt(trace, 'explicit_next_before_null',
+                    requested=params.get('before'), rows=observed, received_at=received_at, context=context)
+                    if cursor_known and cursor is None else None)
+        prior_terminal = previous.get('history_terminal')
+        prior_complete = bool(previous.get('backfill_complete') and
+                              proven_history_terminal(prior_terminal, 'explicit_next_before_null', context))
+        history_status = ('cursor_unknown' if not cursor_known else
+                          'terminal_unverified' if cursor is None and terminal is None else 'ready')
+        deep = resume or not previous
         self.save(key, {'rows':sorted(merged.values(),key=lambda r:r['time']),
-            'next_before':cursor if resume or not previous else previous.get('next_before'),
-            'backfill_complete':not cursor if resume or not previous else previous.get('backfill_complete',False),
-            'unit':'%' if code.startswith('KR_BOND_') else '포인트', 'venue':'KRX'}, trace)
+            'next_before':cursor if deep and history_status == 'ready' else previous.get('next_before'),
+            'backfill_complete':bool(terminal) if deep and history_status == 'ready' else prior_complete,
+            'history_terminal':terminal if deep and history_status == 'ready' else prior_terminal,
+            'history_status':history_status,
+            'unit':'%' if code.startswith('KR_BOND_') else '포인트', 'venue':'KRX'}, trace,
+            status=history_status)
 
     async def index_investors(self, code, interval='1d', resume=False):
         if code not in ('KOSPI','KOSDAQ') or interval not in ('1d','1w','1mo','1y'):

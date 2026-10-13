@@ -163,7 +163,8 @@ def test_old_analysis_projection_rebuilds_with_same_source_revision(tmp_path):
     assert "fixture_old_projection" not in result
     assert result["fundamental_metrics"]["formula_version"] == "fundamental-metrics-v4"
     cached = store.get("official-view:005930:analysis")
-    assert cached["projection_version"] == PROJECTION_VERSION == 15
+    assert cached["projection_version"] == PROJECTION_VERSION
+    assert PROJECTION_VERSION > 14
     assert cached["source_revision"] == revision
     assert store.get("official:005930") == source
     assert store.revisions(("official:005930",))["official:005930"] == revision

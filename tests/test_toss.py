@@ -246,3 +246,51 @@ async def test_official_trade_and_book_frames_update_quotes_and_preserve_equal_t
  assert depth['book_as_of'] is None
  assert collector.store.get('toss-stream-rejected:005930')['reason']=='unsupported_or_invalid_payload'
  await collector.client.close()
+
+
+@pytest.mark.asyncio
+async def test_rejected_targets_stay_out_of_full_replace_without_removing_rest_demand(tmp_path, monkeypatch):
+ from types import SimpleNamespace
+ from itertools import count
+ collector=TossCollector(Store('sqlite://',tmp_path))
+ collector.store.put('universe',{'rows':[{'code':code} for code in ('005930','000660','035900')]})
+ collector.store.request('005930');collector.store.request('000660')
+ collector.store.put('quotes',{'000660':{'price':123,'as_of':'2026-10-12'}})
+ sent=[]
+ ticks=count(100)
+ monkeypatch.setattr('services.market_dashboard.toss.time',SimpleNamespace(monotonic=lambda:next(ticks),time=time.time))
+ class Socket:
+  calls=0
+  async def __aenter__(self):return self
+  async def __aexit__(self,*args):pass
+  async def send(self,value):
+   if value!='PING':sent.append(json.loads(value))
+  async def recv(self):
+   self.calls+=1
+   if self.calls==1:
+    collector.store.request('035900')
+    return json.dumps({'type':'subscriptions','subscribed':['trade:kr:005930','orderbook:kr:005930','orderbook:kr:000660'],
+     'rejected':[{'target':'trade:kr:000660','code':'UNSUPPORTED','message':'fixture only'}]})
+   if self.calls==2:
+    return json.dumps({'type':'message','topic':'trade:kr:000660','data':{'price':'1','volume':'1',
+     'currency':'KRW','timestamp':'2026-10-13T09:00:00+09:00'}})
+   if self.calls==3:
+    return json.dumps({'type':'subscriptions','subscribed':['trade:kr:005930','trade:kr:035900',
+     'orderbook:kr:005930','orderbook:kr:000660','orderbook:kr:035900'],'rejected':[]})
+   raise asyncio.CancelledError
+ async def token():return 'fixture-token'
+ monkeypatch.setattr(collector.client,'token',token)
+ monkeypatch.setattr('websockets.connect',lambda *a,**kw:Socket())
+ with pytest.raises(asyncio.CancelledError):await collector.stream()
+ assert len(sent)==2
+ later={item['type']:item['codes'] for item in sent[1]}
+ assert '000660' not in later['trade:kr'] and '000660' in later['orderbook:kr']
+ assert '035900' in later['trade:kr']
+ state=collector.store.get('provider-toss-stream')
+ assert 'trade:kr:000660' not in state['accepted'] and state['rejected'][0]['target']=='trade:kr:000660'
+ assert collector.store.get('quotes')['000660']['price']==123
+ rejected=collector.store.get('toss-stream-unaccepted')
+ assert rejected['topic']=='trade:kr:000660' and len(rejected['raw_sha256'])==64
+ assert set(collector.store.active())=={'005930','000660','035900'}
+ assert collector.store.get('toss-recovery:000660')['requested_at']
+ await collector.client.close()

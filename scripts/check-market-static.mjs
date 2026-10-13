@@ -7,6 +7,7 @@ import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../apps/web/out');
 const manifest=JSON.parse(await readFile(path.join(root,'build-manifest.json'),'utf8'));
 assert.equal(manifest.profile,'static');
+if(process.env.MARKET_RELEASE)assert.equal(manifest.release,process.env.MARKET_RELEASE,'Static release differs from requested CI/deployment version');
 assert.ok(manifest.files.length>0);
 for(const file of manifest.files){
  const target=path.resolve(root,file.path);

@@ -22,14 +22,14 @@ def archive_clock(value):
     return candle_clock(value)
 
 
-def validate_page(data, code, before, seen, normalize):
+def validate_page(data, code, before, seen, normalize, *, allow_unknown_cursor=False):
     if not isinstance(data, dict) or not isinstance(data.get("candles"), list):
         raise ValueError("Candle records must be an array")
     if data.get("symbol") and data["symbol"] != code:
         raise ValueError("Candle security mismatch")
-    if "nextBefore" not in data:
+    if "nextBefore" not in data and not allow_unknown_cursor:
         raise ValueError("Candle page needs explicit continuation status")
-    cursor = data["nextBefore"]
+    cursor = data.get("nextBefore")
     if cursor is not None:
         if cursor == before or cursor in seen:
             raise ValueError("Candle pagination did not advance")
@@ -61,9 +61,13 @@ def gap_fields(windows):
     }
 
 
-def terminal_receipt(evidence, *, before, rows, received_at):
+def terminal_receipt(evidence, *, before, rows, received_at, context=None):
     """An explicit null cursor is a receipt, not a whole-period validation."""
+    from .stream_evidence import message_digest
+    if evidence.get('source') != 'toss' or not message_digest(evidence):
+        return None
     return {
+        **(context or {}),
         "explicit_next_before_null": True,
         "received_at": received_at,
         "request_before": before,

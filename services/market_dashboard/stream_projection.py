@@ -4,6 +4,7 @@ One shared worker owns this buffer. No simulated sequence, side or cumulative
 volume is introduced. Receipt time is sampled before archive/database work.
 """
 import json
+import re
 import time
 from datetime import datetime
 from uuid import uuid4
@@ -26,7 +27,7 @@ class StreamProjection:
     def wait_seconds(self):
         return 2 if self.started is None else max(0.001, self.interval - (self.clock() - self.started))
 
-    def record(self, event, codes, epoch, received_at):
+    def record(self, event, codes, epoch, received_at, *, archived_digest=None):
         from .toss import valid_stream_data
         topic = str(event.get('topic') or '').split(':')
         if len(topic) != 3:
@@ -38,7 +39,14 @@ class StreamProjection:
             self.flush()
         if self.pending and epoch != self.epoch:
             self.flush()
-        digest = self.store.raw('toss-stream', event['topic'], json.dumps(event).encode())
+        if archived_digest is None:
+            # Direct fixture/legacy callers have no receive buffer. The shared
+            # worker always passes the SHA of its exact archived frame bytes.
+            digest = self.store.raw('toss-stream', event['topic'], json.dumps(event).encode())
+        elif isinstance(archived_digest, str) and re.fullmatch('[0-9a-f]{64}', archived_digest):
+            digest = archived_digest
+        else:
+            raise ValueError('Invalid original stream digest')
         data = event.get('data')
         if not valid_stream_data(kind, data):
             self.store.put('toss-stream-rejected:' + code,

@@ -22,6 +22,27 @@ from .toss_contract import contract_path, request_group, source_scope
 from .request_fairness import FairRequestGate, current_workload, request_workload
 
 BASE = 'https://openapi.tossinvest.com'
+STREAM_URL = 'wss://openapi-ws.tossinvest.com/ws/v1'
+
+
+def history_terminal_receipt(evidence, field, *, requested, rows, received_at, context):
+    """An explicit null is terminal only with a durable original reference."""
+    digest = evidence.get('sha256') or evidence.get('source_document_id')
+    if (evidence.get('source') != 'toss' or not isinstance(digest, str)
+            or not re.fullmatch('[0-9a-f]{64}', digest)
+            or any(evidence.get(alias) not in (None, digest)
+                   for alias in ('sha256', 'source_document_id'))):
+        return None
+    return {**context, field: True, 'received_at': received_at, 'request_cursor': requested,
+            'rows': len(rows), 'source_document_id': digest, 'sha256': digest, 'source': 'toss'}
+
+
+def proven_history_terminal(receipt, field, context):
+    """Legacy flags or another symbol's receipt cannot certify this series."""
+    return (isinstance(receipt, dict) and receipt.get(field) is True
+            and all(receipt.get(key) == value for key, value in context.items())
+            and history_terminal_receipt(receipt, field, requested=None, rows=(),
+                                         received_at=None, context=context) is not None)
 
 
 def calendar_previous_close(store, keys, trade_day, prior_day):
@@ -634,6 +655,10 @@ class TossCollector:
         earliest = None
         gap_closed = False
         terminal = None
+        cursor_unknown = False
+        terminal_unverified = False
+        context = {'code':code, 'kind':('history' if adjusted else 'raw-history') if interval=='1d' else 'intraday',
+                   'venue':'통합', 'adjustment':'source' if interval=='1d' and adjusted else 'raw'}
         seen = {before} if before else set()
 
         def save(status, *, partial=False):
@@ -643,9 +668,12 @@ class TossCollector:
             receipt = previous.get('history_terminal')
             if mode == 'history' or (mode == 'head' and not had_rows):
                 old_cursor = next_cursor
-                old_complete = not partial and terminal is not None
-                if old_complete:
+                if not cursor_unknown and not terminal_unverified:
+                    old_complete = not partial and terminal is not None
+                if terminal is not None and not partial:
                     receipt = terminal
+                elif not cursor_unknown and not terminal_unverified:
+                    receipt = None
             elif mode == 'gap':
                 item = next(window for window in pending if window.get('status', 'collecting') == 'collecting')
                 if gap_closed:
@@ -678,8 +706,13 @@ class TossCollector:
                     'source_trace':evidence or previous.get('source_trace'), 'received_at':now(), **clocks,
                     'status':status, 'next_before':old_cursor, 'history_complete':old_complete,
                     'backfill_complete':complete, 'history_terminal':receipt, **fields,
+                    'history_terminal_status':('cursor_unknown' if cursor_unknown else
+                        'terminal_unverified' if terminal_unverified else
+                        'verified' if proven_history_terminal(receipt, 'explicit_next_before_null', context) else 'unverified'),
                     'latest_next_before':next_cursor if mode=='head' else previous.get('latest_next_before'),
                     'covered_session':session if session_covered else previous.get('covered_session')}
+            if cursor_unknown or terminal_unverified:
+                body['status'] = 'cursor_unknown' if cursor_unknown else 'terminal_unverified'
             # Gap/history visits cannot renew a previously successful head clock.
             for field in ('history_received_at', 'gap_received_at'):
                 if field not in body and previous.get(field):
@@ -695,7 +728,8 @@ class TossCollector:
                 params['before'] = before
             try:
                 data, page_evidence = await self.client.get('/api/v1/candles', params)
-                rows, cursor = validate_page(data, code, before, seen, normalize_candles)
+                rows, cursor = validate_page(data, code, before, seen, normalize_candles,
+                                             allow_unknown_cursor=True)
             except (Exception, asyncio.CancelledError):
                 if observed_count:
                     # Persist only validated pages. The rejected page cannot
@@ -705,13 +739,22 @@ class TossCollector:
             evidence = page_evidence
             observed_count += len(rows)
             merged.update({r['time']:{**r,'source_trace':evidence} for r in rows})
-            next_cursor = cursor
             if rows:
                 earliest = rows[0]['time']
+            if 'nextBefore' not in data:
+                cursor_unknown = True
+                break
             if cursor is None:
-                terminal = terminal_receipt(evidence,before=before,rows=rows,received_at=now())
+                stamp = now()
+                proof = history_terminal_receipt(evidence, 'explicit_next_before_null',
+                    requested=before, rows=rows, received_at=stamp, context=context)
+                if proof is None:
+                    terminal_unverified = True
+                    break
+                terminal = terminal_receipt(evidence,before=before,rows=rows,received_at=stamp,context=context)
             else:
                 seen.add(cursor)
+            next_cursor = cursor
             if repair and rows and archive_clock(rows[0]['time']) <= archive_clock(active_gap['target_time']):
                 gap_closed = True
                 break
@@ -848,7 +891,8 @@ class TossCollector:
         try:
             for index in range(max(1, min(16, int(pages)))):
                 state = await self._trading_page(code, endpoint, resume or index > 0)
-                if not state.get('next_until') or state.get('backfill_complete'):
+                if (not state.get('next_until') or state.get('backfill_complete')
+                        or state.get('history_status') in ('cursor_unknown', 'terminal_unverified')):
                     break
         except Exception as exc:
             failure = exc
@@ -873,17 +917,24 @@ class TossCollector:
         if resume and previous.get('next_until'):
             params['until'] = previous['next_until']
         data, evidence = await self.client.get(f'/api/v1/stocks/{code}/{endpoint}', params)
-        # Only an explicit records array can prove an empty final page. A
-        # malformed response must not erase the durable continuation cursor.
+        # Preserve a valid optional-cursor page without calling it exhausted.
+        # A malformed response must not erase the durable continuation cursor.
         if not isinstance(data, dict) or not isinstance(data.get('records'), list):
             raise ValueError('Trading records must be an array')
         evidence = {**evidence,'scope':'통합' if endpoint=='investor-trading' else 'KRX' if endpoint=='program-trades' else '국내','unit':'주'}
         if data.get('symbol') and data['symbol'] != code:
             raise ValueError('Trading security mismatch')
         observed = data['records']
+        cursor_known = 'nextUntil' in data
         cursor = data.get('nextUntil')
-        if params.get('until') and cursor == params['until']:
-            raise ValueError('Trading history cursor did not advance')
+        if cursor is not None:
+            if not isinstance(cursor, str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2}', cursor):
+                raise ValueError('Invalid trading history cursor')
+            date.fromisoformat(cursor)
+            if params.get('until') and cursor >= params['until']:
+                raise ValueError('Trading history cursor did not advance')
+            if not observed:
+                raise ValueError('Empty trading page needs explicit terminal cursor')
         # Only the new page is upserted. Legacy JSON rows migrate on their first
         # write; old trace maps remain as fallback for already-normalized rows.
         legacy_traces = previous.get('record_traces', {})
@@ -892,14 +943,28 @@ class TossCollector:
         merged.update({r['date']:{**r,'source_trace':evidence} for r in observed})
         had_rows = bool(previous.get('row_count') or previous.get('rows'))
         deep = resume or not had_rows or not previous.get('next_until')
+        received_at = now()
+        context = {'code': code, 'kind': endpoint, 'venue': evidence['scope']}
+        terminal = (history_terminal_receipt(evidence, 'explicit_next_until_null',
+                    requested=params.get('until'), rows=observed, received_at=received_at, context=context)
+                    if cursor_known and cursor is None else None)
+        prior_terminal = previous.get('history_terminal')
+        prior_complete = bool(previous.get('backfill_complete') and
+                              proven_history_terminal(prior_terminal, 'explicit_next_until_null', context))
+        history_status = ('cursor_unknown' if not cursor_known else
+                          'terminal_unverified' if cursor is None and terminal is None else 'ready')
         state = {'rows':list(merged.values()),'source_trace':evidence,'record_traces':legacy_traces,'status':'ready' if observed or (resume and had_rows) else 'stale' if had_rows else 'no_data',
-                 'received_at':now(), 'last_response_rows':len(observed),
+                 'received_at':received_at, 'last_response_rows':len(observed),
                  'head_received_at': previous.get('head_received_at', previous.get('received_at')) if resume else now(),
                  'history_received_at': now() if resume else previous.get('history_received_at'),
-                 'next_until':cursor if deep else previous.get('next_until'),
-                 'backfill_complete':(not cursor) if deep else bool(previous.get('backfill_complete'))}
+                 'history_status':history_status,
+                 'next_until':cursor if deep and history_status == 'ready' else previous.get('next_until'),
+                 'backfill_complete':bool(terminal) if deep and history_status == 'ready' else prior_complete,
+                 'history_terminal':terminal if deep and history_status == 'ready' else prior_terminal}
+        if history_status != 'ready':
+            state['status'] = history_status
         # Refreshing today's page must not reopen an exhausted old cursor.
-        if previous.get('backfill_complete') and not resume:
+        if prior_complete and not resume:
             state.update(next_until=None, backfill_complete=True)
         put_series(self.store, key, state, reverse=True)
         return state
@@ -1024,13 +1089,18 @@ class TossCollector:
         from .stream_projection import StreamProjection
         projection = StreamProjection(self)
         failures = 0
+        # A rejected target stays excluded until this worker is restarted after
+        # the cause is corrected. REST demand and last good data remain intact.
+        denied = set()
+        rejected_targets = {}
         while True:
             token = None
             try:
                 self.store.put('provider-toss-stream', {'status':'connecting','accepted':[], 'rejected':[], 'received_at':now()})
                 token = await self.client.token()
-                async with websockets.connect('wss://openapi-ws.tossinvest.com/ws/v1', additional_headers={'Authorization':'Bearer '+token}, ping_interval=None) as socket:
-                    previous, last_ping, active_checked, codes = None, time.monotonic(), 0.0, []
+                async with websockets.connect(STREAM_URL, additional_headers={'Authorization':'Bearer '+token}, ping_interval=None) as socket:
+                    previous, previous_codes, accepted = None, [], set()
+                    last_ping, active_checked, codes = time.monotonic(), 0.0, []
                     self.epoch = uuid4().hex
                     self.store.put('provider-toss-stream', {'status':'recovering','accepted':[], 'rejected':[], 'received_at':now(),'epoch':self.epoch})
                     while True:
@@ -1039,26 +1109,48 @@ class TossCollector:
                         if time.monotonic() - active_checked >= 1:
                             codes = list(dict.fromkeys(self.store.active()))[:50]
                             active_checked = time.monotonic()
-                        if codes != previous:
-                            await socket.send(json.dumps([{'type':kind,'codes':codes} for kind in ('trade:kr','orderbook:kr')] if codes else []))
-                            self.store.put('provider-toss-stream', {'status':'subscribing' if codes else 'idle','accepted':[], 'rejected':[], 'received_at':now(),'epoch':self.epoch})
-                            for code in set(codes)-set(previous or []):
+                        declarations = [{'type': kind, 'codes': [code for code in codes
+                                         if kind + ':' + code not in denied]}
+                                        for kind in ('trade:kr', 'orderbook:kr')]
+                        declarations = [item for item in declarations if item['codes']]
+                        targets = {item['type'] + ':' + code for item in declarations for code in item['codes']}
+                        signature = tuple(sorted(targets))
+                        if signature != previous:
+                            await socket.send(json.dumps(declarations))
+                            accepted.intersection_update(targets)
+                            self.store.put('provider-toss-stream', {'status':'subscribing' if targets else 'idle','accepted':sorted(accepted), 'rejected':list(rejected_targets.values()), 'received_at':now(),'epoch':self.epoch})
+                            for code in set(codes)-set(previous_codes):
                                 self.store.put('toss-recovery:'+code, {'epoch':self.epoch,'requested_at':now()})
-                            previous = codes
+                            previous, previous_codes = signature, list(codes)
                         if time.monotonic()-last_ping > 60:
                             await socket.send('PING')
                             last_ping = time.monotonic()
                         try:
-                            event = json.loads(await asyncio.wait_for(socket.recv(), timeout=projection.wait_seconds()))
-                            received_at = now()
+                            frame = await asyncio.wait_for(socket.recv(), timeout=projection.wait_seconds())
                         except TimeoutError:
                             projection.flush()
                             continue
+                        received_at = now()
+                        frame_bytes = frame.encode('utf-8') if isinstance(frame, str) else bytes(frame)
+                        digest = self.store.raw('toss-stream', STREAM_URL, frame_bytes)
+                        # The official keepalive reply is JSON {"type":"pong"}.
+                        # Parse only after the exact received frame is archived.
+                        event = json.loads(frame)
                         if event.get('type')=='subscriptions':
                             failures = 0
-                            self.store.put('provider-toss-stream', {'status':'subscribed','accepted':event.get('subscribed',[]),'rejected':event.get('rejected',[]),'received_at':now(),'lossy':True,'epoch':self.epoch})
+                            for rejection in event.get('rejected', []):
+                                if isinstance(rejection, dict) and rejection.get('target') in targets:
+                                    denied.add(rejection['target'])
+                                    rejected_targets[rejection['target']] = rejection
+                            accepted = (set(event.get('subscribed', [])) & targets) - denied
+                            self.store.put('provider-toss-stream', {'status':'subscribed','accepted':sorted(accepted),'rejected':list(rejected_targets.values()),'received_at':now(),'lossy':True,'epoch':self.epoch})
                         elif event.get('type')=='message':
-                            projection.record(event, codes, self.epoch, received_at)
+                            if event.get('topic') in accepted:
+                                projection.record(event, codes, self.epoch, received_at, archived_digest=digest)
+                            else:
+                                self.store.put('toss-stream-unaccepted', {'topic':event.get('topic'),
+                                    'reason':'unaccepted_subscription','raw_sha256':digest,
+                                    'received_at':received_at,'epoch':self.epoch})
                         elif event.get('type')=='error':
                             raise ValueError('Provider stream error')
             except asyncio.CancelledError:

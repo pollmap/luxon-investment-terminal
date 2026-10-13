@@ -158,7 +158,13 @@ class Store:
             save_compressed(directory, digest, content, url, now())
             return digest
         path = directory / f"{digest}.json"
-        if source == 'toss-stream' and not (directory / f'{digest}.bin').exists():
+        stream_payload = None
+        if source == 'toss-stream':
+            try:
+                stream_payload = content.decode('utf-8')
+            except UnicodeDecodeError:
+                pass  # Binary frames retain the existing byte-exact archive path.
+        if stream_payload is not None and not (directory / f'{digest}.bin').exists():
             # Existing raw-v1 readers already support a UTF-8 envelope alone.
             # One create-only durable file preserves the exact frame bytes;
             # do not duplicate each high-frequency frame in a second file.
@@ -168,7 +174,7 @@ class Store:
                     raise ValueError('Stream original differs from received bytes')
                 return digest
             envelope = json.dumps({'url':url, 'received_at':now(), 'sha256':digest,
-                                   'payload':content.decode('utf-8'), 'bytes':len(content)},
+                                   'payload':stream_payload, 'bytes':len(content)},
                                   ensure_ascii=False).encode('utf-8')
             atomic_create(path, envelope)
             return digest
