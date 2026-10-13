@@ -86,10 +86,10 @@ export default function ValuationChart({code}:{code:string}){
     const comparisonBasisEndsEarly=Boolean(basisEnd&&rows.at(-1)?.date&&rows.at(-1)!.date>basisEnd);
   const latestComparison=rows.reduce((last,p,i)=>p.reference_price!==null?i:last,-1);
   useEffect(()=>{
-    // Open with readable, verified figures. The displayed date remains explicit;
-    // choosing "최근" or another point pins that choice, even if it has no ratio.
-    if(cursorDate===null&&latestComparison>=0)setCursorDate(rows[latestComparison].date);
-  },[cursorDate,latestComparison,rows]);
+    // Pin the actual price date independently of a metric's comparison range.
+    // Missing EPS/OCF must not move the user's selection to an older report.
+    if(cursorDate===null&&rows.length)setCursorDate(rows.at(-1)!.date);
+  },[cursorDate,rows]);
   const periods=useMemo(()=>latestValuationPeriods(current?.periods??[]),[current]);
   const chartRows=useMemo(()=>valuationChartRows(rows,chart),[rows,chart]);
   const representative=current&&current.summary.monthly_observations>=24&&typeof current.summary.representative_multiple==='number'&&Number.isFinite(current.summary.representative_multiple)&&current.summary.representative_multiple>0?current.summary.representative_multiple:null;

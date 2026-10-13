@@ -24,10 +24,10 @@ function elements(tree,predicate){
 function text(tree){if(Array.isArray(tree))return tree.map(text).join('');if(tree==null||typeof tree==='boolean')return '';return typeof tree==='object'?text(tree.props.children):String(tree);}
 const button=(h,label)=>elements(h.tree,n=>n.type==='button'&&text(n)===label)[0];
 function hooks(overrides={}){
-  const cells=[];let slot=0;
-  return {reset(){slot=0;},react:{
+  const cells=[],effects=[];let slot=0;
+  return {cells,effects,reset(){slot=0;effects.length=0;},react:{
     useState(initial){const i=slot++;if(!(i in cells))cells[i]=i in overrides?overrides[i]:initial;return [cells[i],value=>{cells[i]=typeof value==='function'?value(cells[i]):value;}];},
-    useMemo:fn=>fn(),useEffect(){},useRef:value=>({current:value}),useId:()=> 'fixture-analysis',
+    useMemo:fn=>fn(),useEffect(fn,deps){effects.push({fn,deps});},useRef:value=>({current:value}),useId:()=> 'fixture-analysis',
   }};
 }
 const types={format:value=>value==null?'—':String(value),tone:()=>'',request:()=>{throw new Error('No network in this fixture');}};
@@ -131,15 +131,18 @@ test('single, missing and invalid reference ranges never invent a comparison per
 });
 
 function valuation(response,overrides={}){
-  const selection={metric:'EPS',basis:'auto',years:5,multiple:'15',mode:'as_known',frequency:'auto',interval:'week',from:'',to:''};
-  const key=JSON.stringify([response.code,'EPS','auto',5,'as_known','auto','week','','']);
+  const selection={metric:response.metric,basis:'auto',years:5,multiple:'15',mode:'as_known',frequency:'auto',interval:'week',from:'',to:''};
+  const key=JSON.stringify([response.code,response.metric,'auto',5,'as_known','auto','week','','']);
   const h=hooks({0:selection,1:true,2:response,3:key,10:[response.metric_definition],...overrides});
   let dynamicIndex=0,blob=null;
   class FixtureURL extends URL{static createObjectURL(value){blob=value;return 'blob:fixture';}static revokeObjectURL(){}}
   const Component=load('valuation-chart.tsx',{
     react:h.react,'./types':types,'./analysis-periods':periods,'./valuation-series':load('valuation-series.ts'),'./chart-selection':load('chart-selection.ts'),'./price-history':load('price-history.ts'),'./market-section-boundary':{default:'fixture-boundary'},'./market-history':{writeMarketHistory(){}},'next/dynamic':{default:()=>dynamicIndex++===0?'fixture-chart':'fixture-eps'},
   },{URL:FixtureURL,URLSearchParams,Blob,setTimeout:()=>0,localStorage:{setItem(){}},location:{href:'https://example.invalid/stocks?code=000001'},window:{dispatchEvent(){}},Event:class{},document:{createElement:()=>({click(){}})}}).default;
-  return {tree:null,render(){h.reset();this.tree=Component({code:response.code});},get blob(){return blob;}};
+  return {tree:null,render(){h.reset();this.tree=Component({code:response.code});},
+    flushCursor(){const effect=h.effects.find(effect=>Array.isArray(effect.deps?.at(-1))&&effect.deps.at(-1)[0]?.date);assert.ok(effect,'Real date-selection effect must be present');effect.fn();},
+    complete(next){h.cells[2]=next;const s=h.cells[0];h.cells[3]=JSON.stringify([next.code,s.metric,s.basis,s.years,s.mode,s.frequency,s.interval,s.from,s.to]);},
+    get blob(){return blob;}};
 }
 function analysis(){return {code:'000001',metric:'EPS',metric_definition:{code:'EPS',label:'기본 EPS',group:'이익',supports_ttm:true},share_basis:{per_share_basis_end:'2024-04-01'},multiple:15,basis:'CFS',frequency:'annual',summary:{representative_multiple:null},availability:{comparison:true,reasons:[]},ttm:{rows:[]},periods:[],series:[
   {...point('2024-01-01',null,false),metric_value:10,price:100},
@@ -149,6 +152,33 @@ function analysis(){return {code:'000001',metric:'EPS',metric_definition:{code:'
   {...point('2024-05-01',null,false),metric_value:30,price:500},
 ]};}
 const chart=h=>elements(h.tree,n=>n.type==='fixture-chart')[0];
+
+test('metric loading and completion retain the actual latest price date beyond verified share basis',()=>{
+  const eps=analysis(),ocf={...eps,metric:'OCF',metric_definition:{...eps.metric_definition,code:'OCF',label:'영업현금흐름/주'},
+    series:eps.series.map(p=>({...p,reference_price:null,metric_value:null,comparison_eligible:false,multiple:null}))};
+  const h=valuation(ocf);h.render();h.flushCursor();h.render();
+  const selected=()=>text(elements(h.tree,n=>n.props?.['aria-label']==='선택한 날짜의 숫자')[0].props.children[0]);
+  assert.equal(selected(),'2024-05-01');const rangeKey=chart(h).props.rangeKey;
+  elements(h.tree,n=>n.props?.['aria-label']==='가치평가 지표')[0].props.onChange({target:{value:'EPS'}});
+  h.render();h.flushCursor();h.render();assert.equal(selected(),'2024-05-01');
+  h.complete(eps);h.render();h.flushCursor();h.render();
+  assert.equal(selected(),'2024-05-01');assert.equal(chart(h).props.rangeKey,rangeKey);
+  const active=elements(h.tree,n=>n.props?.['aria-label']==='선택한 날짜의 숫자')[0];
+  assert.match(text(active),/500/);assert.match(text(active),/—/);
+  button(h,'비교 가능한 최근 실적 보기').props.onClick();h.render();
+  assert.equal(selected(),'2024-04-01'); // Only the explicit user action moves to comparison.
+});
+
+test('an explicit actual date survives missing metric facts and clamps only to another observed price date',()=>{
+  const response=analysis(),h=valuation(response);h.render();h.flushCursor();h.render();
+  chart(h).props.onSelect(1);h.render();
+  const s=()=>text(elements(h.tree,n=>n.props?.['aria-label']==='선택한 날짜의 숫자')[0].props.children[0]);
+  const unavailable={...response,metric:'OCF',series:response.series.map(p=>({...p,metric_value:null,reference_price:null,comparison_eligible:false}))};
+  elements(h.tree,n=>n.props?.['aria-label']==='가치평가 지표')[0].props.onChange({target:{value:'OCF'}});
+  h.complete(unavailable);h.render();h.flushCursor();h.render();assert.equal(s(),'2024-02-01');
+  h.complete({...unavailable,series:unavailable.series.slice(2)});h.render();h.flushCursor();h.render();
+  assert.equal(s(),'2024-03-01');
+});
 test('actual valuation chart displays only eligible range; factor changes preserve date/range and CSV values',async()=>{
   const response=analysis(),before=JSON.stringify(response),h=valuation(response);h.render();
   const caption=()=>text(elements(h.tree,n=>n.props?.['aria-label']==='비교 가능한 실적 구간')[0]);
