@@ -949,8 +949,9 @@ class TossCollector:
                     requested=params.get('until'), rows=observed, received_at=received_at, context=context)
                     if cursor_known and cursor is None else None)
         prior_terminal = previous.get('history_terminal')
-        prior_complete = bool(previous.get('backfill_complete') and
-                              proven_history_terminal(prior_terminal, 'explicit_next_until_null', context))
+        # Retain an earlier completion claim; its receipt verification is a
+        # separate field. A failed/empty head cannot erase durable history.
+        prior_complete = bool(previous.get('backfill_complete'))
         history_status = ('cursor_unknown' if not cursor_known else
                           'terminal_unverified' if cursor is None and terminal is None else 'ready')
         state = {'rows':list(merged.values()),'source_trace':evidence,'record_traces':legacy_traces,'status':'ready' if observed or (resume and had_rows) else 'stale' if had_rows else 'no_data',
@@ -966,6 +967,14 @@ class TossCollector:
         # Refreshing today's page must not reopen an exhausted old cursor.
         if prior_complete and not resume:
             state.update(next_until=None, backfill_complete=True)
+            if terminal is None or not observed:
+                # An empty/nonterminal head does not replace the retained
+                # archive's terminal evidence. Keep the original receipt.
+                state['history_terminal'] = prior_terminal
+        state['history_terminal_status'] = (
+            'verified' if proven_history_terminal(state['history_terminal'], 'explicit_next_until_null', context)
+            else 'legacy_unverified' if state['backfill_complete'] else history_status
+            if history_status != 'ready' else 'unverified')
         put_series(self.store, key, state, reverse=True)
         return state
 

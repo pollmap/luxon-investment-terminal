@@ -8,7 +8,13 @@ from services.market_dashboard.collection import collection_snapshot
 from services.market_dashboard.store import Store, now
 from services.market_dashboard.time_series import put_series
 from services.market_dashboard.toss import TossCollector
+from toss_fixture_evidence import install_fixture_originals
 from services.market_dashboard.toss_backfill import KINDS, TossBackfill
+
+
+@pytest.fixture(autouse=True)
+def original_fixture_responses(monkeypatch):
+    install_fixture_originals(monkeypatch, TossCollector)
 
 
 @pytest.fixture
@@ -154,6 +160,7 @@ async def test_empty_latest_response_preserves_last_good_clock_and_not_history_c
     await collector.fundamentals_of_trading('005930', ('securities-lending',))
     after = store.metadata('collection:005930')['sources']['lending']
     assert after['status'] == 'stale' and after['backfill_complete'] is True
+    assert store.metadata('toss:securities-lending:005930')['history_terminal_status'] == 'legacy_unverified'
     for field in ('as_of', 'received_at', 'last_success_at'):
         assert after[field] == before[field]
     assert store.get('financing:005930')['lending']['rows'][0]['balance'] == 10

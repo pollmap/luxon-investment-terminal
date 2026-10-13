@@ -7,6 +7,7 @@ import pytest
 
 from services.market_dashboard.store import Store, now
 from services.market_dashboard.toss import TossCollector
+from toss_fixture_evidence import install_fixture_originals
 from services.market_dashboard.toss_backfill import (
     TossBackfill,
     after,
@@ -17,6 +18,11 @@ from services.market_dashboard.toss_backfill import (
     recent_head,
     resume_history,
 )
+
+
+@pytest.fixture(autouse=True)
+def original_fixture_responses(monkeypatch):
+    install_fixture_originals(monkeypatch, TossCollector)
 
 
 @pytest.mark.parametrize(('configured','expected'),[(None,16),('8',8),('1',1),('99',16),('bad',16)])
@@ -70,7 +76,7 @@ class Client:
             return {'candles': [{'timestamp': day + 'T15:30:00+09:00', 'openPrice': '10',
                 'closePrice': '11', 'highPrice': '12', 'lowPrice': '9', 'volume': '20'}],
                 'nextBefore': None if params.get('before') else '2020-01-02T15:30:00+09:00'}, {'source': 'fixture_non_production'}
-        return {'records': []}, {'source': 'fixture_non_production'}
+        return {'records': [], 'nextUntil': None}, {'source': 'fixture_non_production'}
 
 
 def setup(tmp_path, client=None):
@@ -169,7 +175,7 @@ async def test_trade_pages_preserve_history_and_each_row_source(tmp_path):
     async def page(path, params):
         older=bool(params.get('until'))
         return {'records':[{'date':'2025-10-01' if older else '2026-10-02','marginLoan':{'balanceQuantity':'5'}}],
-                'nextUntil':None if older else '2020-01-02T15:30:00+09:00'}, {'source':'fixture_non_production','sha256':'old' if older else 'head'}
+                'nextUntil':None if older else '2025-10-01'}, {'source':'fixture_non_production','sha256':'old' if older else 'head'}
     collector.client.get=page
     await collector.fundamentals_of_trading('000660',('credit-trades',))
     await collector.fundamentals_of_trading('000660',('credit-trades',),resume=True)
@@ -177,7 +183,8 @@ async def test_trade_pages_preserve_history_and_each_row_source(tmp_path):
     state=store.get('toss:credit-trades:000660')
     assert state['backfill_complete'] and state['next_until'] is None and len(state['rows'])==2
     rows=store.get('toss-normalized:financing:000660')['credit']['rows']
-    assert [r['source_trace']['sha256'] for r in rows]==['old','head']
+    assert [r['source_trace']['fixture_label'] for r in rows]==['old','head']
+    assert all(len(r['source_trace']['sha256']) == 64 for r in rows)
     async def empty(*args):return {'records':[],'nextUntil':None}, {'sha256':'empty'}
     collector.client.get=empty
     await collector.fundamentals_of_trading('000660',('credit-trades',))
@@ -188,9 +195,9 @@ async def test_trade_pages_preserve_history_and_each_row_source(tmp_path):
 @pytest.mark.asyncio
 async def test_stalled_trading_cursor_preserves_last_good(tmp_path):
     store, collector, _ = setup(tmp_path)
-    original={'rows':[{'date':'2026-10-02'}],'next_until':'same-page'}
+    original={'rows':[{'date':'2026-10-02'}],'next_until':'2026-10-01'}
     store.put('toss:credit-trades:000660',original)
-    async def stalled(*args):return {'records':[],'nextUntil':'same-page'}, {}
+    async def stalled(*args):return {'records':[],'nextUntil':'2026-10-01'}, {}
     collector.client.get=stalled
     with pytest.raises(ValueError,match='did not advance'):
         await collector.fundamentals_of_trading('000660',('credit-trades',),resume=True)
@@ -243,7 +250,7 @@ async def test_program_backfill_writes_only_new_page_and_reads_latest_summary(tm
     rows=[{'date':(date(2000,1,1)+timedelta(days=i)).isoformat(),
            'arbitrage':{'buyVolume':str(i)},'nonArbitrage':{'buyVolume':'1'},
            'source_trace':{'source':'fixture_non_production','sha256':'old'}} for i in range(5000)]
-    put_series(store,key,{'rows':rows,'next_until':'old-page','backfill_complete':False},reverse=True)
+    put_series(store,key,{'rows':rows,'next_until':'1999-12-31','backfill_complete':False},reverse=True)
     calls=[]; reads=[]
     real_upsert=store.time_series.upsert; real_rows=store.time_series.rows
     def upsert(key,values,**kwargs):
@@ -254,7 +261,7 @@ async def test_program_backfill_writes_only_new_page_and_reads_latest_summary(tm
     monkeypatch.setattr(store.time_series,'rows',read)
     async def page(*args):
         return {'records':[{'date':'1999-12-31','arbitrage':{'buyVolume':'5'},'nonArbitrage':{'buyVolume':'1'}}],
-                'nextUntil':'2020-01-02T15:30:00+09:00'}, {'source':'fixture_non_production','sha256':'older'}
+                'nextUntil':'1999-12-30'}, {'source':'fixture_non_production','sha256':'older'}
     collector.client.get=page
     await collector.fundamentals_of_trading('000660',('program-trades',),resume=True)
     assert calls==[1] and reads==[1]
@@ -262,7 +269,8 @@ async def test_program_backfill_writes_only_new_page_and_reads_latest_summary(tm
     latest=store.get('trading:000660')
     assert latest['program']['buy_quantity']==5000
     assert latest['program_trace']['sha256']=='old'
-    assert real_rows(key,start='1999-12-31',end='1999-12-31')[0]['source_trace']['sha256']=='older'
+    source=real_rows(key,start='1999-12-31',end='1999-12-31')[0]['source_trace']
+    assert source['fixture_label']=='older' and len(source['sha256']) == 64
 
 
 @pytest.mark.asyncio
@@ -300,7 +308,8 @@ async def test_raw_and_adjusted_history_have_independent_cursors_and_sources(tmp
     adjusted=store.get('bars:000660:통합:day')
     assert len(raw['rows'])==2 and raw['adjustment']=='raw'
     assert len(adjusted['rows'])==1 and adjusted['next_before']=='2020-01-02T15:30:00+09:00'
-    assert all(r['source_trace']['source']=='fixture_non_production' for r in raw['rows'])
+    assert all(r['source_trace']['source']=='toss' and r['source_trace']['fixture_non_production']
+               and len(r['source_trace']['sha256']) == 64 for r in raw['rows'])
 
 
 @pytest.mark.asyncio
@@ -327,7 +336,7 @@ class LongHistoryClient(Client):
     async def get(self, path, params):
         self.calls.append((path, dict(params)))
         if not path.endswith('candles'):
-            return {'records':[]}, {'source':'fixture_non_production'}
+            return {'records':[],'nextUntil':None}, {'source':'fixture_non_production'}
         page = (datetime.fromisoformat('2026-09-28T15:30:00+09:00') - datetime.fromisoformat(params['before'])).days if params.get('before') else 0
         return {'symbol': params['symbol'], 'candles': [
             {'timestamp': (datetime.fromisoformat('2026-09-28T15:30:00+09:00') - timedelta(days=page)).isoformat(),
@@ -406,13 +415,13 @@ async def test_failed_later_page_preserves_valid_pages_and_resume_cursor(tmp_pat
 class LongTradingClient(Client):
     async def get(self, path, params):
         self.calls.append((path, dict(params)))
-        page = int(params.get('until', '0'))
+        page = (datetime(2026,9,28)-datetime.fromisoformat(params['until'])).days if params.get('until') else 0
         return {'records': [{'date': f'2026-09-{28-page:02d}',
             'individual': {'netBuyVolume': str(page)},
             'marginLoan': {'balanceQuantity': str(page+10)},
             'balanceQuantity': str(page+20), 'shortSellingVolume': str(page+30),
             'arbitrage': {'buyVolume': '10'}, 'nonArbitrage': {'buyVolume': '20'}}],
-            'nextUntil': str(page+1)}, {'source':'fixture_non_production', 'page':page}
+            'nextUntil': (datetime(2026,9,28)-timedelta(days=page+1)).date().isoformat()}, {'source':'fixture_non_production', 'page':page}
 
 
 @pytest.mark.asyncio
@@ -427,7 +436,7 @@ async def test_trading_burst_commits_each_page_and_projects_once(tmp_path, monke
     monkeypatch.setattr(collector, '_project_trading', project)
     await collector.fundamentals_of_trading('000660', (kind,), pages=8)
     saved = store.metadata(f'toss:{kind}:000660')
-    assert saved['row_count'] == 8 and saved['next_until'] == '8'
+    assert saved['row_count'] == 8 and saved['next_until'] == '2026-09-20'
     assert len(collector.client.calls) == 8 and projected == [kind]
     assert not saved['backfill_complete']
     assert [r['source_trace']['page'] for r in store.time_series.rows(f'toss:{kind}:000660',reverse=True)] == list(range(8))
@@ -439,26 +448,26 @@ async def test_trading_burst_failure_updates_view_and_resumes_saved_page(tmp_pat
     store, collector, _ = setup(tmp_path, LongTradingClient())
     original = collector.client.get
     async def fail(path, params):
-        if params.get('until') == '2':
+        if params.get('until') == '2026-09-26':
             if failure == 'request':
                 raise httpx.ReadError('fixture transport')
             data, evidence = await original(path, params)
             if failure == 'security':
                 data['symbol'] = '999999'
             else:
-                data['nextUntil'] = '2'
+                data['nextUntil'] = '2026-09-26'
             return data, evidence
         return await original(path, params)
     collector.client.get = fail
     with pytest.raises(Exception):
         await collector.fundamentals_of_trading('000660', ('credit-trades',), pages=8)
     saved = store.metadata('toss:credit-trades:000660')
-    assert saved['row_count'] == 2 and saved['next_until'] == '2'
+    assert saved['row_count'] == 2 and saved['next_until'] == '2026-09-26'
     assert len(store.get('financing:000660')['credit']['rows']) == 2
     collector.client.get = original
     collector.client.calls.clear()
     await collector.fundamentals_of_trading('000660', ('credit-trades',), pages=2, resume=True)
-    assert collector.client.calls[0][1]['until'] == '2'
+    assert collector.client.calls[0][1]['until'] == '2026-09-26'
     assert store.metadata('toss:credit-trades:000660')['row_count'] == 4
 
 
@@ -472,13 +481,13 @@ async def test_trading_queue_keeps_deep_cursor_on_head_visit_and_resumes_burst(t
     store.put('toss-backfill-progress',{'cursor':0,'phase':4})
     collector.client.calls.clear()
     await queue.step()
-    assert len(collector.client.calls)==1 and store.metadata(key)['next_until']=='8'
+    assert len(collector.client.calls)==1 and store.metadata(key)['next_until']=='2026-09-20'
     store.put('toss-backfill-progress',{'cursor':0,'phase':4})
     collector.client.calls.clear()
     await queue.step()
     assert len(collector.client.calls)==8
-    assert collector.client.calls[0][1]['until']=='8'
-    assert store.metadata(key)['row_count']==16 and store.metadata(key)['next_until']=='16'
+    assert collector.client.calls[0][1]['until']=='2026-09-20'
+    assert store.metadata(key)['row_count']==16 and store.metadata(key)['next_until']=='2026-09-12'
 
 
 @pytest.mark.asyncio
@@ -572,7 +581,7 @@ async def test_one_security_error_does_not_starve_its_other_sources(tmp_path):
         if path.endswith('candles'):
             request=httpx.Request('GET','https://example.test'+path)
             raise httpx.HTTPStatusError('fixture',request=request,response=httpx.Response(404,request=request))
-        return {'records':[]},{'source':'fixture_non_production'}
+        return {'records':[],'nextUntil':None},{'source':'fixture_non_production'}
     collector.client.get=fail_candle
     assert await queue.step()=='error'
     assert await queue.step()=='no_data'

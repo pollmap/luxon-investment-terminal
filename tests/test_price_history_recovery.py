@@ -1,6 +1,8 @@
 """fixture_non_production: source isolation, bounds and explicit page receipts."""
 
 from copy import deepcopy
+import hashlib
+import json
 from types import SimpleNamespace
 
 import httpx
@@ -197,7 +199,11 @@ class Pages:
 
     async def get(self, path, params):
         self.calls.append((path, dict(params)))
-        return next(self.responses), TRACE
+        data = next(self.responses)
+        digest = hashlib.sha256(json.dumps(data).encode()).hexdigest()
+        # Synthetic receipt from this exact fixture page, never a live source.
+        return data, {'source': 'toss', 'sha256': digest,
+                      'source_document_id': digest, 'fixture_non_production': True}
 
 
 @pytest.mark.asyncio
@@ -261,7 +267,12 @@ async def test_valid_prefix_survives_restart_and_final_empty_page_records_receip
     await resumed.history(CODE, pages=2, resume=True)
     saved = store.metadata(f"bars:{CODE}:통합:day")
     assert saved["backfill_complete"] and saved["history_terminal"]["explicit_next_before_null"]
-    assert saved["history_terminal"]["sha256"] == TRACE["sha256"]
+    expected = hashlib.sha256(json.dumps({"candles": [], "nextBefore": None}).encode()).hexdigest()
+    assert saved["history_terminal"]["sha256"] == expected
+    assert saved["history_terminal"]["code"] == CODE
+    assert saved["history_terminal"]["kind"] == 'history'
+    assert saved["history_terminal"]["venue"] == '통합'
+    assert saved["history_terminal"]["adjustment"] == 'source'
     assert saved["row_count"] == 2
 
 

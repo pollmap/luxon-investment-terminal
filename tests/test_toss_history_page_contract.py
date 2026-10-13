@@ -143,7 +143,7 @@ async def test_invalid_or_nonadvancing_trading_cursor_preserves_last_good_page(t
     {'explicit_next_until_null': True, 'source': 'toss', 'sha256': 'a' * 64,
      'code': '000660', 'kind': 'credit-trades', 'venue': '국내'},
 ])
-async def test_unknown_page_cannot_preserve_unproven_or_wrong_security_terminal(tmp_path, receipt):
+async def test_unknown_page_preserves_legacy_claim_without_verifying_wrong_receipt(tmp_path, receipt):
     store = Store('sqlite://', tmp_path)
     key = 'toss:credit-trades:005930'
     store.put(key, {'rows': [{'date': '2026-10-08'}], 'backfill_complete': True,
@@ -151,5 +151,6 @@ async def test_unknown_page_cannot_preserve_unproven_or_wrong_security_terminal(
     collector = TossCollector(store, PageClient([{'records': [{'date': '2026-10-07'}]}]))
     await collector.fundamentals_of_trading('005930', ('credit-trades',))
     saved = store.get(key)
-    assert saved['status'] == 'cursor_unknown' and not saved['backfill_complete']
+    assert saved['status'] == 'cursor_unknown' and saved['backfill_complete']
+    assert saved['history_terminal_status'] == 'legacy_unverified'
     assert len(saved['rows']) == 2
