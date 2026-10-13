@@ -12,6 +12,7 @@ from copy import deepcopy
 from datetime import date, datetime, timedelta
 from urllib.parse import parse_qsl, urlsplit
 
+from bs4 import BeautifulSoup
 from sqlalchemy import literal, select, text
 
 from .raw_archive import read_original
@@ -52,7 +53,8 @@ def _archive(store, proof):
         or parsed.username
         or parsed.password
         or any(name.lower() in private_parameters for name, _ in parse_qsl(parsed.query))
-        or not str(proof.get("excerpt", "")).strip()
+        or not isinstance(proof.get("excerpt"), str)
+        or not proof["excerpt"].strip()
     ):
         raise ValueError("Explicit archived proof and relevant excerpt required")
     directory = store.root / "raw" / source
@@ -66,8 +68,27 @@ def _archive(store, proof):
     if type(metadata.get("bytes")) is not int or not 0 <= metadata["bytes"] <= 64 * 1024**2:
         raise ValueError("Review archive requires a bounded original byte count")
     content = read_original(directory, digest)
+    if len(content) != metadata["bytes"]:
+        raise ValueError("Review archive byte count changed")
     if len(content) > 64 * 1024**2:
         raise ValueError("Review archive is too large")
+    # A valid archive hash alone does not bind the review's quoted passage.
+    # Require an exact passage after HTML/whitespace normalization; do not
+    # guess encodings or use fuzzy matching to approve share units.
+    encoding = proof.get("text_encoding", "utf-8")
+    if encoding not in ("utf-8", "utf-8-sig", "euc-kr", "cp949"):
+        raise ValueError("Review text encoding is unsupported")
+    try:
+        document = content.decode(encoding, errors="strict")
+    except UnicodeError as exc:
+        raise ValueError("Review archive requires an explicit text encoding") from exc
+    soup = BeautifulSoup(document, "html.parser")
+    for hidden in soup.find_all(["script", "style", "template"]):
+        hidden.decompose()
+    text_content = " ".join(soup.get_text(" ", strip=True).split())
+    excerpt = " ".join(str(proof["excerpt"]).split())
+    if excerpt not in text_content:
+        raise ValueError("Reviewed excerpt is absent from the archived document")
 
 
 def validate_review(store, code, review):

@@ -148,6 +148,64 @@ def test_changed_archived_bytes_cannot_pass_replay(context):
     assert store.get("share-basis:" + CODE) is None
 
 
+def test_archive_hash_does_not_approve_an_invented_excerpt(context):
+    store, review = context
+    review["proofs"]["ordinary_share_identity"]["excerpt"] = "No stock splits occurred"
+    with pytest.raises(ValueError, match="excerpt is absent"):
+        queue_initial_review(store, CODE, review)
+    assert store.get("share-basis-promotion:" + CODE) is None
+    assert store.get("share-basis:" + CODE) is None
+
+
+@pytest.mark.parametrize("encoding", ["utf-8", "cp949"])
+def test_reviewed_html_passage_uses_declared_encoding_and_visible_text(context, encoding):
+    store, review = context
+    proof = review["proofs"]["ordinary_share_identity"]
+    content = "<table><tr><td>보통주</td><td>주식 수 100</td></tr></table>"
+    proof["sha256"] = store.raw(proof["raw_source"], proof["source_url"], content.encode(encoding))
+    proof.update(excerpt="보통주  주식 수 100", text_encoding=encoding)
+    queue_initial_review(store, CODE, review)
+    assert process_one_review(store)["status"] == "promoted"
+
+
+@pytest.mark.parametrize("content", [
+    b'<script>No splits</script><p>Other text</p>',
+    b'<style>No splits</style><p>Other text</p>',
+    b'<template>No splits</template><p>Other text</p>',
+])
+def test_hidden_html_is_not_a_reviewed_passage(context, content):
+    store, review = context
+    proof = review["proofs"]["ordinary_share_identity"]
+    proof["sha256"] = store.raw(proof["raw_source"], proof["source_url"], content)
+    proof["excerpt"] = "No splits"
+    with pytest.raises(ValueError, match="excerpt is absent"):
+        queue_initial_review(store, CODE, review)
+
+
+def test_review_does_not_guess_a_lossy_text_encoding(context):
+    store, review = context
+    proof = review["proofs"]["ordinary_share_identity"]
+    proof["sha256"] = store.raw(proof["raw_source"], proof["source_url"], "보통주".encode("cp949"))
+    proof["excerpt"] = "보통주"
+    with pytest.raises(ValueError, match="explicit text encoding"):
+        queue_initial_review(store, CODE, review)
+
+
+@pytest.mark.parametrize("excerpt", [1, True, [], None])
+def test_review_excerpt_requires_an_explicit_text_passage(context, excerpt):
+    store, review = context
+    review["proofs"]["ordinary_share_identity"]["excerpt"] = excerpt
+    with pytest.raises(ValueError, match="Explicit archived proof"):
+        queue_initial_review(store, CODE, review)
+
+
+def test_review_text_encoding_must_be_in_the_small_supported_set(context):
+    store, review = context
+    review["proofs"]["ordinary_share_identity"]["text_encoding"] = "utf-16"
+    with pytest.raises(ValueError, match="encoding is unsupported"):
+        queue_initial_review(store, CODE, review)
+
+
 def test_credential_query_cannot_be_preserved_as_public_proof(context):
     store, review = context
     review["proofs"]["issuer_share_history"]["source_url"] += "?crtfc_key=fixture-not-a-secret"
