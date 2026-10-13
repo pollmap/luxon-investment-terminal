@@ -508,3 +508,118 @@ def test_postgres_compact_paths_bind_as_text_arrays(source, monkeypatch):
     assert all(f'%({name})s::TEXT[]' in sql for name in compiled.params
                if isinstance(compiled.binds[name].type, ARRAY))
     assert 'search_selected AS MATERIALIZED' in str(compiled)
+
+
+def test_cached_identity_generation_does_not_wait_for_another_source_query(source, monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    import threading
+
+    source.update_quote('100000', {'aliases': ['처음별칭']})
+    heads = source.revisions(('enriched', 'quotes'))
+    enrichment = search_view._light_map(source, 'enriched', heads['enriched'], search_view.IDENTITY_PATHS)
+    search_view._light_map(source, 'quotes', heads['quotes'], search_view.IDENTITY_PATHS)
+    source.update_quote('100000', {'aliases': ['다음별칭']})
+    current = source.revisions(('quotes',))['quotes']
+    entered, release, answered = threading.Event(), threading.Event(), threading.Event()
+    original = search_view._quote_delta
+
+    def paused(*args, **kwargs):
+        entered.set()
+        assert release.wait(3)
+        return original(*args, **kwargs)
+
+    def cached_read():
+        answer = search_view._light_map(source, 'enriched', heads['enriched'], search_view.IDENTITY_PATHS)
+        assert answer is enrichment
+        answered.set()
+        return answer
+
+    monkeypatch.setattr(search_view, '_quote_delta', paused)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        updating = pool.submit(search_view._light_map, source, 'quotes', current, search_view.IDENTITY_PATHS)
+        try:
+            assert entered.wait(2)
+            cached = pool.submit(cached_read)
+            # Structural concurrency gate: the exact observed generation must
+            # answer while the other source SQL is explicitly still paused.
+            assert answered.wait(1), 'Unrelated source SQL held the shared identity cache lock'
+            assert cached.result() is enrichment
+        finally:
+            release.set()
+        assert updating.result()['100000']['aliases'] == ['다음별칭']
+
+
+def test_candidate_dependencies_keep_heads_of_the_matched_identity_generation(source):
+    source.update_quote('100000', {'aliases': ['동시별칭']})
+    keys = ('universe', 'enriched', 'quotes')
+    first = source.revisions(keys)
+    universe = source.get('universe')
+    observed = {}
+    codes = search_view.identity_candidates(source, universe, '동시별칭', first, observed_heads=observed)
+    expected = search_view.candidate_dependencies(source, codes, first, observed_heads=observed)
+    source.update_quote('100000', {'aliases': ['새로운동시별칭']})
+    latest = source.revisions(keys)
+    new_observation = {}
+    search_view.identity_candidates(source, universe, '동시별칭', latest, observed_heads=new_observation)
+    # Replacing the global projection cache must not relabel the already used
+    # identity values with this later writer's heads.
+    actual = search_view.candidate_dependencies(source, codes, first, observed_heads=observed)
+    changed = search_view.candidate_dependencies(source, codes, latest, observed_heads=new_observation)
+    assert actual == expected
+    assert actual['quote:100000'] != changed['quote:100000']
+
+
+@pytest.mark.asyncio
+async def test_projection_replacement_between_matching_and_dependency_read_cannot_cache_new_heads(source, monkeypatch):
+    from services.market_dashboard.response_cache import InFlightResponses, RevisionReadBatcher, RevisionResponseCache
+    source.update_quote('100000', {'aliases': ['변경별칭']})
+    monkeypatch.setattr(market, '_search_responses', RevisionResponseCache())
+    monkeypatch.setattr(market, '_search_flights', InFlightResponses())
+    monkeypatch.setattr(market, '_revision_reads', RevisionReadBatcher())
+    original, mutated = search_view.identity_candidates, False
+
+    def replace(*args, **kwargs):
+        nonlocal mutated
+        codes = original(*args, **kwargs)
+        if not mutated:
+            mutated = True
+            source.update_quote('100000', {'aliases': ['변경별칭', '추가별칭']})
+            heads = source.revisions(('universe', 'enriched', 'quotes'))
+            original(source, args[1], args[2], heads)
+        return codes
+
+    monkeypatch.setattr(search_view, 'identity_candidates', replace)
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=market.app), base_url='http://fixture') as client:
+        first = await client.get(market.BASE + '/search?q=변경별칭')
+        assert first.status_code == 200 and first.json()['total'] == 1
+        assert not market._search_responses.entries
+        second = await client.get(market.BASE + '/search?q=변경별칭')
+        assert second.status_code == 200 and second.json()['total'] == 1
+        assert len(market._search_responses.entries) == 1
+
+
+@pytest.mark.parametrize('key', ['quotes', 'enriched'])
+def test_postgres_full_identity_projection_materializes_original_entries_once(monkeypatch, key):
+    from types import SimpleNamespace
+    from sqlalchemy.dialects import postgresql
+    store = SimpleNamespace(engine=SimpleNamespace(dialect=SimpleNamespace(name='postgresql')))
+    statements = []
+
+    def capture(_store, statement, params):
+        statements.append(str(statement.compile(dialect=postgresql.dialect())))
+        assert params == {'key': key}
+        width = 1 + 2 * len(search_view.IDENTITY_PATHS)
+        extra = ['enriched-item:missing'] if key == 'enriched' else []
+        return [tuple([None] * width + extra + ['source-head', 'book-head', None])]
+
+    monkeypatch.setattr(search_view, '_records', capture)
+    revision, values, heads = search_view._light_snapshot(store, key, search_view.IDENTITY_PATHS)
+    assert values == {} and revision
+    assert 'entries AS MATERIALIZED (' in statements[0]
+    assert 'FROM entries ORDER BY priority' in statements[0]
+    assert 'jsonb_each(s.payload::jsonb)' in statements[0]
+    assert 'item_revision' in statements[0]
+    if key == 'enriched':
+        assert heads == {'default-enriched-item': 'enriched-item:missing'}
+    else:
+        assert heads == {'quotes': 'source-head', 'quote-book': 'book-head'}

@@ -952,9 +952,12 @@ async def search(request: Request, q: str = "", limit: int = 12):
             current = first_heads if first_heads is not None else timings.read_revisions(store, source_keys)
             first_heads = None
             universe = universe_inputs(store, current.get('universe'))[0]
-            codes = identity_candidates(store, universe, normalized_q, current)
+            identity_heads = {}
+            codes = identity_candidates(store, universe, normalized_q, current,
+                                        observed_heads=identity_heads)
             observed.update(heads=current, codes=codes)
-            return current if codes is None else candidate_dependencies(store, codes, current)
+            return current if codes is None else candidate_dependencies(
+                store, codes, current, observed_heads=identity_heads)
         return _search_responses.response(store, cache_key, selected_revisions,
             lambda: search_payload(normalized_q, bounded_limit,
                 known_revisions=observed['heads'], candidate_codes=observed['codes']))

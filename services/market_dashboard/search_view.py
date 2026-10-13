@@ -41,6 +41,12 @@ _lock = threading.Lock()
 _cache = OrderedDict()
 _identity_lock = threading.Lock()
 _identity_cache = OrderedDict()
+# Cache publication is short. A slow source query must not hold the cache lock
+# or prevent an exact observed generation from serving another search.
+_projection_build_locks = {
+    (ranking, key): threading.Lock()
+    for ranking in (False, True) for key in ('enriched', 'quotes')
+}
 MAX_RANK_CANDIDATES = 512
 
 
@@ -133,87 +139,111 @@ def _quote_delta(store, cached, paths=PATHS):
     return revision, projected, heads
 
 
-def _light_map(store, key, revision, paths=PATHS):
+def _light_map(store, key, revision, paths=PATHS, *, observed_heads=None):
     identity = (store, key)
-    cache, lock = (_cache, _lock) if paths == PATHS else (_identity_cache, _identity_lock)
-    with timings.timed_lock(lock, 'search_lock'):
-        cached = cache.get(identity)
-        if revision is not None and cached and cached[0] == revision:
-            cache.move_to_end(identity)
-            return cached[1]
-        if key == 'quotes' and cached:
-            incremental = _quote_delta(store, cached, paths)
-            if incremental is not None:
-                cache[identity] = incremental
+    ranking = paths == PATHS
+    cache, lock = (_cache, _lock) if ranking else (_identity_cache, _identity_lock)
+
+    def current():
+        with timings.timed_lock(lock, 'search_lock'):
+            cached = cache.get(identity)
+            if revision is not None and cached and cached[0] == revision:
                 cache.move_to_end(identity)
-                return incremental[1]
-            if paths == PATHS:
+                return cached
+        return None
+
+    def observed(snapshot):
+        # Values and their heads are one immutable generation. A later builder
+        # cannot replace the provenance of identities already used for matching.
+        if observed_heads is not None:
+            observed_heads[key] = snapshot[2]
+        return snapshot[1]
+
+    cached = current()
+    if cached is not None:
+        return observed(cached)
+    build_lock = _projection_build_locks[(ranking, key)]
+    with timings.timed_lock(build_lock, 'search_lock'):
+        cached = current()
+        if cached is not None:
+            return observed(cached)
+        with timings.timed_lock(lock, 'search_lock'):
+            cached = cache.get(identity)
+        snapshot = _quote_delta(store, cached, paths) if key == 'quotes' and cached else None
+        if snapshot is None:
+            if key == 'quotes' and cached and ranking:
                 timings.count('search_fallback')
-        sqlite = store.engine.dialect.name == 'sqlite'
-        entries = ("SELECT e.key AS code, e.value AS value, 0 AS priority, NULL AS item_revision "
-                   "FROM market_snapshots s JOIN json_each(s.payload) e ON true "
-                   "WHERE s.key = :key" if sqlite else
-                   "SELECT e.key AS code, e.value AS value, 0 AS priority, NULL AS item_revision "
-                   "FROM market_snapshots s CROSS JOIN LATERAL "
-                   "jsonb_each(s.payload::jsonb) e WHERE s.key = :key")
-        if key == 'quotes':
-            value = 'payload' if sqlite else 'payload::jsonb'
-            entries += (f" UNION ALL SELECT substr(key, 7), {value}, 1, updated_at "
-                        "FROM market_snapshots WHERE key LIKE 'quote:%'")
-        # Include an empty sentinel so even an empty/deleted source has a head
-        # observation in this very SELECT, without a second revision query.
-        empty = "'{}'" if sqlite else "'{}'::jsonb"
-        entries += f' UNION ALL SELECT NULL, {empty}, -1, NULL'
-        columns = _columns(sqlite, paths)
-        if key == 'enriched' and paths == IDENTITY_PATHS:
-            from .enriched_view import PREFIX, STATE
-            generation = ("json_extract(payload, '$.source_revision')" if sqlite else
-                          "payload::jsonb ->> 'source_revision'")
-            # Observe per-company heads with these actual identity values, not
-            # in one additional version query for every concurrent search.
-            valid = (f"(SELECT {generation} FROM market_snapshots WHERE key = '{STATE}') "
-                     '= (SELECT updated_at FROM heads WHERE key = :key)')
-            item_head = ("(SELECT updated_at FROM market_snapshots "
-                         f"WHERE key = '{PREFIX}' || entries.code)")
-            columns.append(f"CASE WHEN {valid} THEN COALESCE({item_head}, 'enriched-item:missing') "
-                           'ELSE (SELECT updated_at FROM heads WHERE key = :key) END')
-        columns.extend(("(SELECT updated_at FROM heads WHERE key = :key)",
-                        "(SELECT updated_at FROM heads WHERE key = 'quote-book')",
-                        'item_revision'))
-        statement = text("WITH heads AS (SELECT key, updated_at FROM market_snapshots "
-                         "WHERE key IN (:key, 'quote-book')), entries AS (" + entries
-                         + ') SELECT ' + ', '.join(columns)
-                         + ' FROM entries ORDER BY priority')
-        records = _records(store, statement, {'key': key})
-        if paths == PATHS:
-            timings.count('search_full')
-        projected = _decode(records, sqlite, paths)
-        observed_revision = records[0][-3]
-        heads = {}
-        if key == 'quotes':
-            from .quote_store import book_revision
-            heads = {key: value for key, value in (('quotes', observed_revision),
-                     ('quote-book', records[0][-2])) if value is not None}
-            heads.update({'quote:' + record[0]: record[-1] for record in records
-                          if record[-1] is not None})
-            observed_revision = book_revision(observed_revision, records[0][-2])
-        elif key == 'enriched' and paths == IDENTITY_PATHS:
-            # The empty sentinel also resolves a missing company without a
-            # separate read. Invalid/unprepared projections retain the global
-            # legacy dependency, as Store.item_revisions does.
-            heads = {'default-enriched-item':next(record[-4] for record in records if record[0] is None)}
-            heads.update({'enriched-item:' + record[0]:record[-4] for record in records
-                          if record[0] is not None})
-        # Attach only the source heads observed with the actual projected values.
-        if observed_revision is not None:
-            cache[identity] = (observed_revision, projected, heads)
-            cache.move_to_end(identity)
-            while len(cache) > 4:
-                cache.popitem(last=False)
-        return projected
+            snapshot = _light_snapshot(store, key, paths)
+        if snapshot[0] is not None:
+            with timings.timed_lock(lock, 'search_lock'):
+                cache[identity] = snapshot
+                cache.move_to_end(identity)
+                while len(cache) > 4:
+                    cache.popitem(last=False)
+        return observed(snapshot)
 
 
-def identity_candidates(store, universe, query, revisions):
+def _light_snapshot(store, key, paths):
+    sqlite = store.engine.dialect.name == 'sqlite'
+    entries = ("SELECT e.key AS code, e.value AS value, 0 AS priority, NULL AS item_revision "
+               "FROM market_snapshots s JOIN json_each(s.payload) e ON true "
+               "WHERE s.key = :key" if sqlite else
+               "SELECT e.key AS code, e.value AS value, 0 AS priority, NULL AS item_revision "
+               "FROM market_snapshots s CROSS JOIN LATERAL "
+               "jsonb_each(s.payload::jsonb) e WHERE s.key = :key")
+    if key == 'quotes':
+        value = 'payload' if sqlite else 'payload::jsonb'
+        entries += (f" UNION ALL SELECT substr(key, 7), {value}, 1, updated_at "
+                    "FROM market_snapshots WHERE key LIKE 'quote:%'")
+    # Include an empty sentinel so even an empty/deleted source has a head
+    # observation in this very SELECT, without a second revision query.
+    empty = "'{}'" if sqlite else "'{}'::jsonb"
+    entries += f' UNION ALL SELECT NULL, {empty}, -1, NULL'
+    columns = _columns(sqlite, paths)
+    if key == 'enriched' and paths == IDENTITY_PATHS:
+        from .enriched_view import PREFIX, STATE
+        generation = ("json_extract(payload, '$.source_revision')" if sqlite else
+                      "payload::jsonb ->> 'source_revision'")
+        # Observe per-company heads with these actual identity values, not
+        # in one additional version query for every concurrent search.
+        valid = (f"(SELECT {generation} FROM market_snapshots WHERE key = '{STATE}') "
+                 '= (SELECT updated_at FROM heads WHERE key = :key)')
+        item_head = ("(SELECT updated_at FROM market_snapshots "
+                     f"WHERE key = '{PREFIX}' || entries.code)")
+        columns.append(f"CASE WHEN {valid} THEN COALESCE({item_head}, 'enriched-item:missing') "
+                       'ELSE (SELECT updated_at FROM heads WHERE key = :key) END')
+    columns.extend(("(SELECT updated_at FROM heads WHERE key = :key)",
+                    "(SELECT updated_at FROM heads WHERE key = 'quote-book')",
+                    'item_revision'))
+    statement = text("WITH heads AS (SELECT key, updated_at FROM market_snapshots "
+                     "WHERE key IN (:key, 'quote-book')), entries AS "
+                     + ('' if sqlite else 'MATERIALIZED ') + '(' + entries
+                     + ') SELECT ' + ', '.join(columns)
+                     + ' FROM entries ORDER BY priority')
+    records = _records(store, statement, {'key': key})
+    if paths == PATHS:
+        timings.count('search_full')
+    projected = _decode(records, sqlite, paths)
+    observed_revision = records[0][-3]
+    heads = {}
+    if key == 'quotes':
+        from .quote_store import book_revision
+        heads = {key: value for key, value in (('quotes', observed_revision),
+                 ('quote-book', records[0][-2])) if value is not None}
+        heads.update({'quote:' + record[0]: record[-1] for record in records
+                      if record[-1] is not None})
+        observed_revision = book_revision(observed_revision, records[0][-2])
+    elif key == 'enriched' and paths == IDENTITY_PATHS:
+        # The empty sentinel also resolves a missing company without a
+        # separate read. Invalid/unprepared projections retain the global
+        # legacy dependency, as Store.item_revisions does.
+        heads = {'default-enriched-item':next(record[-4] for record in records if record[0] is None)}
+        heads.update({'enriched-item:' + record[0]:record[-4] for record in records
+                      if record[0] is not None})
+    return observed_revision, projected, heads
+
+
+def identity_candidates(store, universe, query, revisions, *, observed_heads=None):
     """Identify a bounded match set without loading financial or ranking fields.
 
     Broad/empty queries retain the market-wide ranking contract. Quote aliases
@@ -223,8 +253,10 @@ def identity_candidates(store, universe, query, revisions):
         return None
     from .service_scope import universe_view
 
-    details = _light_map(store, 'enriched', revisions.get('enriched'), IDENTITY_PATHS)
-    quotes = _light_map(store, 'quotes', revisions.get('quotes'), IDENTITY_PATHS)
+    details = _light_map(store, 'enriched', revisions.get('enriched'), IDENTITY_PATHS,
+                         observed_heads=observed_heads)
+    quotes = _light_map(store, 'quotes', revisions.get('quotes'), IDENTITY_PATHS,
+                        observed_heads=observed_heads)
     codes = []
     for base in universe_view(universe)['rows']:
         code = base['code']
@@ -240,13 +272,17 @@ def identity_candidates(store, universe, query, revisions):
     return tuple(codes)
 
 
-def candidate_dependencies(store, codes, revisions):
+def candidate_dependencies(store, codes, revisions, *, observed_heads=None):
     """Reuse the exact quote heads observed with the identity projection."""
-    with _identity_lock:
-        cached = _identity_cache.get((store, 'quotes'))
-        quote_heads = dict(cached[2]) if cached else {}
-        enriched = _identity_cache.get((store, 'enriched'))
-        enriched_heads = dict(enriched[2]) if enriched else {}
+    if observed_heads is not None:
+        quote_heads = observed_heads.get('quotes', {})
+        enriched_heads = observed_heads.get('enriched', {})
+    else:
+        with _identity_lock:
+            cached = _identity_cache.get((store, 'quotes'))
+            quote_heads = cached[2] if cached else {}
+            enriched = _identity_cache.get((store, 'enriched'))
+            enriched_heads = enriched[2] if enriched else {}
     result = {key: revisions[key] for key in ('universe',) if key in revisions}
     # A normal enrichment update in another company must not invalidate this
     # response. Store resolves item heads against the legacy projection state.

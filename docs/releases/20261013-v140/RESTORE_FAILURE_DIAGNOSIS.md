@@ -96,3 +96,16 @@ PG는 속성이 같아도 서로 다른 collation 객체를 같은 것으로 취
 5. 원인이 Windows 임시 stage 할당으로 확인되면 bounded native COPY stage의 처리/정리 수명만 변경합니다. 원본·400행/16MiB framing·frozen codec·exact keys·canonical 비교·최종 전체 hash gate는 변경하지 않습니다. 어떤 대안도 fixture 통과만으로 실제 복원 완료라 하지 않습니다.
 
 **종료 판단:** 실제 원본 17,014,175행·8,071개 원본 참조와 전체 ordered hash가 일치하고 supervised child 및 클러스터 종료를 확인한 새 RESULT가 있어야 복원 통과입니다. 현재는 원본과 기존 partial DB가 보존된 **미완료** 상태입니다.
+
+## 5. 최종 정렬 어댑터 보완 — 구현과 실제 검증 구분
+
+`indexed_counts.py`에 별도 명시 wrapper를 추가하고 `indexed_resume.py`의 연결 전달만 감쌌습니다. **`ordered_verify.py`·`local_restore.py`의 원래 최종 SQL과 전체 해시 검증 함수, frozen `copy_stream.py`·`checkpoint.py`·`delta_archive.py`는 변경하지 않았습니다.**
+
+- 정확히 일치하는 복원 대상의 rows/trace/original inventory SQL 세 종류만 명시 C 정렬에서 기본 열 정렬로 전달합니다. 다른 SQL, source 대상, distinct series 키의 기존 C 정렬은 그대로 전달합니다.
+- managed READ ONLY REPEATABLE READ/serializable transaction마다 owned PG17·UTF8·libc default C·열/PK collation 계약을 다시 확인합니다. 이 조건에서 두 정렬의 의미가 같더라도 실제 계획은 따로 확인합니다.
+- 모든 실제 rows ordering 호출은 **그 호출의 실제 series 파라미터**로 unforced EXPLAIN을 수행합니다. 빈 series 또는 이전 series의 계획을 다른 구간에 재사용하지 않습니다. 허용하는 계획은 검증한 PK의 직접 Forward Index/Index Only Scan이며 Sort/Seq Scan/역방향 등은 거부합니다.
+- trace 전체/원본 키의 작은 Sort가 합리적일 수 있지만 현재 정책은 엄격한 거부입니다. 이를 데이터 손상으로 보고하지 않고 `final_order_index_plan_required` 계약 오류로 남깁니다. 실제 데이터의 계획을 확인한 뒤 별도 공간·시간 근거가 있을 때 정책을 재검토해야 합니다.
+- named cursor의 실행·fetch·닫기 및 transaction의 반환값/rollback 의미를 보존합니다. 예외·취소 시 증거를 refused로 남기고 실제 원래 ordering SELECT를 실행하지 않습니다. EXPLAIN에는 ANALYZE·LIMIT·planner forcing을 추가하지 않으며 payload·파라미터 값을 증거에 보존하지 않습니다.
+- `final_order_index_contract`는 최대 세 종류의 계획 요약과 검사 수를 보존합니다. **`restore_verified/ordered_hash_verified/source_references_verified=false`를 유지**하며 최종 원래 검증기가 모든 행·참조·canonical hash를 검사합니다.
+
+검증은 `test_market_compact_final_order.py`의 명시된 비운영 fake DB/catalog/plan으로 수행합니다. canonical/hash 동일성, 실제 파라미터별 계획, catalog·collation 변경, 비정상 계획, 예외/취소/rollback 및 기존 연결 wrapper 호환을 확인했습니다. 관련 6개 fixture 파일은 **217개 통과(5.01초)**, 새 어댑터·연결 integration·테스트의 Ruff는 통과했습니다. 실제 owned PG 시작·DB query·복원·최종 전체 hash를 실행하지 않았으므로 **실제 계획 통과와 종합 복원은 여전히 미검증**입니다.

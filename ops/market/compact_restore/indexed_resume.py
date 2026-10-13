@@ -1,8 +1,12 @@
 """Owned PG17 resume with proven default-C index pages; offline by default.
 
-This connection adapter changes only the four bounded checkpoint-count SELECTs.
-The existing replay, source-reference, ordered-hash and resource gates remain
-in resume_restore. No runtime monkeypatch, index creation or planner forcing.
+Explicit connection adapters change four bounded checkpoint-count SELECTs and
+three exact final-order statements, including their named-cursor delivery.
+Owned PG17 UTF8/default-C catalogs and unforced plans gate each translation.
+An explicit prefix sink reuses native COPY stages and verified trace decoding.
+The frozen final verifier, canonical hash and source-reference/resource gates
+remain unchanged; adapter plan evidence is never whole-restore proof.
+No runtime monkeypatch, index creation or planner forcing.
 """
 
 from __future__ import annotations
@@ -13,6 +17,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from . import resume_restore as resume
+from .indexed_counts import FinalOrderConnection
 from .optimized_prefix_replay import restore_with_prefix_sink
 
 TRACE_FIRST = resume.TRACE_COUNT_PAGE + 'ORDER BY digest COLLATE "C" LIMIT %s'
@@ -162,7 +167,9 @@ class IndexedResumeRestore(resume.ResumeRestore):
     def connect(self, database=resume.local.DATABASE):
         # The inherited connection validates the owned local cluster identity.
         with super().connect(database) as db:
-            yield IndexedCountConnection(db, data=self.data, budget=self.budget, report=self.report)
+            yield FinalOrderConnection(
+                IndexedCountConnection(db, data=self.data, budget=self.budget, report=self.report),
+            )
 
 
 def main(argv=None):
