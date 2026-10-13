@@ -13,6 +13,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from . import resume_restore as resume
+from .optimized_prefix_replay import restore_with_prefix_sink
 
 TRACE_FIRST = resume.TRACE_COUNT_PAGE + 'ORDER BY digest COLLATE "C" LIMIT %s'
 TRACE_NEXT = (resume.TRACE_COUNT_PAGE + 'WHERE digest COLLATE "C" > %s COLLATE "C" '
@@ -154,6 +155,9 @@ class IndexedCountConnection:
 
 
 class IndexedResumeRestore(resume.ResumeRestore):
+    def restore(self, manifest):
+        return restore_with_prefix_sink(self, manifest)
+
     @contextmanager
     def connect(self, database=resume.local.DATABASE):
         # The inherited connection validates the owned local cluster identity.

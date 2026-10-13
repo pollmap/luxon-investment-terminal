@@ -3,6 +3,7 @@
 import json
 import threading
 from collections import OrderedDict
+from functools import lru_cache
 
 from sqlalchemy import Text, String, bindparam, case, cast, column, func, literal, select, text, values
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
@@ -28,10 +29,19 @@ COMPACT_PATHS = tuple((key,) for key in (
 )) + tuple(('facts', key) for key in ('price', 'change', 'volume', 'value')) + (
     ('daily_facts', 'volume'), ('daily_facts', 'value'),
 )
+SUMMARY_PATHS = tuple((key,) for key in (
+    'code','name','aliases','market','sector','logo_url','price','change','as_of','received_at',
+    'market_status','volume','value','cap','foreign','per','pbr','roe','dividend',
+    'source_trace','quote_trace','facts','daily_facts','company',
+)) + tuple(('facts',key) for key in (
+    'price','change','volume','value','cap','foreign','per','pbr','roe','dividend',
+)) + (('daily_facts','volume'),('daily_facts','value')) + tuple(
+    ('company',key) for key in ('products','sector','listed_at'))
 _lock = threading.Lock()
 _cache = OrderedDict()
 _identity_lock = threading.Lock()
 _identity_cache = OrderedDict()
+MAX_RANK_CANDIDATES = 512
 
 
 def _columns(sqlite, paths=PATHS):
@@ -97,7 +107,7 @@ def _quote_delta(store, cached, paths=PATHS):
     changed = [key for key, revision in heads.items()
                if key.startswith('quote:') and previous.get(key) != revision]
     # Large bursts use one full projection rather than expanding a huge IN list.
-    if len(changed) > 30:
+    if len(changed) > (30 if paths == PATHS else MAX_RANK_CANDIDATES):
         return None
     sqlite = store.engine.dialect.name == 'sqlite'
     rows = []
@@ -118,9 +128,8 @@ def _quote_delta(store, cached, paths=PATHS):
     revision = book_revision(heads.get('quotes'), heads.get('quote-book'))
     projected = dict(cached[1])
     projected.update(_decode(rows, sqlite, paths))
-    if paths == PATHS:
-        timings.count('search_delta')
-        timings.count('search_delta_rows', len(rows))
+    timings.count('search_delta')
+    timings.count('search_delta_rows', len(rows))
     return revision, projected, heads
 
 
@@ -186,7 +195,7 @@ def _light_map(store, key, revision, paths=PATHS):
 
 
 def identity_candidates(store, universe, query, revisions):
-    """Identify at most 30 matches without loading financial or ranking fields.
+    """Identify a bounded match set without loading financial or ranking fields.
 
     Broad/empty queries retain the market-wide ranking contract. Quote aliases
     remain searchable, including legacy writes and stale public quote rejection.
@@ -207,7 +216,7 @@ def identity_candidates(store, universe, query, revisions):
             quote = {}
         if matches_security({**base, **details.get(code, {}), **quote}, query):
             codes.append(code)
-            if len(codes) > 30:
+            if len(codes) > MAX_RANK_CANDIDATES:
                 return None
     return tuple(codes)
 
@@ -217,7 +226,10 @@ def candidate_dependencies(store, codes, revisions):
     with _identity_lock:
         cached = _identity_cache.get((store, 'quotes'))
         quote_heads = dict(cached[2]) if cached else {}
-    result = {key: revisions[key] for key in ('universe', 'enriched') if key in revisions}
+    result = {key: revisions[key] for key in ('universe',) if key in revisions}
+    # A normal enrichment update in another company must not invalidate this
+    # response. Store resolves item heads against the legacy projection state.
+    result.update(timings.read_revisions(store, tuple('enriched-item:' + code for code in codes)))
     result['candidate-codes'] = json.dumps(codes, separators=(',', ':'))
     for code in codes:
         key = 'quote:' + code
@@ -236,6 +248,10 @@ def candidates(store, universe, query, limit, revisions):
         return {'rows': [], 'total': 0}
     details = _light_map(store, 'enriched', revisions.get('enriched'))
     quotes = _light_map(store, 'quotes', revisions.get('quotes'))
+    return _rank_identities(bases, details, quotes, query, limit)
+
+
+def _rank_identities(bases, details, quotes, query, limit):
     rows = []
     for base in bases:
         code = base['code']
@@ -257,13 +273,36 @@ def candidates(store, universe, query, limit, revisions):
 
 def selected_inputs(store, codes, *, compact=False):
     """Hydrate at most 30 companies in one snapshot, including legacy fallbacks."""
+    return _selected_inputs(store, codes, compact=compact)
+
+
+def summary_inputs(store, code):
+    """The summary does not decode lifetime company history on every price tick."""
+    return _selected_inputs(store, (code,), compact=True, paths=SUMMARY_PATHS)
+
+
+def rank_candidates(store, identities, codes, query, limit):
+    """Read ordering facts only for matches; hydrate only the eventual top 30."""
+    details, quotes = _selected_inputs(store, codes, compact=True, paths=PATHS,
+                                       maximum=MAX_RANK_CANDIDATES)
+    return _rank_identities([identities[code] for code in codes], details, quotes, query, limit)
+
+
+def _selected_inputs(store, codes, *, compact=False, paths=COMPACT_PATHS, maximum=30):
     from .enriched_view import PREFIX, STATE
 
     codes = tuple(dict.fromkeys(codes))
     if not codes:
         return {}, {}
-    if len(codes) > 30:
-        raise ValueError('Search hydration is limited to 30 securities')
+    if len(codes) > maximum:
+        raise ValueError(f'Search projection is limited to {maximum} securities')
+    if compact:
+        sqlite = store.engine.dialect.name == 'sqlite'
+        params = {'codes':json.dumps(codes) if sqlite else list(codes)}
+        records = _records(store, _compact_statement(sqlite, paths), params)
+        width = len(paths) * 2
+        return (_decode([(row[0], *row[1:1+width]) for row in records],sqlite,paths),
+                _decode([(row[0], *row[1+width:]) for row in records],sqlite,paths))
     requested = values(column('code', String)).data([(code,) for code in codes]).cte('requested')
     source = store.snapshots.alias('enriched_source')
     state = store.snapshots.alias('enriched_state')
@@ -292,35 +331,6 @@ def selected_inputs(store, codes, *, compact=False):
         .outerjoin(detail, detail.c.key == literal(PREFIX) + requested.c.code)
         .outerjoin(legacy, legacy.c.key == 'quotes')
         .outerjoin(quote, quote.c.key == literal('quote:') + requested.c.code))
-    if compact:
-        selected = query.cte('search_selected')
-        if store.engine.dialect.name == 'postgresql':
-            # Evaluate the bounded legacy/projection choice once per selected
-            # company, not once for every JSON path in the compact projection.
-            selected = selected.prefix_with('MATERIALIZED')
-        sqlite = store.engine.dialect.name == 'sqlite'
-        columns = [selected.c.code]
-        for field in (selected.c.detail, selected.c.quote):
-            for path in COMPACT_PATHS:
-                if sqlite:
-                    location = '$.' + '.'.join(path)
-                    value = func.json_extract(field, location)
-                    kind = func.json_type(field, location)
-                    if path in (('facts',), ('daily_facts',)):
-                        value = case((kind == 'object', literal('{}')), else_=value)
-                    columns.extend((value, kind))
-                else:
-                    value = field.op('#>')(cast(list(path), ARRAY(Text)))
-                    kind = func.jsonb_typeof(value)
-                    if path in (('facts',), ('daily_facts',)):
-                        value = case((kind == 'object', cast(literal('{}'), JSONB)), else_=value)
-                    columns.extend((value, kind))
-        records = _records(store, select(*columns))
-        width = len(COMPACT_PATHS) * 2
-        return (
-            _decode([(row[0], *row[1:1 + width]) for row in records], sqlite, COMPACT_PATHS),
-            _decode([(row[0], *row[1 + width:]) for row in records], sqlite, COMPACT_PATHS),
-        )
     records = _records(store, query)
     details, quotes = {}, {}
     with timings.stage('search_decode'):
@@ -329,3 +339,45 @@ def selected_inputs(store, codes, *, compact=False):
                              else detail_raw or {})
             quotes[code] = json.loads(quote_raw) if isinstance(quote_raw, str) else quote_raw or {}
     return details, quotes
+
+
+@lru_cache(maxsize=8)
+def _compact_statement(sqlite, paths):
+    """Reuse a fixed bound query, avoiding hundreds of expression compilations.
+
+    Paths are internal constants. Only the code array is supplied by callers;
+    legacy JSON/projection validity is chosen once per requested company.
+    """
+    from .enriched_view import PREFIX, STATE
+    requested = ('SELECT value AS code FROM json_each(:codes)' if sqlite else
+                 'SELECT unnest(CAST(:codes AS text[])) AS code')
+    generation = ("json_extract(state.payload, '$.source_revision')" if sqlite else
+                  "state.payload::jsonb ->> 'source_revision'")
+    detail = 'detail.payload' if sqlite else 'detail.payload::jsonb'
+    quote = 'quote.payload' if sqlite else 'quote.payload::jsonb'
+    old_detail = ("json_extract(source.payload, '$.\"' || requested.code || '\"')" if sqlite else
+                  'source.payload::jsonb -> requested.code')
+    old_quote = ("json_extract(legacy.payload, '$.\"' || requested.code || '\"')" if sqlite else
+                 'legacy.payload::jsonb -> requested.code')
+    columns = ['code']
+    for field in ('detail', 'quote'):
+        for path in paths:
+            location = '$.' + '.'.join(path) if sqlite else '{' + ','.join(path) + '}'
+            value = f"json_extract({field}, '{location}')" if sqlite else f"{field} #> '{location}'"
+            kind = f"json_type({field}, '{location}')" if sqlite else f'jsonb_typeof({value})'
+            if path in (('facts',), ('daily_facts',), ('company',)):
+                empty = "'{}'" if sqlite else "'{}'::jsonb"
+                value = f"CASE WHEN {kind} = 'object' THEN {empty} ELSE {value} END"
+            columns.extend((value, kind))
+    sql = (f'WITH requested AS ({requested}), search_selected AS MATERIALIZED ('
+           f'SELECT requested.code, CASE WHEN {generation} = source.updated_at THEN {detail} '
+           f'ELSE {old_detail} END AS detail, CASE WHEN quote.key IS NOT NULL THEN {quote} '
+           f'ELSE {old_quote} END AS quote FROM requested '
+           "LEFT JOIN market_snapshots source ON source.key = 'enriched' "
+           f"LEFT JOIN market_snapshots state ON state.key = '{STATE}' "
+           f"LEFT JOIN market_snapshots detail ON detail.key = '{PREFIX}' || requested.code "
+           "LEFT JOIN market_snapshots legacy ON legacy.key = 'quotes' "
+           "LEFT JOIN market_snapshots quote ON quote.key = 'quote:' || requested.code) "
+           'SELECT ' + ', '.join(columns) + ' FROM search_selected')
+    statement = text(sql)
+    return statement if sqlite else statement.bindparams(bindparam('codes',type_=ARRAY(Text)))

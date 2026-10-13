@@ -145,6 +145,32 @@ def test_historical_floor_is_preserved_with_explicit_reason(releases):
     ]
 
 
+@pytest.mark.parametrize("measure_bytes", [False, True])
+def test_operator_rollback_is_kept_after_latest_two_and_reader_floor_advance(releases, measure_bytes):
+    root, _, containers = releases
+    document(root / "shared/data/storage-format.json", {
+        "version": 1, "rollback_floor": "20261009-test-v7",
+        "operator_rollback_releases": ["20261009-test-v1"],
+    })
+    state = retention.inventory(measure_bytes=measure_bytes, containers=containers)
+    assert "20261009-test-v1" in state["keep"]
+    assert "20261009-test-v1" not in {row["name"] for row in state["candidates"]}
+    assert state["protected_reasons"]["20261009-test-v1"] == ["operator_rollback_release"]
+
+
+@pytest.mark.parametrize("reserved", [None, "20261009-test-v1", {}, ["../outside"],
+                                      ["20261009-missing"], [12]])
+def test_malformed_operator_rollback_reference_refuses_cleanup(releases, reserved):
+    root, _, containers = releases
+    document(root / "shared/data/storage-format.json", {
+        "version": 1, "rollback_floor": "20261009-test-v7",
+        "operator_rollback_releases": reserved,
+    })
+    with pytest.raises(ValueError):
+        retention.inventory(containers=containers)
+    assert len(list((root / "releases").iterdir())) == 8
+
+
 def test_null_historical_floor_is_allowed_but_null_active_reader_is_not(releases):
     root, _, containers = releases
     path = root / "shared/data/storage-format.json"

@@ -71,7 +71,7 @@ def test_exact_counts_keep_replay_and_final_hash_gates(monkeypatch, tmp_path):
     assert counts and all('COLLATE' not in sql for sql, _ in counts)
     assert all(params[-1] == 2 for _, params in counts)
     assert all(sql.startswith(('SELECT', 'EXPLAIN')) for sql, _ in db.calls)
-    assert m.IndexedResumeRestore.restore is m.resume.ResumeRestore.restore
+    assert m.IndexedResumeRestore.restore is not m.resume.ResumeRestore.restore
     assert m.IndexedResumeRestore.run is m.resume.ResumeRestore.run
     assert m.IndexedResumeRestore.final_verify is m.resume.ResumeRestore.final_verify
 

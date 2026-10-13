@@ -88,7 +88,8 @@ def test_search_matches_existing_list_semantics_without_full_hydration(source, m
     finally:
         event.remove(source.engine, 'before_cursor_execute', sql)
     assert sizes == [len(expected['rows'])]
-    assert len(selections) == (1 if expected['rows'] else 0)
+    # Broad matched names rank their bounded candidate set before result hydration.
+    assert len(selections) == (2 if query in ('삼성', 'ㅅㅅ') else 1 if expected['rows'] else 0)
     assert sizes[0] <= 30
 
 
@@ -137,6 +138,71 @@ def test_unrelated_quote_change_reuses_narrow_response_but_new_matching_alias_in
     asyncio.run(scenario())
 
 
+def test_broad_identity_matches_rank_only_candidates_and_hydrate_at_most_thirty(source, monkeypatch):
+    universe = source.get('universe')
+    universe['rows'] += [{'code':str(200000+i),'name':f'다른기업 fixture {i}', 'market':'KOSPI',
+                         'value':1,'as_of':'2026-10-08','source_trace':{'source':'fixture_non_production'}}
+                        for i in range(200)]
+    source.put('universe', universe)
+    # Both identity fields and selected-source versions must remain compatible.
+    source.update_quote('100079', {'price':179,'as_of':'2026-10-08','quote_trace':{'source':'toss'},
+                                   'daily_facts':{'value':{'value':9999,'period':'2026-10-08'}}})
+    def forbidden(*args, **kwargs):
+        raise AssertionError('An 80-match query must not prepare the entire ranking map')
+    monkeypatch.setattr(search_view, 'candidates', forbidden)
+    decoded, original = [], search_view._decode
+    def capture(records, sqlite, paths=search_view.PATHS):
+        decoded.append((len(records), paths))
+        return original(records, sqlite, paths)
+    monkeypatch.setattr(search_view, '_decode', capture)
+    actual = market.search_payload('삼성', 1)
+    assert actual['total'] == 80 and actual['rows'][0]['code'] == '100079'
+    assert [count for count, paths in decoded if paths == search_view.PATHS] == [80, 80]
+    assert [count for count, paths in decoded if paths == search_view.COMPACT_PATHS] == [1, 1]
+
+
+def test_enrichment_of_other_company_reuses_candidate_response_but_selected_facts_invalidate(source, monkeypatch):
+    from services.market_dashboard.response_cache import InFlightResponses, RevisionReadBatcher, RevisionResponseCache
+    source.put('enriched', {'100000':{'aliases':['분리별칭']},'100001':{'facts':{'per':{'value':1}}}})
+    rebuild(source)
+    monkeypatch.setattr(market, '_search_responses', RevisionResponseCache())
+    monkeypatch.setattr(market, '_search_flights', InFlightResponses())
+    monkeypatch.setattr(market, '_revision_reads', RevisionReadBatcher())
+    original, calls = market.search_payload, []
+    def counted(*args, **kwargs):
+        calls.append(args[0]);return original(*args, **kwargs)
+    monkeypatch.setattr(market, 'search_payload', counted)
+    async def scenario():
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=market.app),base_url='http://fixture') as client:
+            url=market.BASE+'/search?q=분리별칭'
+            first=await client.get(url)
+            publish(source, {'code':'100001','facts':{'per':{'value':2}}})
+            second=await client.get(url)
+            assert first.content == second.content and len(calls) == 1
+            publish(source, {'code':'100000','facts':{'price':{'value':200}}})
+            third=await client.get(url)
+            assert third.json()['rows'][0]['price'] == 200 and len(calls) == 2
+    asyncio.run(scenario())
+
+
+def test_identity_burst_over_thirty_reads_only_changed_fields_without_full_projection(source):
+    source.update_quotes({str(100000+i):{'price':100+i,'as_of':'2026-10-08T09:00:00+09:00','quote_trace':{'source':'toss'}}
+                          for i in range(80)})
+    market.search_payload('별칭79', 1)
+    source.update_quotes({str(100000+i):{'price':200+i,'as_of':'2026-10-08T09:01:00+09:00','quote_trace':{'source':'toss'}}
+                          for i in range(40)})
+    statements=[]
+    def sql(_conn, _cursor, statement, _parameters, _context, _many):
+        statements.append(statement)
+    event.listen(source.engine,'before_cursor_execute',sql)
+    try:
+        result=market.search_payload('별칭79',1)
+    finally:
+        event.remove(source.engine,'before_cursor_execute',sql)
+    assert result['rows'][0]['code'] == '100079'
+    assert not any('json_each(s.payload)' in statement for statement in statements)
+
+
 def test_live_single_quote_refresh_projects_only_changed_row(source):
     source.put('quotes', {'100079': {'aliases': ['과거별칭']}})
     source.update_quote('100079', {'price': 179, 'as_of': '2026-10-08T09:00:00+09:00',
@@ -160,13 +226,42 @@ def test_live_single_quote_refresh_projects_only_changed_row(source):
     assert result['rows'][0]['price'] == 180
     assert record.counts['search_delta'] == record.counts['search_delta_rows'] == 1
     assert 'search_full' not in record.counts
-    assert not any('json_each' in statement for statement in statements)
+    assert not any('json_each(s.payload)' in statement for statement in statements)
     expected = apply_query(market.rows_with_details(check_revision=True)[0],
                            Query(q='삼성', limit=30))
     expected['rows'] = [compact(row) for row in expected['rows']]
     assert result == expected
     assert market.search_payload('과거별칭', 30)['total'] == 0
     assert market.search_payload('새로운별칭', 30)['rows'][0]['price'] == 180
+
+
+def test_summary_projection_preserves_first_screen_without_decoding_company_history(source, monkeypatch):
+    source.put('enriched', {'100000': {'company':{'products':['원문제품'],'sector':'원문산업',
+        'listed_at':'2000-01-01','unused_profile':['fixture_non_production']*2000},
+        'per':10,'cap':999,'facts':{'per':{'value':10,'period':'2026-10-08','unit':'배'}},
+        'unused_financial_history':['fixture_non_production']*2000}})
+    rebuild(source)
+    source.put('detail:100000',{'company':{'description':'원문 설명'},'financials':['fixture']*2000})
+    source.update_quote('100000',{'price':201,'change':2,'as_of':'2026-10-08T09:00:00+09:00',
+                                'quote_trace':{'source':'toss','fixture_non_production':True}})
+    expected=market.detail_snapshot(source,'100000','summary',row=market.security_row(source,'100000'))
+    import services.market_dashboard.enriched_view as enrichment
+    def forbidden(*args,**kwargs):
+        raise AssertionError('Summary decoded a full company/quote payload')
+    monkeypatch.setattr(enrichment,'read_item',forbidden)
+    monkeypatch.setattr(source,'get_quote',forbidden)
+    heads=source.revisions(('universe','enriched-item:100000','quote:100000'))
+    row=market.summary_row(source,'100000',heads)
+    assert 'unused_financial_history' not in row and 'unused_profile' not in row['company']
+    assert market.detail_snapshot(source,'100000','summary',row=row)==expected
+    # Updating price still uses the narrow read; another company cannot evict it.
+    publish(source,{'code':'100001','facts':{'per':{'value':99}}})
+    heads=source.revisions(('universe','enriched-item:100000','quote:100000'))
+    assert market.summary_row(source,'100000',heads) is row
+    source.update_quote('100000',{'price':202,'as_of':'2026-10-08T10:00:00+09:00',
+                                'quote_trace':{'source':'toss','fixture_non_production':True}})
+    heads=source.revisions(('universe','enriched-item:100000','quote:100000'))
+    assert market.summary_row(source,'100000',heads)['price']==202
 
 
 @pytest.mark.parametrize('change', ['legacy', 'deleted', 'large_batch'])
@@ -405,11 +500,11 @@ def test_postgres_compact_paths_bind_as_text_arrays(source, monkeypatch):
     compiled = observed[0]
     path_binds = [compiled.binds[name] for name in compiled.params
                   if isinstance(compiled.binds[name].type, ARRAY)]
-    assert len(path_binds) == 2 * len(search_view.COMPACT_PATHS)
+    assert len(path_binds) == 1  # One typed code array; JSON paths are fixed internal literals.
     assert all(isinstance(bind.type.item_type, Text) for bind in path_binds)
-    assert all(isinstance(bind.value, list) for bind in path_binds)
     sql = str(compiled)
-    assert sql.count('#> CAST(') == sql.count('#>')
+    assert '100000' not in sql and 'unnest(CAST(' in sql
+    assert sql.count('#>') >= 2 * len(search_view.COMPACT_PATHS)
     assert all(f'%({name})s::TEXT[]' in sql for name in compiled.params
                if isinstance(compiled.binds[name].type, ARRAY))
     assert 'search_selected AS MATERIALIZED' in str(compiled)

@@ -143,6 +143,12 @@ def storage_release_references(contract, root):
     previous = contract.get("previous_rollback_floor")
     if previous is not None:
         references.append((previous, "storage_previous_rollback_floor_historical"))
+    # Explicit operator rollback commitments survive changes to automatic
+    # latest-two retention and to the storage reader floor.
+    reserved = contract.get("operator_rollback_releases", [])
+    if not isinstance(reserved, list):
+        raise ValueError("Operator rollback releases must be a list")
+    references.extend((name, "operator_rollback_release") for name in reserved)
     for name, _ in references:
         if not isinstance(name, str) or not RELEASE_NAME.fullmatch(name):
             raise ValueError("Storage release reference is missing or invalid")

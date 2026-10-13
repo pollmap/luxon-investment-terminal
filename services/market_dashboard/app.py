@@ -579,6 +579,31 @@ def security_row(store, code, *, include_quote=True, revisions=None):
     return selected[0]
 
 
+def summary_row(store, code, revisions):
+    """Assemble the first-screen projection in one bounded, reusable SQL read."""
+    from .search_view import summary_inputs
+    source_keys = ('universe', f'enriched-item:{code}', f'quote:{code}')
+    source_revision = tuple((key,revisions.get(key)) for key in source_keys)
+    identity = (store,code,'summary')
+    with _security_rows_lock:
+        cached = _security_rows.get(identity)
+        if cached and cached[0] == source_revision:
+            _security_rows.move_to_end(identity)
+            return cached[1]
+    _, identities = universe_inputs(store,revisions.get('universe'))
+    base = identities.get(code)
+    if base is None:
+        raise HTTPException(404,'수집된 종목 목록에서 찾을 수 없습니다.')
+    details,quotes = summary_inputs(store,code)
+    selected,_ = assemble_rows(store,({'rows':[base]},details,quotes))
+    with _security_rows_lock:
+        _security_rows[identity] = (source_revision,selected[0])
+        _security_rows.move_to_end(identity)
+        while len(_security_rows)>256:
+            _security_rows.popitem(last=False)
+    return selected[0]
+
+
 @app.get(BASE + "/health")
 async def health():
     store = get_store()
@@ -938,14 +963,15 @@ async def search(request: Request, q: str = "", limit: int = 12):
 
 
 def search_payload(query, limit, *, known_revisions=None, candidate_codes=None):
-    from .search_view import candidates, identity_candidates, selected_inputs
+    from .search_view import candidates, identity_candidates, rank_candidates, selected_inputs
     store = get_store()
     heads = known_revisions if known_revisions is not None else timings.read_revisions(
         store, ('universe', 'enriched', 'quotes'))
     universe, identities = universe_inputs(store, heads.get('universe'))
     if candidate_codes is None:
         candidate_codes = identity_candidates(store, universe, query, heads)
-    result = candidates(store, universe, query, limit, heads) if candidate_codes is None else None
+    result = (candidates(store, universe, query, limit, heads) if candidate_codes is None else
+              rank_candidates(store, identities, candidate_codes, query, limit) if len(candidate_codes) > 30 else None)
     codes = [row['code'] for row in result['rows']] if result is not None else candidate_codes
     details, quotes = selected_inputs(store, codes, compact=True)
     selected, _ = assemble_rows(store, (
@@ -1011,7 +1037,8 @@ async def security(code: str, request: Request, background_tasks: BackgroundTask
             source_keys = ('universe', f'enriched-item:{code}') + ((f'quote:{code}',) if include_quote else ())
             heads = first_heads if first_heads is not None else timings.read_revisions(store, (*dependencies, *source_keys))
             first_heads = None
-            row = security_row(store, code, include_quote=include_quote, revisions=heads)
+            row = (summary_row(store,code,heads) if view == 'summary' else
+                   security_row(store, code, include_quote=include_quote, revisions=heads))
             observed['row'] = row
             selected = row if view == 'full' else {
                 'security': summary_security(row) if view == 'summary' else {k: row.get(k) for k in ('code', 'name', 'market')},
