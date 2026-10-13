@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-13T15:12:11.489327+00:00",
+  "cluster_stopped": true,
+  "files": 1315,
+  "logical_bytes": 9399579381,
+  "allocated_file_data_bytes": 3587425013,
+  "compressed_files": 11,
+  "sparse_files": 0,
+  "drive_free_bytes": 14051143680,
+  "bytes_read_for_hash": 0,
+  "database_queries": 0,
+  "source_modified": false,
+  "scope": "Stopped file metadata only; cannot measure deleted-open allocations while former process ran"
+}

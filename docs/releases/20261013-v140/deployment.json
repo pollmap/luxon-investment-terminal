@@ -1,0 +1,19 @@
+{
+  "provenance": {
+    "release": "20261013-projection-restore-v140",
+    "source_commit": "6e7b6ce942801c1a7c8f5417efa0abf33e748ed6",
+    "ci_run": "https://github.com/pollmap/luxon-investment-terminal/actions/runs/38415136149",
+    "backend_archive_sha256": "83de6cf43332fd00aef15278cea8ce20798ac2a909af87a599053a3e2a913265",
+    "backend_image": "sha256:7bc9677197cbd1a5a92f3ee00d3b809494a37b09cf278fec5a8aa0304820c7a9",
+    "static_manifest_sha256": "6a20aefc4c751bd50fc1f9c73b6f5754c57a98b8471eb6ae0cd80a6aa54e3ef1",
+    "static_archive_sha256": "6bc323cd4be5cd068cf04f70e6de712a40846217806b961b1a1e43cab3c9488f",
+    "cloudflare_version": "05ef1d17-a441-42bd-badf-613120b0f813"
+  },
+  "marker_sha256": "bdb5e391158f52f42b2157ae62f4ae7c2154574eb1d0c529249d5cd8e70fcf60",
+  "current": "/srv/services/korea-stocks/releases/20261013-projection-restore-v140",
+  "disk_total": 154894188544,
+  "disk_free": 3819331584,
+  "disk_used": 151058079744,
+  "db_redis_restarted": false,
+  "raw_deleted": false
+}

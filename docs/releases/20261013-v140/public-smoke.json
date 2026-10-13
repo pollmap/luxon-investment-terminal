@@ -1,0 +1,33 @@
+{
+  "at": "2026-10-13T14:53:33.748284+00:00",
+  "source_commit": "6e7b6ce942801c1a7c8f5417efa0abf33e748ed6",
+  "release": "20261013-projection-restore-v140",
+  "passed": true,
+  "origins": [
+    {
+      "origin": "https://stocks.62-171-141-206.sslip.io",
+      "manifest_status": 200,
+      "manifest_matches": true,
+      "release": "20261013-projection-restore-v140",
+      "asset_status": 200,
+      "asset_matches": true,
+      "api_status": 200,
+      "api_release": "20261013-projection-restore-v140",
+      "internal_status": 404,
+      "orders_status": 404
+    },
+    {
+      "origin": "https://korea-stocks-edge.lch68-workers.workers.dev",
+      "manifest_status": 200,
+      "manifest_matches": true,
+      "release": "20261013-projection-restore-v140",
+      "asset_status": 200,
+      "asset_matches": true,
+      "api_status": 200,
+      "api_release": "20261013-projection-restore-v140",
+      "internal_status": 404,
+      "orders_status": 404
+    }
+  ],
+  "scope": "Selected HTTP/version/assets/access checks; not live receipt or load performance"
+}

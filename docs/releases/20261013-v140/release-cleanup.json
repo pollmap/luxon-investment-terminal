@@ -1,0 +1,43 @@
+{
+  "at": "2026-10-13T14:59:50.436756+00:00",
+  "applied": true,
+  "removed_release_count": 8,
+  "removed_names": [
+    "20261011-candle-research-v128",
+    "20261011-candle-research-v129",
+    "20261011-candle-research-v130",
+    "20261011-stock-shopping-v132",
+    "20261012-incremental-evidence-v133",
+    "20261012-reference-analysis-v134",
+    "20261013-evidence-bridge-v135",
+    "20261013-lucian-history-v136"
+  ],
+  "manifest_logical_bytes": 1789319166,
+  "legacy_reclaimed_bytes_field_basis": "Logical manifest sum; not measured allocated bytes or causal free-space difference",
+  "verified_files": 14878,
+  "compressed_bytes": 102961245,
+  "archive_sha256": "c24dc42b79554fd0ca9a397869c51e149c83972bfabc7099cc450e94f06e3add",
+  "all_release_hashes_verified": true,
+  "isolated_app_release_restore_verified": true,
+  "restored_release": "20261011-candle-research-v128",
+  "restored_files": 1871,
+  "restored_tree_sha256": "866faeb7553394329c6b8fd1f8e28dfc1f9f5220f1794c2cd4f668e3a11ac406",
+  "local_archive": "C:\\Users\\lch68\\Documents\\Codex\\2026-09-24\\x20\\outputs\\korea-stock-dashboard\\work\\operations-20261013-140\\inactive-releases-20261013-140.tar.gz",
+  "kept": [
+    "20261005-share-universe-archive-v73",
+    "20261009-first-interaction-v93",
+    "20261010-ocf-republication-v112",
+    "20261010-reader-floor-v109",
+    "20261010-share-review-v113",
+    "20261010-storage-writes-v110",
+    "20261011-stock-shopping-v131",
+    "20261013-lucian-date-v139",
+    "20261013-lucian-final-v138",
+    "20261013-lucian-search-v137"
+  ],
+  "database_restore_gate_passed": false,
+  "raw_or_database_deleted": false,
+  "docker_pruned": false,
+  "pc_cache_deleted": false,
+  "pc_cache_reclaimed_bytes": 0
+}

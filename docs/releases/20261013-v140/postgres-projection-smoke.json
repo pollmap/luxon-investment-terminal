@@ -1,0 +1,39 @@
+{
+  "at": "2026-10-13T14:36:49.857315+00:00",
+  "runtime_release": "20261013-lucian-date-v139",
+  "writes": 0,
+  "provider_calls": 0,
+  "queries": [
+    {
+      "name": "summary",
+      "sql_sha256": "d3c1ef31f94827482d96e4ca15f1232c034d2aee000df7f80b9de56026c37f79",
+      "requested_codes": [
+        "005930"
+      ],
+      "returned_codes": [
+        "005930"
+      ],
+      "column_count": 157,
+      "seconds": 0.056743,
+      "returned_identity_matches": true
+    },
+    {
+      "name": "ranking",
+      "sql_sha256": "d50d0653e9e62a1b7ca62478d3d36040b8e229fc9a8f5f6de7f08642e15cca20",
+      "requested_codes": [
+        "005930",
+        "000660",
+        "068270"
+      ],
+      "returned_codes": [
+        "005930",
+        "000660",
+        "068270"
+      ],
+      "column_count": 49,
+      "seconds": 0.00565,
+      "returned_identity_matches": true
+    }
+  ],
+  "scope": "Two read-only SQL smoke queries, not 100-connection API performance"
+}

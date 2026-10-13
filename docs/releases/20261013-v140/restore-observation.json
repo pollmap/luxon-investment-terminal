@@ -1,0 +1,104 @@
+{
+  "at": "2026-10-13T15:18:34.018690+00:00",
+  "attempt": "work/target-restore/82cf96ad6b684cfab19678431ad8f171/resume-1e2e43d093744ffca15fee7687aaef5e",
+  "source_archive_sha256": "6c1861479624e5dfac87bdeb767579a818933ac87836b754490fe27cfcdf1c4c",
+  "result_sha256": "00bcc1e04936543b05c7a921664008fd4cad570203b3bc4ff574bce29ead40d7",
+  "expected_series_rows": 17014175,
+  "expected_trace_rows": 8071,
+  "budget": {
+    "seconds": 14400,
+    "growth_bytes": 6442450944,
+    "total_cluster_bytes": 17179869184,
+    "minimum_free_bytes": 4294967296
+  },
+  "whole_result_present": true,
+  "state": "interrupted",
+  "phase": "prefix_restore",
+  "restore_verified": false,
+  "data_equal": false,
+  "archive_content_verified": true,
+  "cluster_stopped": true,
+  "production_contacted": false,
+  "input_paths_modified": false,
+  "automatic_retry": false,
+  "elapsed_seconds": 2514.265,
+  "budget_failure": {
+    "code": "disk_reserve_exhausted",
+    "drive_growth_bytes": 7016779776,
+    "elapsed_seconds": 2513.328,
+    "free_bytes": 4296216576,
+    "incoming_bytes": 2385184,
+    "initial_cluster_bytes": 9400163921,
+    "initial_free_bytes": 11312996352,
+    "last_cluster_bytes": 9400109823,
+    "max_growth_bytes": 6442450944,
+    "max_total_cluster_bytes": 17179869184,
+    "minimum_free_bytes": 4294967296,
+    "own_directory_growth_bytes": 0,
+    "reserved_bytes": 8469864
+  },
+  "checkpoint_counts": {
+    "method": "exact-pk-keyset-v1",
+    "ordered_hash_verified": false,
+    "series_batches": 3732,
+    "series_rows": 15282400,
+    "source_references_verified": false,
+    "state": "matched_checkpoint",
+    "trace_batches": 20,
+    "trace_rows": 8071
+  },
+  "row_progress": {
+    "checkpoint_reload_required": true,
+    "committed": {
+      "series_rows": 15282400,
+      "trace_rows": 8071
+    },
+    "ordered_hash_verified": false,
+    "processed": {
+      "series_rows": 4227200,
+      "trace_rows": 8071
+    },
+    "verified_prefix": {
+      "series_rows": 4226800,
+      "trace_rows": 8071
+    }
+  },
+  "prefix_optimization": {
+    "adapter": "prefix-native-reuse-v1",
+    "cache": {
+      "db_reads": 33912,
+      "entries": 0,
+      "full_validations": 18116,
+      "max_bytes": 16777216,
+      "max_entries": 256,
+      "retained_bytes": 0,
+      "verified_reuses": 11972503
+    },
+    "failed_batches": 1,
+    "last_batch": {
+      "phase": "framing",
+      "rows": 400,
+      "seconds": {
+        "framing": 0.001216
+      },
+      "state": "interrupted"
+    },
+    "ordered_hash_verified": false,
+    "phase_seconds": {
+      "canonical_compare": 897.593627,
+      "commit": 330.435393,
+      "copy": 69.694723,
+      "decode_fetch": 40.385303,
+      "framing": 12.98009,
+      "key_query": 127.663157,
+      "stage_setup": 10.129932
+    },
+    "source_references_verified": false,
+    "successful_batches": 10567,
+    "verified_series_rows": 4226800
+  },
+  "error_code": "prefix_restore_incomplete",
+  "after_shutdown_free_bytes": 14051143680,
+  "after_shutdown_allocation_evidence": "stopped-cluster-allocation.json",
+  "cause": "Unresolved transient drive allocation; own logical directory did not grow. Space recovered after owned PostgreSQL shutdown. No contemporaneous before/after pagefile allocation measurement."
+}

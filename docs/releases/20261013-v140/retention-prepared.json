@@ -1,0 +1,12 @@
+{
+  "helper_before_sha256": "ca26cd1332d5120103d318f77840f081a8f4e8b8bf92ba40830d099b515119b5",
+  "helper_sha256": "ce5b57920b5a48b1e2e0e877a48b94da6072c442a6503c3d5ca27200edfe2171",
+  "contract_before_sha256": "bc01389bbe8e98dee75f423d9a4e9d51cd81ed3e8b15d6ff5b00695b690cc73c",
+  "contract_after_sha256": "b79e71eb704b4553b2bed528b50150b470116801c9dc9d8debcd06045f0c26fc",
+  "operator_rollback_releases": [
+    "20261011-stock-shopping-v131"
+  ],
+  "raw_deleted": false,
+  "database_changed": false,
+  "restarted": false
+}

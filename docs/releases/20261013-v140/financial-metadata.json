@@ -1,0 +1,207 @@
+{
+  "at": "2026-10-13T14:05:50.379935+00:00",
+  "release": "20261013-lucian-date-v139",
+  "provider_calls": 0,
+  "writes": 0,
+  "actual_financial_calculations": 0,
+  "scope": "bounded stored job/event/share-basis metadata, not independent validation",
+  "securities": {
+    "005930": {
+      "events": {
+        "revision": "2026-10-11T17:53:45.334825+00:00",
+        "snapshot_bytes": 45558,
+        "active_rows": 42,
+        "amount_present": 42,
+        "record_date_present": 42,
+        "ex_date_present": 0,
+        "payment_date_present": 31,
+        "verified_claims": 0,
+        "reviewed_claims": 0,
+        "coverage_claim": false
+      },
+      "share-basis": {
+        "revision": "2026-10-09T23:24:04.025195+00:00",
+        "snapshot_bytes": 16742,
+        "verified": true,
+        "start": "2016-01-01",
+        "end": "2026-10-08",
+        "company_id": "00126380",
+        "security_code": "005930",
+        "basis_id": "005930:split-history:201601-202606:v70:reviewed-through:20261008",
+        "no_split_interval": null,
+        "stored_claim_only": true
+      }
+    },
+    "005935": {
+      "events": {
+        "revision": "2026-10-11T13:30:15.339168+00:00",
+        "snapshot_bytes": 54839,
+        "active_rows": 41,
+        "amount_present": 41,
+        "record_date_present": 41,
+        "ex_date_present": 0,
+        "payment_date_present": 30,
+        "verified_claims": 0,
+        "reviewed_claims": 0,
+        "coverage_claim": false
+      }
+    },
+    "000660": {
+      "dividend-observations": {
+        "revision": "2026-10-10T17:41:00.986348+00:00",
+        "snapshot_bytes": 1159,
+        "active_rows": 1,
+        "amount_present": 1,
+        "record_date_present": 1,
+        "ex_date_present": 1,
+        "payment_date_present": 0,
+        "verified_claims": 0,
+        "reviewed_claims": 1,
+        "coverage_claim": null
+      },
+      "events": {
+        "revision": "2026-10-11T13:28:07.118020+00:00",
+        "snapshot_bytes": 27442,
+        "active_rows": 26,
+        "amount_present": 26,
+        "record_date_present": 26,
+        "ex_date_present": 1,
+        "payment_date_present": 0,
+        "verified_claims": 0,
+        "reviewed_claims": 0,
+        "coverage_claim": false
+      },
+      "share-basis": {
+        "revision": "2026-10-08T16:40:01.721891+00:00",
+        "snapshot_bytes": 15813,
+        "verified": true,
+        "start": "2021-01-01",
+        "end": "2026-10-08",
+        "company_id": "00164779",
+        "security_code": "000660",
+        "basis_id": "000660:review:20260630:v69:reviewed-through:20261008",
+        "no_split_interval": true,
+        "stored_claim_only": true
+      }
+    },
+    "035900": {
+      "events": {
+        "revision": "2026-10-11T10:13:54.630216+00:00",
+        "snapshot_bytes": 4776,
+        "active_rows": 5,
+        "amount_present": 5,
+        "record_date_present": 5,
+        "ex_date_present": 0,
+        "payment_date_present": 5,
+        "verified_claims": 0,
+        "reviewed_claims": 0,
+        "coverage_claim": false
+      },
+      "share-basis": {
+        "revision": "2026-10-10T10:35:26.010976+00:00",
+        "snapshot_bytes": 73588,
+        "verified": true,
+        "start": "2025-01-01",
+        "end": "2026-10-08",
+        "company_id": "00258689",
+        "security_code": "035900",
+        "basis_id": "035900:review:20260630:jyp-v1:reviewed-through:20261008",
+        "no_split_interval": true,
+        "stored_claim_only": true
+      }
+    },
+    "068270": {},
+    "000270": {
+      "events": {
+        "revision": "2026-10-11T10:17:26.162529+00:00",
+        "snapshot_bytes": 8939,
+        "active_rows": 8,
+        "amount_present": 8,
+        "record_date_present": 8,
+        "ex_date_present": 0,
+        "payment_date_present": 1,
+        "verified_claims": 0,
+        "reviewed_claims": 0,
+        "coverage_claim": false
+      },
+      "share-basis-bootstrap": {
+        "revision": "2026-10-09T15:03:19.842333+00:00",
+        "snapshot_bytes": 10402,
+        "status": "review_required",
+        "retry_after": null,
+        "input_count": 21,
+        "candidate_window": {
+          "end": "2026-06-30",
+          "start": "2025-07-01"
+        },
+        "period_inputs_complete": true,
+        "missing_period_ranges": []
+      },
+      "share-basis": {
+        "revision": "2026-10-10T10:00:28.565186+00:00",
+        "snapshot_bytes": 26381,
+        "verified": true,
+        "start": "2025-01-01",
+        "end": "2026-10-08",
+        "company_id": "00106641",
+        "security_code": "000270",
+        "basis_id": "000270:review:20260630:local-20261009:reviewed-through:20261008",
+        "no_split_interval": true,
+        "stored_claim_only": true
+      }
+    },
+    "005380": {
+      "dividend-observations": {
+        "revision": "2026-10-10T17:41:31.797165+00:00",
+        "snapshot_bytes": 22186,
+        "active_rows": 23,
+        "amount_present": 23,
+        "record_date_present": 23,
+        "ex_date_present": 1,
+        "payment_date_present": 22,
+        "verified_claims": 0,
+        "reviewed_claims": 22,
+        "coverage_claim": null
+      },
+      "events": {
+        "revision": "2026-10-11T13:28:28.912863+00:00",
+        "snapshot_bytes": 58545,
+        "active_rows": 34,
+        "amount_present": 34,
+        "record_date_present": 34,
+        "ex_date_present": 1,
+        "payment_date_present": 27,
+        "verified_claims": 1,
+        "reviewed_claims": 6,
+        "coverage_claim": false
+      },
+      "share-basis": {
+        "revision": "2026-10-08T21:59:52.835883+00:00",
+        "snapshot_bytes": 11795,
+        "verified": true,
+        "start": "2021-12-31",
+        "end": "2026-10-08",
+        "company_id": "00164742",
+        "security_code": "005380",
+        "basis_id": "005380:review:20260630:v69:reviewed-through:20261008",
+        "no_split_interval": true,
+        "stored_claim_only": true
+      }
+    },
+    "094800": {
+      "events": {
+        "revision": "2026-10-10T10:31:46.628287+00:00",
+        "snapshot_bytes": 186,
+        "active_rows": 0,
+        "amount_present": 0,
+        "record_date_present": 0,
+        "ex_date_present": 0,
+        "payment_date_present": 0,
+        "verified_claims": 0,
+        "reviewed_claims": 0,
+        "coverage_claim": false
+      }
+    }
+  },
+  "share_basis_snapshot_count": 5
+}
