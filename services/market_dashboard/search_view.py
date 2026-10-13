@@ -165,6 +165,18 @@ def _light_map(store, key, revision, paths=PATHS):
         empty = "'{}'" if sqlite else "'{}'::jsonb"
         entries += f' UNION ALL SELECT NULL, {empty}, -1, NULL'
         columns = _columns(sqlite, paths)
+        if key == 'enriched' and paths == IDENTITY_PATHS:
+            from .enriched_view import PREFIX, STATE
+            generation = ("json_extract(payload, '$.source_revision')" if sqlite else
+                          "payload::jsonb ->> 'source_revision'")
+            # Observe per-company heads with these actual identity values, not
+            # in one additional version query for every concurrent search.
+            valid = (f"(SELECT {generation} FROM market_snapshots WHERE key = '{STATE}') "
+                     '= (SELECT updated_at FROM heads WHERE key = :key)')
+            item_head = ("(SELECT updated_at FROM market_snapshots "
+                         f"WHERE key = '{PREFIX}' || entries.code)")
+            columns.append(f"CASE WHEN {valid} THEN COALESCE({item_head}, 'enriched-item:missing') "
+                           'ELSE (SELECT updated_at FROM heads WHERE key = :key) END')
         columns.extend(("(SELECT updated_at FROM heads WHERE key = :key)",
                         "(SELECT updated_at FROM heads WHERE key = 'quote-book')",
                         'item_revision'))
@@ -185,6 +197,13 @@ def _light_map(store, key, revision, paths=PATHS):
             heads.update({'quote:' + record[0]: record[-1] for record in records
                           if record[-1] is not None})
             observed_revision = book_revision(observed_revision, records[0][-2])
+        elif key == 'enriched' and paths == IDENTITY_PATHS:
+            # The empty sentinel also resolves a missing company without a
+            # separate read. Invalid/unprepared projections retain the global
+            # legacy dependency, as Store.item_revisions does.
+            heads = {'default-enriched-item':next(record[-4] for record in records if record[0] is None)}
+            heads.update({'enriched-item:' + record[0]:record[-4] for record in records
+                          if record[0] is not None})
         # Attach only the source heads observed with the actual projected values.
         if observed_revision is not None:
             cache[identity] = (observed_revision, projected, heads)
@@ -226,10 +245,14 @@ def candidate_dependencies(store, codes, revisions):
     with _identity_lock:
         cached = _identity_cache.get((store, 'quotes'))
         quote_heads = dict(cached[2]) if cached else {}
+        enriched = _identity_cache.get((store, 'enriched'))
+        enriched_heads = dict(enriched[2]) if enriched else {}
     result = {key: revisions[key] for key in ('universe',) if key in revisions}
     # A normal enrichment update in another company must not invalidate this
     # response. Store resolves item heads against the legacy projection state.
-    result.update(timings.read_revisions(store, tuple('enriched-item:' + code for code in codes)))
+    default_enriched = enriched_heads.get('default-enriched-item',revisions.get('enriched'))
+    result.update({'enriched-item:' + code:enriched_heads.get('enriched-item:' + code,default_enriched)
+                   for code in codes})
     result['candidate-codes'] = json.dumps(codes, separators=(',', ':'))
     for code in codes:
         key = 'quote:' + code
