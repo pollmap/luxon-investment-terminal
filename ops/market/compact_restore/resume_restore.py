@@ -27,6 +27,11 @@ from . import restore_supervisor as supervisor
 from .replay_batch import ReplayBatchSink
 
 MIN_FREE = 4 * 1024**3
+COUNT_BATCH_ROWS = 4096
+TRACE_COUNT_PAGE = (
+    "SELECT digest,original FROM market_compact_restore.traces "
+)
+SERIES_COUNT_PAGE = "SELECT series,time FROM market_compact_restore.rows "
 
 
 def cluster_bytes(data, check, maximum):
@@ -183,6 +188,8 @@ KNOWN_FAILURES = {
     "Checkpoint CAS failed": "checkpoint_cas_failed",
     "missing_existing_checkpoint": "missing_existing_checkpoint",
     "prefix_restore_incomplete": "prefix_restore_incomplete",
+    "checkpoint_count_key_not_advancing": "checkpoint_count_key_not_advancing",
+    "checkpoint_count_page_invalid": "checkpoint_count_page_invalid",
 }
 
 
@@ -261,10 +268,100 @@ class ResumeSink(ReplayBatchSink):
 
     def check_counts(self, checkpoint):
         try:
-            return super().check_counts(checkpoint)
+            # open() calls inside its transaction; the final COPY check calls
+            # from IDLE while still holding the same target advisory lock.
+            if self.locked and self.db.info.transaction_status.name == "IDLE":
+                with self.db.transaction():
+                    self._check_counts_keyset(checkpoint)
+            else:
+                self._check_counts_keyset(checkpoint)
+            self.budget.check()
         except BaseException as error:
+            if "checkpoint_counts" in self.report:
+                self.report["checkpoint_counts"]["state"] = "interrupted"
             self._record(error, "checkpoint_counts", checkpoint)
             raise
+
+    def _count_page(self, statement, parameters):
+        timeout = min(30000, self.budget.check())
+        self.db.execute("SELECT set_config('statement_timeout',%s,true)", (str(timeout),))
+        self.budget.check()
+        rows = self.db.execute(statement, parameters).fetchmany(COUNT_BATCH_ROWS + 1)
+        self.budget.check()
+        if len(rows) > COUNT_BATCH_ROWS:
+            raise local.Refused("checkpoint_count_page_invalid")
+        return rows
+
+    def _check_counts_keyset(self, checkpoint):
+        # open() has already acquired the target advisory lock and entered a
+        # transaction. Count only keys, never payloads or approximate statistics.
+        if not self.locked or self.db.info.transaction_status.name != "INTRANS":
+            raise local.Refused("checkpoint_count_requires_owned_transaction")
+        self.budget.check()
+        if (checkpoint.trace_rows > self.manifest.trace_rows
+                or checkpoint.series_rows > self.manifest.series_rows):
+            raise cp.codec.Refused("Stored prefix row count differs from atomic checkpoint")
+        counts = {"method": "exact-pk-keyset-v1", "state": "checking",
+                  "trace_rows": 0, "series_rows": 0, "trace_batches": 0, "series_batches": 0,
+                  "source_references_verified": False, "ordered_hash_verified": False}
+        self.report["checkpoint_counts"] = counts
+        # Only this owned restore transaction; never ALTER SYSTEM/server defaults.
+        # PG17: zero avoids Gather workers (the failed run could not start one).
+        self.db.execute("SELECT set_config('max_parallel_workers_per_gather','0',true)")
+        previous = None
+        while True:
+            where = '' if previous is None else 'WHERE digest COLLATE "C" > %s COLLATE "C" '
+            params = (COUNT_BATCH_ROWS,) if previous is None else (previous, COUNT_BATCH_ROWS)
+            rows = self._count_page(
+                TRACE_COUNT_PAGE + where + 'ORDER BY digest COLLATE "C" LIMIT %s', params,
+            )
+            if not rows:
+                break
+            for index, row in enumerate(rows):
+                if index % 256 == 0:
+                    self.budget.check()
+                if (len(row) != 2 or not cp.digest_valid(row[0]) or type(row[1]) is not bool):
+                    raise local.Refused("checkpoint_count_page_invalid")
+                if previous is not None and row[0] <= previous:
+                    raise local.Refused("checkpoint_count_key_not_advancing")
+                previous = row[0]
+                counts["trace_rows"] += int(row[1])
+                if counts["trace_rows"] > checkpoint.trace_rows:
+                    raise cp.codec.Refused("Stored prefix row count differs from atomic checkpoint")
+            counts["trace_batches"] += 1
+        if counts["trace_rows"] != checkpoint.trace_rows:
+            raise cp.codec.Refused("Stored prefix row count differs from atomic checkpoint")
+        previous = None
+        while True:
+            where = ('' if previous is None else
+                     'WHERE (series COLLATE "C",time COLLATE "C") > '
+                     '(%s COLLATE "C",%s COLLATE "C") ')
+            params = (COUNT_BATCH_ROWS,) if previous is None else (*previous, COUNT_BATCH_ROWS)
+            rows = self._count_page(
+                SERIES_COUNT_PAGE + where +
+                'ORDER BY series COLLATE "C",time COLLATE "C" LIMIT %s', params,
+            )
+            if not rows:
+                break
+            for index, row in enumerate(rows):
+                if index % 256 == 0:
+                    self.budget.check()
+                if (len(row) != 2 or any(not isinstance(value, str) or "\x00" in value
+                                         for value in row)
+                        or not 1 <= len(row[0]) <= 128 or not 1 <= len(row[1]) <= 40):
+                    raise local.Refused("checkpoint_count_page_invalid")
+                key = tuple(row)
+                if previous is not None and key <= previous:
+                    raise local.Refused("checkpoint_count_key_not_advancing")
+                previous = key
+                counts["series_rows"] += 1
+                if counts["series_rows"] > checkpoint.series_rows:
+                    raise cp.codec.Refused("Stored prefix row count differs from atomic checkpoint")
+            counts["series_batches"] += 1
+        if counts["series_rows"] != checkpoint.series_rows:
+            raise cp.codec.Refused("Stored prefix row count differs from atomic checkpoint")
+        self.budget.check()
+        counts["state"] = "matched_checkpoint"
 
 
 def validate_existing(work, inputs):

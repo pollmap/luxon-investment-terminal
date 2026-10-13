@@ -214,7 +214,10 @@ def test_sink_retains_known_reason_before_coordinator_swallows_it(
     item = runner(owned)
     def failed(*_args, **_kwargs):
         raise m.local.codec.Refused(message)
-    monkeypatch.setattr(m.cp.PgBatchSink, operation, failed)
+    if operation == "check_counts":
+        monkeypatch.setattr(m.ResumeSink, "_check_counts_keyset", failed)
+    else:
+        monkeypatch.setattr(m.cp.PgBatchSink, operation, failed)
     sink = m.ResumeSink(object(), item.saved_manifest, item.budget, item.report)
     with pytest.raises(m.local.codec.Refused):
         if operation == "consume":

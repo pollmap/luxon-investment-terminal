@@ -427,6 +427,44 @@ def test_daemon_control_does_not_wait_for_inherited_pipe_eof(tmp_path, monkeypat
     assert seen == [[str(tmp_path / "pg_ctl"), "start"]]
 
 
+@pytest.mark.parametrize("failure", ["stderr_open", "spawn"])
+def test_control_permission_failure_identifies_safe_step_and_closes_files(
+        tmp_path, monkeypatch, failure):
+    runner = fake_runner(tmp_path, monkeypatch)
+    private = "fixture-private-path-secret-argument-and-environment"
+    runner.tool = lambda name: tmp_path / private
+    monkeypatch.setenv("PGPASSWORD", private)
+    monkeypatch.setenv("FIXTURE_PRIVATE_ENV", private)
+    temporary_file = m.tempfile.TemporaryFile
+    opened, spawned = [], []
+
+    def prepare_output():
+        if failure == "stderr_open" and opened:
+            raise PermissionError(13, private)
+        output = temporary_file()
+        opened.append(output)
+        return output
+
+    def start(argv, **kwargs):
+        spawned.append(True)
+        assert "PGPASSWORD" not in kwargs["env"]
+        raise PermissionError(13, private)
+
+    monkeypatch.setattr(m.tempfile, "TemporaryFile", prepare_output)
+    monkeypatch.setattr(m.subprocess, "Popen", start)
+    with pytest.raises(PermissionError):
+        runner.command("postgres", [private])
+
+    diagnostic = {key: value for key, value in runner.report.items()
+                  if key.startswith("control_")}
+    assert diagnostic == {"control_tool": "postgres", "control_step": failure}
+    assert private not in json.dumps(runner.report)
+    assert runner.report["processes"] == []
+    assert all(output.closed for output in opened)
+    assert len(opened) == (1 if failure == "stderr_open" else 2)
+    assert spawned == ([] if failure == "stderr_open" else [True])
+
+
 @pytest.mark.parametrize("failure", ["deadline", "output"])
 def test_control_timeout_or_output_limit_reaps_only_owned_child(tmp_path, monkeypatch, failure):
     runner = fake_runner(tmp_path, monkeypatch)

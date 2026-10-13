@@ -23,7 +23,7 @@ import tempfile
 import threading
 import time
 import uuid
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from pathlib import Path
 
 from . import checkpoint as cp
@@ -40,6 +40,7 @@ DATABASE = "market_compact_restore_candidate"
 ADMIN = "compact_restore_admin"
 MAX_REPORT = 64 * 1024**2
 MAX_RECEIPT = 64 * 1024
+CONTROL_TOOLS = ("initdb", "pg_ctl", "pg_restore", "postgres")
 EXPECTED_COLUMNS = {
     "market_source_traces": [("digest", "character varying(64)"), ("byte_count", "integer"),
                              ("payload", "text")],
@@ -300,12 +301,15 @@ class LocalRestore:
                        "input_paths_modified": False, "processes": []}
 
     def tool(self, name):
-        if name not in ("initdb", "pg_ctl", "pg_restore", "postgres"):
+        if name not in CONTROL_TOOLS:
             raise Refused("unknown_local_tool")
         return _plain(BIN / (name + (".exe" if os.name == "nt" else "")))
 
     def command(self, name, args, *, seconds=60, cleanup=False, accepted=(0,),
                 output_limit=4*1024**2):
+        # Fixed values only: never retain argv, paths, environment or error text.
+        self.report["control_tool"] = name if name in CONTROL_TOOLS else "unknown"
+        self.report["control_step"] = "budget_check"
         if not cleanup:
             self.guard.check()
             seconds = min(seconds, self.budget.max_seconds -
@@ -319,9 +323,16 @@ class LocalRestore:
         environment = {k: v for k, v in os.environ.items() if not k.upper().startswith("PG")}
         options = {"creationflags": subprocess.CREATE_NO_WINDOW} if os.name == "nt" else {}
         deadline = time.monotonic() + seconds
-        with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
+        self.report["control_step"] = "tool_validation"
+        tool = self.tool(name)
+        with ExitStack() as outputs:
+            self.report["control_step"] = "stdout_open"
+            stdout = outputs.enter_context(tempfile.TemporaryFile())
+            self.report["control_step"] = "stderr_open"
+            stderr = outputs.enter_context(tempfile.TemporaryFile())
+            self.report["control_step"] = "spawn"
             child = subprocess.Popen(
-                [str(self.tool(name)), *args], stdin=subprocess.DEVNULL,
+                [str(tool), *args], stdin=subprocess.DEVNULL,
                 stdout=stdout, stderr=stderr, shell=False, close_fds=True,
                 env=environment, **options,
             )
@@ -336,11 +347,13 @@ class LocalRestore:
                     self.guard.check()
 
             try:
+                self.report["control_step"] = "wait"
                 while child.poll() is None:
                     check()
                     time.sleep(0.02)
                 code = child.wait(timeout=max(0.001, deadline - time.monotonic()))
                 check()
+                self.report["control_step"] = "read_output"
                 stdout.seek(0)
                 output = stdout.read(output_limit + 1)
                 if len(output) > output_limit:
@@ -350,10 +363,12 @@ class LocalRestore:
                     child.kill()  # only this owned control process
                     child.wait(timeout=5)
         self.report["processes"].append({"tool": name, "exit_code": code})
+        self.report["control_step"] = "exit_check"
         if code not in accepted:
             raise Refused("local_tool_failed")
         if not cleanup:
             self.guard.check()
+        self.report["control_step"] = "complete"
         return code, bytes(output)
 
     def preflight(self):
