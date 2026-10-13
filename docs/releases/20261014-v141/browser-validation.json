@@ -1,0 +1,21 @@
+{
+  "at": "2026-10-13T15:50:07.660780+00:00",
+  "release": "20261014-search-lock-v141",
+  "source_commit": "8e1288b66d00050b56d5c7d42400763140551415",
+  "browser": "Codex in-app browser, actual viewport 1265x712",
+  "actual_mobile_verified": false,
+  "new_visual_design_claim": false,
+  "actions": [
+    "existing v140 tab update banner refresh",
+    "same Samsung code/tab/3-month/day/candle selection preserved",
+    "visible search field 하이닉스",
+    "actual SK하이닉스 000660 search result opened",
+    "61 real daily candles and volume, OHLC values, integrated order depth displayed"
+  ],
+  "last_confirmed_price_date": "2026-10-13",
+  "live_market_receipt_verified": false,
+  "screenshot": "public-v141-search-candle.png",
+  "screenshot_sha256": "816d7f0fb54d7cc102508e9188d0d8c706b80f54ce16c04da82ee056f891ba5b",
+  "user_settings_preserved": true,
+  "father_task_verified": false
+}

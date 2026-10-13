@@ -1,0 +1,19 @@
+{
+  "provenance": {
+    "release": "20261014-search-lock-v141",
+    "source_commit": "8e1288b66d00050b56d5c7d42400763140551415",
+    "ci_run": "https://github.com/pollmap/luxon-investment-terminal/actions/runs/38422894057",
+    "backend_archive_sha256": "a8cafbd7c2b52f0e7aad33117df75f73d3ae91220601ee43fa2d8486d1d3fe4b",
+    "backend_image": "sha256:a799da5644a309c7a21240b0a4bcec9ce41f29a8105fb42691ec98b2a7577836",
+    "static_manifest_sha256": "a46788766686324c7ace9d46fb6de8f62cf3bdfefd9af9a431dd67d8642655ca",
+    "static_archive_sha256": "5e3c3c0d7d92bff28c769cb8aeef051b32efecdd7708fbae7485e768f8335486",
+    "cloudflare_version": "313866eb-d8f6-4a8a-a059-d98b5415248b"
+  },
+  "marker_sha256": "9e031ab4ec23c66111ade2f3ef805f2e375faea38a696822eade485e510e8477",
+  "current": "/srv/services/korea-stocks/releases/20261014-search-lock-v141",
+  "disk_total": 154894188544,
+  "disk_free": 7550435328,
+  "disk_used": 147326976000,
+  "db_redis_restarted": false,
+  "raw_deleted": false
+}

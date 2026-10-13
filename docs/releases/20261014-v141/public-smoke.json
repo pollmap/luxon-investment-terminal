@@ -1,0 +1,37 @@
+{
+  "at": "2026-10-13T15:43:54.292127+00:00",
+  "source_commit": "8e1288b66d00050b56d5c7d42400763140551415",
+  "release": "20261014-search-lock-v141",
+  "passed": true,
+  "origins": [
+    {
+      "origin": "https://stocks.62-171-141-206.sslip.io",
+      "manifest_status": 200,
+      "manifest_matches": true,
+      "release": "20261014-search-lock-v141",
+      "asset_status": 200,
+      "asset_matches": true,
+      "api_status": 200,
+      "api_release": "20261014-search-lock-v141",
+      "search_status": 200,
+      "search_contains_samsung": true,
+      "internal_status": 404,
+      "orders_status": 404
+    },
+    {
+      "origin": "https://korea-stocks-edge.lch68-workers.workers.dev",
+      "manifest_status": 200,
+      "manifest_matches": true,
+      "release": "20261014-search-lock-v141",
+      "asset_status": 200,
+      "asset_matches": true,
+      "api_status": 200,
+      "api_release": "20261014-search-lock-v141",
+      "search_status": 200,
+      "search_contains_samsung": true,
+      "internal_status": 404,
+      "orders_status": 404
+    }
+  ],
+  "scope": "Selected version, asset, search and access checks; not actual live receipt, full data or load performance"
+}
