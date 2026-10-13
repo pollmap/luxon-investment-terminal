@@ -619,6 +619,19 @@ def activate_public(d, target=None):
     return target
 
 
+def test_copy_never_inherits_another_releases_source_revision(release_copy):
+    d = release_copy
+    activate_public(d)
+    (d.previous/'static-web/index.html').write_bytes(b'current HTML')
+    marker = d.previous/'source-revision.json'
+    content = '{"release":"previous","source_commit":"old-source"}'
+    marker.write_text(content)
+    d.promoter.copy_release(d.previous, d.candidate)
+    assert marker.read_text() == content
+    assert not (d.candidate/'source-revision.json').exists()
+    assert (d.candidate/'static-web/index.html').read_bytes() == b'current HTML'
+
+
 def test_copy_saves_exact_snapshot_bytes_and_preserves_active_assets(release_copy):
     d = release_copy
     public = activate_public(d)

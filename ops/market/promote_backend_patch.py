@@ -45,8 +45,10 @@ def _replacement_names(relative, frontend):
         return {'market_dashboard'}
     if relative == Path('scripts'):
         return {Path(name).name for name in RUNTIME_SCRIPTS}
-    if frontend and relative == Path('.'):
-        return {'web-build', 'web-server.js', 'web-public'}
+    if relative == Path('.'):
+        # Revision provenance belongs to one release, unlike retained assets.
+        # A copied marker must never label a new release with an older commit.
+        return {'source-revision.json'} | ({'web-build', 'web-server.js', 'web-public'} if frontend else set())
     return set()
 
 
