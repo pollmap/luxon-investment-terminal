@@ -1,0 +1,16 @@
+{
+  "target": "work/lucian-v136/local-static-v138-preserved",
+  "verified_remaining_copy": "work/lucian-v136/ci-static-final-v138",
+  "files": 76,
+  "logical_bytes": 24402209,
+  "byte_equality_verified": true,
+  "deletion_executed": false,
+  "status": "blocked_by_automatic_approval_review",
+  "stated_reason": "blocked by policy; no further reason provided",
+  "approaches": ["checked computed target", "separate read-only hash verification and literal absolute target"],
+  "review_rejections": 2,
+  "bypass_attempted": false,
+  "original_data_deleted": false,
+  "restore_restarted": false,
+  "reclaimed_bytes": 0
+}

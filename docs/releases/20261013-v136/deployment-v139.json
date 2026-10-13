@@ -1,0 +1,33 @@
+{
+  "release": "20261013-lucian-date-v139",
+  "source_commit": "ecae992b7c7acf40d6c109191721a3985a24d30f",
+  "ci_run": "https://github.com/pollmap/luxon-investment-terminal/actions/runs/38401937553",
+  "backend_archive_sha256": "955604792df67cd0ff3e63b364897e582c2a8c29d4e21d2331db25a75a5fd9a2",
+  "backend_image": "sha256:0e488623f773584fb2359230ce07e66dcc9ca30994d2e73164fe822c5b44723b",
+  "static_manifest_sha256": "6a723bc3db504cd94d0a81fa7e7ddad09ba10d0092cdcac2492fb7d4171be897",
+  "static_archive_sha256": "44b620af911e8e963db9cf96a3f6f9a51f27259b7c0b46e42a9f9af4f96ced4d",
+  "cloudflare_version": "bb755c81-7794-42de-a753-052278a6f507",
+  "at": "2026-10-13T13:23:19.085942+00:00",
+  "vps": {
+    "current": "/srv/services/korea-stocks/releases/20261013-lucian-date-v139",
+    "revision_recorded": true,
+    "replaced_inherited_revision_sha256": "15424f5ca4aabdc0072a0202e5f673454edc76ecbb0e00672eae22e18ec281a2",
+    "disk_total_bytes": 154894188544,
+    "disk_used_bytes": 152263815168,
+    "disk_available_bytes": 2613596160,
+    "disk_used_percent": 98.30182565225628,
+    "needed_to_below_80_percent_bytes": 28348464334
+  },
+  "service_statuses": [
+    "korea-stocks-market-worker-1\tUp 12 minutes",
+    "korea-stocks-market-api-1\tUp 12 minutes",
+    "korea-stocks-market-web-1\tExited (143) 4 days ago",
+    "korea-stocks-openalgo-1\tUp 8 days",
+    "hannun-public-market-market-db-1\tUp 11 days (healthy)",
+    "hannun-public-market-market-redis-1\tUp 11 days"
+  ],
+  "other_services_observed": {
+    "count": 21,
+    "details": "omitted from public record; not deployment targets"
+  }
+}

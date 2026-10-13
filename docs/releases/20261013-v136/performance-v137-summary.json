@@ -1,0 +1,140 @@
+{
+  "at": "2026-10-13T11:22:29.400Z",
+  "concurrency": 100,
+  "connections": 100,
+  "transport": "HTTP/2 100 independent TLS sessions, one concurrent request per session, Windows PC public internet",
+  "measurement_contract": {
+    "version": "http2-receive-end-v2",
+    "scope": "API endpoint load; not the browser search/detail user flow",
+    "phases": {
+      "first": "First batch; not guaranteed cold",
+      "warm": "Three subsequent batches; not guaranteed cache hits",
+      "after_1600ms": "Batch after a 1600ms pause; classify expiry from response headers"
+    },
+    "request_headers": {
+      "accept-encoding": "gzip",
+      "origin": null,
+      "if-none-match": null,
+      "cache-control": null
+    },
+    "browser_behaviour_included": false,
+    "connection_setup_in_request_timing": false,
+    "request_model": "100 independent TLS sessions; one offered concurrent request per session; sessions reused across phases and endpoints",
+    "body_validation": "ms/body_ms end at the readable end event; JSON/gzip validation runs only after the entire batch has received or failed",
+    "stream_readiness": "stream_ready_ms records Node stream readiness, not proven network-only or server queue time; peer_max_concurrent_streams is the observed peer limit",
+    "timing": "TTFB includes proxy/queue/transit; app_ms is current uncached application-header time. Do not subtract independent percentiles.",
+    "origin_header": "On edge HIT the origin cache header is historical, not a new origin lookup",
+    "connection_setup": "DNS/TCP/TLS/connect and peer-settings readiness recorded separately; all attempts settle before the first batch; no automatic reconnect"
+  },
+  "complete": true,
+  "release": "20261013-lucian-search-v137",
+  "evidence_sha256": "37527591af385c932c096166cdfb30e063d84911452a8d8adb43bed42dcad0c0",
+  "results": [
+    {
+      "hostname": "stocks.62-171-141-206.sslip.io",
+      "endpoint": "search",
+      "first": {
+        "requests": 100,
+        "p50_ms": 3891.24,
+        "p95_ms": 6782.92,
+        "app_p95_ms": 6369.45,
+        "ttfb_p95_ms": 6780.69,
+        "errors": 0,
+        "origin_cache": {
+          "MISS": 100
+        },
+        "cache": {
+          "ORIGIN": 100
+        }
+      },
+      "warm": {
+        "requests": 300,
+        "p50_ms": 994.09,
+        "p95_ms": 1483.72,
+        "app_p95_ms": 1157.78,
+        "ttfb_p95_ms": 1482.94,
+        "errors": 0,
+        "origin_cache": {
+          "EXPIRED": 280,
+          "HIT": 20
+        },
+        "cache": {
+          "ORIGIN": 300
+        }
+      },
+      "after_1600ms": {
+        "requests": 100,
+        "p50_ms": 3115.29,
+        "p95_ms": 4555.54,
+        "app_p95_ms": 4203.98,
+        "ttfb_p95_ms": 4555,
+        "errors": 0,
+        "origin_cache": {
+          "EXPIRED": 100
+        },
+        "cache": {
+          "ORIGIN": 100
+        }
+      }
+    },
+    {
+      "hostname": "stocks.62-171-141-206.sslip.io",
+      "endpoint": "summary",
+      "first": {
+        "requests": 100,
+        "p50_ms": 816.37,
+        "p95_ms": 860.46,
+        "app_p95_ms": 496.89,
+        "ttfb_p95_ms": 860.4,
+        "errors": 0,
+        "origin_cache": {
+          "EXPIRED": 10,
+          "MISS": 90
+        },
+        "cache": {
+          "ORIGIN": 100
+        }
+      },
+      "warm": {
+        "requests": 300,
+        "p50_ms": 312.08,
+        "p95_ms": 531.78,
+        "app_p95_ms": 178.83,
+        "ttfb_p95_ms": 531.69,
+        "errors": 0,
+        "origin_cache": {
+          "EXPIRED": 100,
+          "HIT": 200
+        },
+        "cache": {
+          "ORIGIN": 300
+        }
+      },
+      "after_1600ms": {
+        "requests": 100,
+        "p50_ms": 1555.99,
+        "p95_ms": 1627.31,
+        "app_p95_ms": 451.45,
+        "ttfb_p95_ms": 1627.27,
+        "errors": 0,
+        "origin_cache": {
+          "EXPIRED": 100
+        },
+        "cache": {
+          "ORIGIN": 100
+        }
+      }
+    }
+  ],
+  "target_passed": false,
+  "collection_worker": "on; session closed before final measurement",
+  "connection_setup": [
+    {
+      "hostname": "stocks.62-171-141-206.sslip.io",
+      "attempted": 100,
+      "ready": 100,
+      "connect_ms_p95": 1762.319,
+      "ready_ms_p95": 2050.9700000000003
+    }
+  ]
+}

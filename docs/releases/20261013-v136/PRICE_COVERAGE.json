@@ -1,0 +1,117 @@
+{
+  "at": "2026-10-13T11:42:58.498640+00:00",
+  "release": "20261013-lucian-search-v137",
+  "scope": "snapshot/job metadata only",
+  "universe": 2761,
+  "provider_calls": 0,
+  "writes": 0,
+  "actual_history_rows_scanned": 0,
+  "full_archive_hash_scans": 0,
+  "independently_verified_complete_security_count": null,
+  "verification_count_reason": "No independent full-row/hash/source-reference/calendar scan performed.",
+  "summary": {
+    "adjusted": {
+      "securities": {
+        "snapshot_present": 2760,
+        "metadata_oversized_not_decoded": 0,
+        "terminal_evidence_available": 0,
+        "source_reference_available": 2760,
+        "ordered_hash_present": 0,
+        "stored_verification_marker_matches_metadata": 0,
+        "older_cursor_pending": 2155,
+        "middle_gap_pending": 0,
+        "job:ready": 605,
+        "provider_404_unresolved": 1,
+        "job:collecting": 2155,
+        "snapshot_missing": 1,
+        "job:not_in_provider_catalogue": 1
+      },
+      "reported_rows_from_metadata": 2421092,
+      "metadata_first_time": "1975-01-04T00:00:00+09:00",
+      "metadata_last_time": "2026-10-13T00:00:00+09:00"
+    },
+    "raw": {
+      "securities": {
+        "snapshot_present": 2760,
+        "metadata_oversized_not_decoded": 0,
+        "terminal_evidence_available": 0,
+        "source_reference_available": 2760,
+        "ordered_hash_present": 0,
+        "stored_verification_marker_matches_metadata": 0,
+        "older_cursor_pending": 2151,
+        "middle_gap_pending": 0,
+        "job:ready": 604,
+        "provider_404_unresolved": 1,
+        "job:collecting": 2156,
+        "snapshot_missing": 1,
+        "job:not_in_provider_catalogue": 1
+      },
+      "reported_rows_from_metadata": 2471169,
+      "metadata_first_time": "1975-06-12T00:00:00+09:00",
+      "metadata_last_time": "2026-10-13T00:00:00+09:00"
+    },
+    "legacy": {
+      "securities": {
+        "snapshot_present": 2761,
+        "metadata_oversized_not_decoded": 0,
+        "terminal_evidence_available": 0,
+        "source_reference_available": 2761,
+        "ordered_hash_present": 0,
+        "stored_verification_marker_matches_metadata": 0,
+        "older_cursor_pending": 0,
+        "middle_gap_pending": 0
+      },
+      "reported_rows_from_metadata": 6486732,
+      "metadata_first_time": "2007-06-05",
+      "metadata_last_time": "2026-10-08"
+    }
+  },
+  "progress_capacity_and_legacy_jobs": {
+    "toss-backfill-progress": {
+      "status": "capacity_limited",
+      "phase": 5,
+      "cursor": 513,
+      "universe_total": 2765,
+      "updated_at": "2026-10-13T11:42:56.540761+00:00"
+    },
+    "storage-capacity:price-history": {
+      "status": "capacity_limited",
+      "phase": null,
+      "cursor": null,
+      "universe_total": null,
+      "updated_at": "2026-10-13T11:35:49.383544+00:00"
+    }
+  },
+  "progress_universe_differs_from_current_scope": true,
+  "metadata_file_sha256": "34fd3f628663fdcc3cb00a6512dc6ddaf37521e6bd1ccc729a3e9d9e69d9157b",
+  "basis_separation": {
+    "adjusted": {
+      "explicit_venue_matches": 2760,
+      "explicit_adjustment_matches": 2760,
+      "metadata_basis_mismatch_or_missing": 0,
+      "present": 2760
+    },
+    "raw": {
+      "explicit_venue_matches": 2760,
+      "explicit_adjustment_matches": 2760,
+      "metadata_basis_mismatch_or_missing": 0,
+      "present": 2760
+    }
+  },
+  "unresolved_404": [
+    {
+      "code": "094800",
+      "market": "KOSPI",
+      "job_statuses": {
+        "history": "not_in_provider_catalogue",
+        "raw-history": "not_in_provider_catalogue"
+      }
+    }
+  ],
+  "valid_aggregate_select_count": 3,
+  "total_select_count_including_protective_probe": 7,
+  "row_counts_are_metadata_only": true,
+  "metadata_markers_are_not_independent_validation": true,
+  "actual_source_rows_and_references_not_verified": true,
+  "adjusted_raw_legacy_not_combined": true
+}

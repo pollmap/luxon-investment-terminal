@@ -1,0 +1,42 @@
+{
+  "at": "2026-10-13T13:18:30.627726+00:00",
+  "release": "20261013-lucian-date-v139",
+  "source_commit": "ecae992b7c7acf40d6c109191721a3985a24d30f",
+  "ci_run": 38401937553,
+  "passed": true,
+  "origins": [
+    {
+      "origin": "https://stocks.62-171-141-206.sslip.io",
+      "http_version": "HTTP/1.1",
+      "manifest_status": 200,
+      "release": "20261013-lucian-date-v139",
+      "manifest_sha256": "6a723bc3db504cd94d0a81fa7e7ddad09ba10d0092cdcac2492fb7d4171be897",
+      "manifest_matches": true,
+      "asset_count": 75,
+      "script_status": 200,
+      "script_sha256": "91fdef19d46dc29ed881c869e65818af49b1055bf9b108ad41ad7041338bdd67",
+      "script_matches": true,
+      "health_status": 200,
+      "api_release": "20261013-lucian-date-v139",
+      "internal_status": 404,
+      "orders_status": 404
+    },
+    {
+      "origin": "https://korea-stocks-edge.lch68-workers.workers.dev",
+      "http_version": "HTTP/1.1",
+      "manifest_status": 200,
+      "release": "20261013-lucian-date-v139",
+      "manifest_sha256": "6a723bc3db504cd94d0a81fa7e7ddad09ba10d0092cdcac2492fb7d4171be897",
+      "manifest_matches": true,
+      "asset_count": 75,
+      "script_status": 200,
+      "script_sha256": "91fdef19d46dc29ed881c869e65818af49b1055bf9b108ad41ad7041338bdd67",
+      "script_matches": true,
+      "health_status": 200,
+      "api_release": "20261013-lucian-date-v139",
+      "internal_status": 404,
+      "orders_status": 404
+    }
+  ],
+  "scope": "HTTP assets, version and selected public denial routes only; no live stream or load gate"
+}

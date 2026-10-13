@@ -1,0 +1,97 @@
+[
+  {
+    "release": "20261013-lucian-search-v137",
+    "manifest_sha256": "6f16de24582fe8e7c352b3151d6f7d4fc0eef952b4ea76fd6f719c66dbdfb253",
+    "matches_local": true,
+    "assets": 77
+  },
+  {
+    "api_release": "20261013-lucian-search-v137"
+  },
+  {
+    "internal_http_status": 404,
+    "toss_orders_http_status": 404
+  },
+  {
+    "code": "005930",
+    "status": 200,
+    "rows": 13752,
+    "coverage": {
+      "requested": {
+        "start": null,
+        "end": "2026-10-13"
+      },
+      "displayed": {
+        "start": "1975-06-12",
+        "end": "2026-10-13",
+        "rows": 13752
+      },
+      "stored": {
+        "start": "1975-06-12",
+        "end": "2026-10-13",
+        "rows": 13752
+      },
+      "selection": {
+        "reason": "compatible_widest",
+        "venue": "통합",
+        "adjustment": "source",
+        "ohlc_edges_available": true
+      },
+      "collection": {
+        "status": "ready",
+        "history_complete": true,
+        "backfill_complete": true,
+        "terminal_receipt_available": false,
+        "older_pages_pending": false,
+        "gap_pending": false,
+        "gap_status": "closed",
+        "head_received_at": "2026-10-13T11:27:12.813315+00:00"
+      },
+      "verification": {
+        "status": "unverified",
+        "reason": "period_integrity_not_verified"
+      }
+    }
+  },
+  {
+    "code": "068270",
+    "status": 200,
+    "rows": 405,
+    "coverage": {
+      "requested": {
+        "start": null,
+        "end": "2026-10-13"
+      },
+      "displayed": {
+        "start": "2025-02-13",
+        "end": "2026-10-13",
+        "rows": 405
+      },
+      "stored": {
+        "start": "2025-02-13",
+        "end": "2026-10-13",
+        "rows": 405
+      },
+      "selection": {
+        "reason": "compatible_widest",
+        "venue": "통합",
+        "adjustment": "source",
+        "ohlc_edges_available": true
+      },
+      "collection": {
+        "status": "ready",
+        "history_complete": false,
+        "backfill_complete": false,
+        "terminal_receipt_available": false,
+        "older_pages_pending": true,
+        "gap_pending": false,
+        "gap_status": "closed",
+        "head_received_at": "2026-10-13T11:23:21.206936+00:00"
+      },
+      "verification": {
+        "status": "unverified",
+        "reason": "period_integrity_not_verified"
+      }
+    }
+  }
+]

@@ -1,0 +1,105 @@
+{
+  "state": "interrupted",
+  "phase": "prefix_restore",
+  "restore_verified": false,
+  "data_equal": false,
+  "production_proof": false,
+  "current_fence_valid": false,
+  "proof_scope": "dated_archive_independent_restore_only",
+  "fixture_non_production": false,
+  "archive_sha256": "6c1861479624e5dfac87bdeb767579a818933ac87836b754490fe27cfcdf1c4c",
+  "archive_receipt_sha256": "775f29002e4fe2c3088e87834585df87eab4d0b644ad151bf0532932cb34901e",
+  "source_report_sha256": "f8d7fa1ce899326c3162d0849ac60436d985b5f61655862708b3966bb8eb421b",
+  "archive_content_verified": true,
+  "cluster_stopped": true,
+  "production_contacted": false,
+  "input_paths_modified": false,
+  "row_progress": {
+    "checkpoint_reload_required": true,
+    "committed": {
+      "series_rows": 15282400,
+      "trace_rows": 8071
+    },
+    "ordered_hash_verified": false,
+    "processed": {
+      "series_rows": 4262800,
+      "trace_rows": 8071
+    },
+    "verified_prefix": {
+      "series_rows": 4262400,
+      "trace_rows": 8071
+    }
+  },
+  "checkpoint_counts": {
+    "method": "exact-pk-keyset-v1",
+    "ordered_hash_verified": false,
+    "series_batches": 3732,
+    "series_rows": 15282400,
+    "source_references_verified": false,
+    "state": "matched_checkpoint",
+    "trace_batches": 20,
+    "trace_rows": 8071
+  },
+  "count_index_contract": {
+    "adapter": "owned-default-c-index-v1",
+    "collation": "C",
+    "encoding": "UTF8",
+    "ordered_hash_verified": false,
+    "pg_major": 17,
+    "plans": [
+      {
+        "continuation": false,
+        "index": "traces_pkey",
+        "node": "Index Scan",
+        "table": "traces"
+      },
+      {
+        "continuation": true,
+        "index": "traces_pkey",
+        "node": "Index Scan",
+        "table": "traces"
+      },
+      {
+        "continuation": false,
+        "index": "rows_pkey",
+        "node": "Index Only Scan",
+        "table": "rows"
+      },
+      {
+        "continuation": true,
+        "index": "rows_pkey",
+        "node": "Index Only Scan",
+        "table": "rows"
+      }
+    ],
+    "source_references_verified": false,
+    "state": "verified"
+  },
+  "budget_failure": {
+    "code": "disk_reserve_exhausted",
+    "drive_growth_bytes": 8082067456,
+    "elapsed_seconds": 6153.86,
+    "free_bytes": 4293443584,
+    "incoming_bytes": 0,
+    "initial_cluster_bytes": 9499955169,
+    "initial_free_bytes": 12375511040,
+    "last_cluster_bytes": 9400112731,
+    "max_growth_bytes": 6442450944,
+    "max_total_cluster_bytes": 17179869184,
+    "minimum_free_bytes": 4294967296,
+    "own_directory_growth_bytes": 0,
+    "reserved_bytes": 6323096
+  },
+  "elapsed_seconds": 6156.422,
+  "attempt": "work/target-restore/82cf96ad6b684cfab19678431ad8f171/resume-a900a5ff368341778d56c42c75629562",
+  "result_sha256": "2402edfb10b2d36682724500ec71c6fda79b684cfe5f61ca9e15c871b7bc02a7",
+  "expected": {
+    "series_rows": 17014175,
+    "trace_rows": 8071
+  },
+  "restore_cli_exit": 1,
+  "parent_shell_exit": 0,
+  "automatic_retry": false,
+  "production_transition": false,
+  "global_space_loss_attribution": "unverified; not equal to owned cluster growth"
+}

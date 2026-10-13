@@ -1,0 +1,8 @@
+{
+  "old_sha256": "730d1c33cf18913dfe517de29e68f1844b401f8a5b70a54a537fcd1cf36e7da9",
+  "new_sha256": "7cb6b5054b7db2a8f1f0e50af2067d48ad99638d11b46981f380a74d09e7eba7",
+  "scope": "future deployment helper only",
+  "services_restarted": false,
+  "at": "2026-10-13T13:32:14.420065+00:00",
+  "tool_commit": "4fc1e4377c64fb2c71289130d61a68d78ca14949"
+}
