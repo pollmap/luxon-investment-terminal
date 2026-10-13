@@ -6,6 +6,9 @@ import { request, format, type Price } from "./types";
 import type { DetailSelection } from "./detail-preferences";
 import {chartCutoff} from "./chart-period";
 import {historyChartPath,type FirstChartRequest} from './first-chart-request';
+import {closestObservedIndex} from './chart-selection';
+import {historyNotice,type PriceHistoryCoverage} from './price-history';
+import MarketSectionBoundary from './market-section-boundary';
 
 const validCandle = (p:Price) => [p.open,p.high,p.low,p.close].every(v=>Number.isFinite(v)&&v>0)&&p.low<=Math.min(p.open,p.close)&&p.high>=Math.max(p.open,p.close);
 const EMPTY:Price[]=[];
@@ -46,23 +49,24 @@ export default function PriceChart({
   const bar = intraday ? "day" : selection?.bar ?? localBar;
   const setBar = (bar: string) => onSelectionChange ? onSelectionChange({bar}) : setLocalBar(bar);
   const selectionKey=`${code}:${range}:${bar}`;
-  const [windowData,setWindowData]=useState<{key:string;rows:WindowRow[]}|null>(null);
+  const [windowData,setWindowData]=useState<{code:string;key:string;rows:WindowRow[];coverage?:{start:string|null;end:string|null};history_coverage?:PriceHistoryCoverage;venue?:string;adjustment?:string;status?:string}|null>(null);
   const [loadError,setLoadError]=useState("");
   const [retry,setRetry]=useState(0);
+  const [loading,setLoading]=useState(false),[zoomReset,setZoomReset]=useState(0),[expanded,setExpanded]=useState(false);
   useEffect(()=>{
     if(!code)return;
     const abort=new AbortController();let busy=false,initial=true;
-    const load=async()=>{if(document.hidden||busy)return;busy=true;try{
+    const load=async()=>{if(document.hidden||busy)return;busy=true;setLoading(true);setLoadError("");try{
       const path=historyChartPath(code,range,bar);
       const prefetched=initial?firstRequest:undefined;initial=false;
-      const result=await (prefetched?prefetched.read<{rows:WindowRow[]}>(path,abort.signal):request<{rows:WindowRow[]}>(path,{signal:abort.signal}));
-      if(!abort.signal.aborted){setWindowData({key:selectionKey,rows:result.rows});setLoadError("");}
-    }catch{if(!abort.signal.aborted)setLoadError("차트를 불러오지 못했어요.");}finally{busy=false;}};
+      const result=await (prefetched?prefetched.read<Omit<NonNullable<typeof windowData>,'key'|'code'>>(path,abort.signal):request<Omit<NonNullable<typeof windowData>,'key'|'code'>>(path,{signal:abort.signal}));
+      if(!abort.signal.aborted){setWindowData({...result,code,key:selectionKey});setLoadError("");}
+    }catch{if(!abort.signal.aborted)setLoadError("차트를 불러오지 못했어요.");}finally{busy=false;if(!abort.signal.aborted)setLoading(false);}};
     void load();const timer=setInterval(load,60000);document.addEventListener('visibilitychange',load);
     return()=>{abort.abort();clearInterval(timer);document.removeEventListener('visibilitychange',load);};
   },[code,range,bar,selectionKey,retry,firstRequest]);
   const data = useMemo(() => {
-    if(code)return windowData?.key===selectionKey?windowData.rows.map(p=>({...p,valid:validCandle(p)})):[];
+    if(code)return windowData?.code===code?windowData.rows.map(p=>({...p,valid:validCandle(p)})):[];
     const ordered=rows.filter(p=>Number.isFinite(p.close)&&p.close>0).sort((a,b)=>a.date.localeCompare(b.date));
     const grouped = new Map<string, Price & {valid:boolean}>();
     for (const p of ordered) {
@@ -90,16 +94,17 @@ export default function PriceChart({
     const cutoff=intraday?'':chartCutoff(ordered.at(-1)?.date||'',range);
     return full.map((p,i)=>({...p,ma20:i>=19?full.slice(i-19,i+1).reduce((s,q)=>s+q.close,0)/20:null})).filter(p=>p.date>=cutoff);
   }, [rows, range, bar, intraday,code,windowData,selectionKey]);
-  const chartRows = useMemo(()=>data.map(p=>({...p,time:p.date})),[data]);
-  const foundCursor=cursorDate===null?-1:data.findIndex(row=>row.date===cursorDate);
-  const cursor=foundCursor<0?null:foundCursor;
+  const chartRows = useMemo(()=>data.map(p=>({...p,time:p.date,valid:kind==='candle'||kind==='bar'?p.valid:Number.isFinite(p.close)&&p.close>0})),[data,kind]);
+  const cursor=closestObservedIndex(data.map(row=>row.date),cursorDate);
   const setCursor=(index:number|null)=>setCursorDate(index===null?null:data[index]?.date??null);
   const labelDate = (value:string) => intraday ? value.slice(11,16) : value;
   const active = data[Math.min(cursor ?? data.length - 1, data.length - 1)];
-  const chooseRange = (value:number) => {setRange(value);setCursor(null);setTablePage(0);};
-  const chooseBar = (value:string) => {setBar(value);setCursor(null);setTablePage(0);};
+  const chooseRange = (value:number) => {setRange(value);setTablePage(0);};
+  const chooseBar = (value:string) => {setBar(value);setTablePage(0);};
+  const history=windowData&&windowData.code===code?windowData.history_coverage:undefined,stored=history?.stored??windowData?.coverage;
+  const notice=historyNotice(history),changing=loading&&windowData?.key!==selectionKey;
   return (
-    <div className="mk-chart">
+    <div className={`mk-chart ${expanded?'mk-price-expanded':''}`} aria-busy={loading}>
       {!small && !intraday && (
         <><div className="mk-price-controls-mobile" aria-label="가격 차트 설정">
           <select aria-label="차트 기간 선택" value={String(range)} onChange={event=>event.target.value==='intraday'?onIntraday?.():chooseRange(Number(event.target.value))}>
@@ -144,7 +149,10 @@ export default function PriceChart({
         </div></>
       )}
       {!active ? <div className="mk-chart-empty" role="status">{loadError||(!windowData||windowData.key!==selectionKey?"차트를 불러오는 중이에요.":"이 기간의 가격 자료가 없어요.")}{loadError&&<button className="mk-button" onClick={()=>{firstRequest?.reset();setLoadError("");setRetry(v=>v+1);}}>다시 시도</button>}</div> : <>
-      <FinancialChart rows={chartRows} kind={kind} rangeKey={`${code??'local'}:${intraday?'intraday':range}:${bar}`} movingAverage={ma} onSelect={setCursor} label={`${data[0].date}부터 ${data[data.length-1].date}까지 주가와 거래량`}/>
+      {changing&&<p className="mk-caption" role="status">선택한 기간을 불러오는 중이에요.</p>}
+      {loadError&&<p className="mk-caption" role="alert">{loadError} <button className="mk-button" onClick={()=>{firstRequest?.reset();setRetry(v=>v+1);}}>다시 시도</button></p>}
+      <MarketSectionBoundary label="가격 차트"><FinancialChart rows={chartRows} kind={kind} rangeKey={`${code??'local'}:${intraday?'intraday':'history'}:${zoomReset}`} movingAverage={ma} onSelect={setCursor} label={`${data[0].date}부터 ${data[data.length-1].date}까지 주가와 거래량`}/></MarketSectionBoundary>
+      {!small&&stored?.start&&stored.end&&<details className="mk-price-coverage"><summary>표시 {data[0].date} ~ {data.at(-1)?.date}{notice?' · 일부 자료':''}</summary><p>저장된 기간 {stored.start} ~ {stored.end}{windowData?.venue?` · ${windowData.venue}`:''}{windowData?.adjustment==='split'?' · 분할 조정':''}</p>{notice&&<p role="status">{notice}</p>}</details>}
       <div className="mk-chart-caption">
         <strong>{intraday?active.date.slice(0,16).replace("T"," "):active.date}</strong>
         <span>
@@ -156,6 +164,7 @@ export default function PriceChart({
       {!small && !intraday && <label className="mk-price-extra-mobile mk-check"><input type="checkbox" checked={ma} onChange={event=>setMa(event.target.checked)}/>20{bar==='day'?'일':'봉'}선</label>}
 
       {!small && <div className="mk-segment" aria-label="차트 날짜 이동"><button disabled={(cursor??data.length-1)===0} onClick={() => setCursor(Math.max(0, (cursor ?? data.length-1)-1))}>{intraday?"이전 봉":"이전 날짜"}</button><button disabled={(cursor??data.length-1)>=data.length-1} onClick={() => setCursor(Math.min(data.length-1, (cursor ?? data.length-1)+1))}>{intraday?"다음 봉":"다음 날짜"}</button><button onClick={() => setCursor(null)}>최근</button></div>}
+      {!small&&<details className="mk-chart-view-options"><summary>차트 보기</summary><div className="mk-row"><button className="mk-button" aria-pressed={expanded} onClick={()=>setExpanded(value=>!value)}>{expanded?'기본 크기':'크게 보기'}</button><button className="mk-button" onClick={()=>setZoomReset(value=>value+1)}>전체 구간 보기</button></div></details>}
       {!small && (
         <details className="mk-chart-data">
           <summary>차트 수치 표로 보기 · 전체 {data.length.toLocaleString()}개 봉</summary>

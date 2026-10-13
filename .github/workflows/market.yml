@@ -5,6 +5,12 @@ on:
   push:
     branches: [master, codex/public-stock-dashboard]
   workflow_dispatch:
+    inputs:
+      release:
+        description: 'Validated static release label (no automatic deployment)'
+        required: false
+        default: ci-candidate
+        type: string
 
 permissions:
   contents: read
@@ -48,7 +54,7 @@ jobs:
     timeout-minutes: 30
     env:
       NEXT_TELEMETRY_DISABLED: '1'
-      MARKET_RELEASE: ci-candidate
+      MARKET_RELEASE: ${{ inputs.release || 'ci-candidate' }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -68,6 +74,9 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           pnpm --dir apps/web exec playwright install --with-deps chromium
+      - name: Validate release label
+        run: |
+          [[ "$MARKET_RELEASE" =~ ^[a-z0-9][a-z0-9._-]{0,63}$ ]]
       - name: Run pure tests, types, export and fixture browsers without external networking
         shell: bash
         run: |
@@ -75,7 +84,7 @@ jobs:
             ip link set lo up
             exec setpriv --reuid="$1" --regid="$2" --init-groups env PATH="$3" HOME="$4" bash -euo pipefail
           ' market-ci "$(id -u)" "$(id -g)" "$PATH" "$HOME" <<'OFFLINE'
-          export NEXT_TELEMETRY_DISABLED=1 MARKET_RELEASE=ci-candidate
+          export NEXT_TELEMETRY_DISABLED=1
           export MARKET_WEB_URL=http://127.0.0.1:3219
           node --test apps/web/tests/market/*.node.test.mjs apps/web/tests/market/search-proxy.test.mjs
           node --test ops/cloudflare/worker.test.mjs scripts/market_benchmark_metrics.test.mjs scripts/benchmark_market_http2.test.mjs
@@ -98,5 +107,12 @@ jobs:
                       raise
                   time.sleep(0.2)
           PY
-          pnpm --dir apps/web exec playwright test --config playwright.market.config.ts first-chart.spec.ts request-efficiency.spec.ts multi-metric.spec.ts financial-questions.spec.ts --reporter=list --output=../../work/ci/browser-results
+          pnpm --dir apps/web exec playwright test --config playwright.market.config.ts compact-workspace.spec.ts first-chart.spec.ts request-efficiency.spec.ts multi-metric.spec.ts financial-questions.spec.ts --reporter=list --output=../../work/ci/browser-results
           OFFLINE
+      - name: Preserve verified static candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: market-static-${{ github.sha }}
+          path: apps/web/out
+          if-no-files-found: error
+          retention-days: 3

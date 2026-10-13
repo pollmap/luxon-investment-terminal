@@ -20,7 +20,7 @@ class StreamEvidence:
         self.pending = {}
         self.flushed_at = 0.0
 
-    def record(self, *, kind, code, epoch, source_time, evidence, received_at=None):
+    def record(self, *, kind, code, epoch, source_time, evidence, received_at=None, auto_flush=True):
         if kind not in ('trade', 'orderbook'):
             return
         received = datetime.fromisoformat(received_at) if received_at else datetime.now(UTC)
@@ -46,7 +46,7 @@ class StreamEvidence:
         if epoch not in row['epochs']:
             row['epochs'].append(epoch)
             row['epochs'] = row['epochs'][-20:]
-        if time.monotonic()-self.flushed_at >= 5:
+        if auto_flush and time.monotonic()-self.flushed_at >= 5:
             self.flush()
 
     def flush(self):

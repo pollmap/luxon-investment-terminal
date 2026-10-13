@@ -156,6 +156,15 @@ export type Financial = {
   unit: string;
   formula?: string;
   source_trace: Trace;
+  period_start?:string;
+  period_end?:string;
+  period_verified?:boolean;
+  period_reason?:string|null;
+  available_at?:string;
+  input_period_start?:string;
+  input_period_end?:string;
+  input_company_id?:string;
+  input_published_at?:string;
 };
 export type CollectionSource = {
   status: "ready" | "partial" | "stale" | "no_data" | "unavailable" | "error" | "rate_limited" | "pending" | string;

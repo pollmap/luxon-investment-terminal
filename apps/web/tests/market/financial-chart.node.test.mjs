@@ -16,7 +16,8 @@ function harness(){
   for(const key of ['LineSeries','CandlestickSeries','BarSeries','HistogramSeries','AreaSeries'])lib[key]=key;
   const source=fs.readFileSync(new URL('../../components/market/financial-chart.tsx',import.meta.url),'utf8');
   const code=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX}}).outputText;
-  const context={exports:{},require(name){if(name==='react')return react;if(name==='lightweight-charts')return lib;if(name==='react/jsx-runtime')return {jsx:()=>null};throw Error(name);},getComputedStyle:()=>({getPropertyValue:()=>''}),MutationObserver:class{observe(){}disconnect(){}},matchMedia:()=>({addEventListener(){},removeEventListener(){}})};
+  const selection={exports:{}};vm.runInNewContext(ts.transpileModule(fs.readFileSync(new URL('../../components/market/chart-selection.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,selection);
+  const context={exports:{},require(name){if(name==='react')return react;if(name==='lightweight-charts')return lib;if(name==='react/jsx-runtime')return {jsx:()=>null};if(name==='./chart-selection')return selection.exports;throw Error(name);},getComputedStyle:()=>({getPropertyValue:()=>''}),MutationObserver:class{observe(){}disconnect(){}},matchMedia:()=>({addEventListener(){},removeEventListener(){}})};
   vm.runInNewContext(code,context);
   return {series,removed,scale,get fits(){return fits;},get created(){return created;},render(props){index=0;effectIndex=0;context.exports.default(props);refs[0].current=host;for(const fn of pending.splice(0))fn();}};
 }

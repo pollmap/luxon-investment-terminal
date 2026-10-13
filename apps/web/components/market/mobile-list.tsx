@@ -25,7 +25,7 @@ export default function MobileList({
   onMetric: (metric: MetricId, row?: Stock) => void;
 }) {
   const [choosing, setChoosing] = useState(false);
-  const selectionMode = (controlledSelection ?? choosing) || selected.length > 0;
+  const selectionMode = controlledSelection ?? (choosing || selected.length > 0);
   return (
     <div className="mk-mobile-list">
       {controlledSelection === undefined && <button className="mk-button mk-compare-mode" aria-pressed={selectionMode} onClick={() => {

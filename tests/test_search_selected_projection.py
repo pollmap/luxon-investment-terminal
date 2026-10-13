@@ -1,6 +1,9 @@
 """Search compatibility and bounded hydration using fixture-only stored evidence."""
 
 import importlib
+import asyncio
+
+import httpx
 
 import pytest
 from sqlalchemy import event
@@ -95,6 +98,43 @@ def test_turnover_update_can_promote_a_security_outside_initial_limit(source):
         'quote_trace': {'source': 'toss'},
         'daily_facts': {'value': {'value': 9999, 'period': '2026-10-08'}}})
     assert market.search_payload('삼성', 1)['rows'][0]['code'] == '100079'
+
+
+def test_narrow_identity_search_avoids_market_ranking_projection(source, monkeypatch):
+    source.put('enriched', {'100079': {'aliases': ['정밀별칭']}})
+    def unexpected(*_args, **_kwargs):
+        raise AssertionError('A narrow identity search must not prepare market-wide ranking')
+    monkeypatch.setattr(search_view, 'candidates', unexpected)
+    assert market.search_payload('정밀별칭', 1)['rows'][0]['code'] == '100079'
+    assert market.search_payload('100001', 12)['rows'][0]['code'] == '100001'
+
+
+def test_unrelated_quote_change_reuses_narrow_response_but_new_matching_alias_invalidates(source, monkeypatch):
+    from services.market_dashboard.response_cache import InFlightResponses, RevisionReadBatcher, RevisionResponseCache
+    monkeypatch.setattr(market, '_search_responses', RevisionResponseCache())
+    monkeypatch.setattr(market, '_search_flights', InFlightResponses())
+    monkeypatch.setattr(market, '_revision_reads', RevisionReadBatcher())
+    source.put('enriched', {'100000': {'aliases': ['연결별칭']}})
+    original, calls = market.search_payload, []
+    def counted(*args, **kwargs):
+        calls.append(args[0])
+        return original(*args, **kwargs)
+    monkeypatch.setattr(market, 'search_payload', counted)
+    async def scenario():
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=market.app), base_url='http://fixture') as client:
+            url=market.BASE+'/search?q=연결별칭'
+            first=await client.get(url)
+            source.update_quote('100079', {'price':999,'as_of':'2026-10-08','quote_trace':{'source':'toss'}})
+            second=await client.get(url)
+            assert first.content==second.content and len(calls)==1
+            source.update_quote('100079', {'aliases':['연결별칭']})
+            third=await client.get(url)
+            assert third.json()['total']==2 and len(calls)==2
+            source.update_quote('100000', {'price':300,'as_of':'2026-10-08','quote_trace':{'source':'toss'}})
+            fourth=await client.get(url)
+            selected={row['code']:row for row in fourth.json()['rows']}
+            assert selected['100000']['price']==300 and len(calls)==3
+    asyncio.run(scenario())
 
 
 def test_live_single_quote_refresh_projects_only_changed_row(source):

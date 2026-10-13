@@ -6,7 +6,7 @@ from sqlalchemy.exc import OperationalError
 
 logger = logging.getLogger(__name__)
 
-PROJECTION_VERSION = 15
+PROJECTION_VERSION = 17
 FIELDS = {
     'company': ('company', 'report_facts', 'source_trace', 'company_source_trace', 'issuer_link'),
     'fundamentals': ('company', 'statements', 'source_trace', 'financials_received_at',
@@ -47,6 +47,10 @@ def project(official, view):
                 'share_basis_evidence':official.get('share_basis_evidence'),
                 'ttm':{basis:ttm_summary(official,basis) for basis in ('CFS','OFS')},
                 'per_share_facts':official.get('per_share_facts',[])}
+    if view == 'reports' and official:
+        from .financial_timeline import annual_contexts
+        return {**{key: official[key] for key in FIELDS[view] if key in official},
+                'annual_period_contexts': annual_contexts(official)}
     return {key: official[key] for key in FIELDS[view] if key in official} if official else None
 
 

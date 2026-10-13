@@ -278,6 +278,10 @@ def test_period_prices_reads_only_requested_history(store, monkeypatch):
     original = store.time_series.rows
 
     def bounded(series, reverse=False, **options):
+        if options.get('limit') == 1:
+            # Source selection may inspect an indexed edge, never hydrate an
+            # archive to decide OHLC availability or market/adjustment scope.
+            return original(series, reverse, **options)
         assert options.get('start') == '2026-09-25'
         result = original(series, reverse, **options)
         reads.append(len(result))

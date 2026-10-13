@@ -201,8 +201,12 @@ def head_age_seconds(snapshot, clock):
 
 
 def normalize_candles(items):
+    if not isinstance(items, list):
+        raise ValueError('Candle records must be an array')
     rows = {}
     for item in items:
+        if not isinstance(item, dict):
+            raise ValueError('Candle observation must be an object')
         stamp = datetime.fromisoformat(item['timestamp'])
         if stamp.tzinfo is None or item.get('currency', 'KRW') != 'KRW':
             raise ValueError('Unknown candle timezone or currency')
@@ -217,6 +221,8 @@ def normalize_candles(items):
         if row['volume'] is not None and row['volume'] < 0:
             raise ValueError('Negative volume')
         row.update(time=stamp.isoformat(), date=stamp.date().isoformat(), ohlc_valid=True)
+        if row['time'] in rows and rows[row['time']] != row:
+            raise ValueError('Conflicting candle observations')
         rows[row['time']] = row
     return sorted(rows.values(), key=lambda r: r['time'])
 
@@ -590,28 +596,95 @@ class TossCollector:
         else:
             batch[code] = patch
 
-    async def history(self, code, interval='1d', pages=1, resume=False, *, adjusted=True, compact=False, cover_session=False):
+    async def history(self, code, interval='1d', pages=1, resume=False, *, adjusted=True, compact=False, cover_session=False, repair=False):
         if interval not in ('1d','1m'):
             raise ValueError('Unsupported candle interval')
+        if type(pages) is not int or not 1 <= pages <= 16:
+            raise ValueError('Candle page budget must be between 1 and 16')
         lock = self.history_locks.setdefault((code, interval, adjusted), asyncio.Lock())
         async with lock:
-            return await self._history(code, interval, pages, resume, adjusted=adjusted, compact=compact, cover_session=cover_session)
+            return await self._history(code, interval, pages, resume, adjusted=adjusted, compact=compact, cover_session=cover_session, repair=repair)
 
-    async def _history(self, code, interval='1d', pages=1, resume=False, *, adjusted=True, compact=False, cover_session=False):
+    async def _history(self, code, interval='1d', pages=1, resume=False, *, adjusted=True, compact=False, cover_session=False, repair=False):
+        from .candle_pages import archive_clock, gap_fields, pending_gaps, terminal_receipt, validate_page
+
+        if repair and (resume or interval != '1d'):
+            raise ValueError('Gap repair requires its independent daily cursor')
         key = f'bars:{code}:통합:'+('day' if adjusted else 'raw') if interval=='1d' else f'bars:{code}:통합:1min'
         previous = self.store.metadata(key, {}) if interval=='1d' else self.store.get(key, {})
-        clocks = {'head_received_at': previous.get('head_received_at', previous.get('received_at'))} if resume else {'head_received_at': now()}
+        mode = 'gap' if repair else 'history' if resume else 'head'
+        windows = pending_gaps(previous)
+        active_gap = next((window for window in windows if window.get('status', 'collecting') == 'collecting'), None)
+        if repair and not active_gap:
+            return self.store.metadata(key, {}) if compact else self.store.get(key, {})
+        clocks = {'head_received_at': previous.get('head_received_at', previous.get('received_at'))} if mode != 'head' else {'head_received_at': now()}
         if resume:
             clocks['history_received_at'] = now()
+        if repair:
+            clocks['gap_received_at'] = now()
         had_rows=bool(previous.get('row_count') or previous.get('rows'))
         merged = {r['time']:r for r in previous.get('rows', [])}
-        before = previous.get('next_before') if resume else None
+        before = active_gap['next_before'] if repair else previous.get('next_before') if resume else None
         next_cursor = before
         evidence = None
         observed_count=0
         session = None
         session_covered = False
-        previous_last = max(merged, default=None)
+        previous_last = previous.get('last_time') or max(merged, default=None)
+        earliest = None
+        gap_closed = False
+        terminal = None
+        seen = {before} if before else set()
+
+        def save(status, *, partial=False):
+            pending = pending_gaps(previous)
+            old_cursor = previous.get('next_before')
+            old_complete = bool(previous.get('history_complete', previous.get('backfill_complete', False)))
+            receipt = previous.get('history_terminal')
+            if mode == 'history' or (mode == 'head' and not had_rows):
+                old_cursor = next_cursor
+                old_complete = not partial and terminal is not None
+                if old_complete:
+                    receipt = terminal
+            elif mode == 'gap':
+                item = next(window for window in pending if window.get('status', 'collecting') == 'collecting')
+                if gap_closed:
+                    pending.remove(item)
+                else:
+                    item['next_before'] = next_cursor
+                    item['status'] = 'source_gap' if terminal is not None and not partial else 'collecting'
+                    item['updated_at'] = now()
+            elif interval == '1d' and had_rows and earliest and previous_last:
+                if old_cursor is None and not old_complete:
+                    # A migrated/partial archive without a durable continuation
+                    # must start from an observed page cursor, not refresh its
+                    # head forever. Existing completed cursors remain closed.
+                    old_cursor = next_cursor
+                    old_complete = terminal is not None and not partial
+                    if old_complete:
+                        receipt = terminal
+                if archive_clock(earliest) > archive_clock(previous_last):
+                    window = {'target_time': previous_last, 'next_before': next_cursor,
+                              'status': 'source_gap' if terminal is not None and not partial else 'collecting',
+                              'started_at': now()}
+                    # Never overwrite a previously incomplete bridge.
+                    if not any(w.get('target_time') == previous_last for w in pending):
+                        pending.append(window)
+            fields = gap_fields(pending) if interval == '1d' else {}
+            complete = old_complete and not pending
+            body = {'rows':sorted(merged.values(), key=lambda r:r['time']), 'venue':'통합',
+                    'adjustment':'source' if interval=='1d' and adjusted else 'raw',
+                    'adjusted_requested':interval=='1d' and adjusted,
+                    'source_trace':evidence or previous.get('source_trace'), 'received_at':now(), **clocks,
+                    'status':status, 'next_before':old_cursor, 'history_complete':old_complete,
+                    'backfill_complete':complete, 'history_terminal':receipt, **fields,
+                    'latest_next_before':next_cursor if mode=='head' else previous.get('latest_next_before'),
+                    'covered_session':session if session_covered else previous.get('covered_session')}
+            # Gap/history visits cannot renew a previously successful head clock.
+            for field in ('history_received_at', 'gap_received_at'):
+                if field not in body and previous.get(field):
+                    body[field] = previous[field]
+            self._put_history_series(key,body)
         # A new trading day can be more than one page ahead of the archive.
         # Walk back to the preceding day (or overlap with a verified session),
         # rather than repeatedly fetching only the last 200 minutes forever.
@@ -622,28 +695,29 @@ class TossCollector:
                 params['before'] = before
             try:
                 data, page_evidence = await self.client.get('/api/v1/candles', params)
-                if data.get('symbol') and data['symbol'] != code:
-                    raise ValueError('Candle security mismatch')
-                rows = normalize_candles(data['candles'])
-                cursor = data.get('nextBefore')
-                if cursor and cursor == before:
-                    raise ValueError('Candle pagination did not advance')
+                rows, cursor = validate_page(data, code, before, seen, normalize_candles)
             except (Exception, asyncio.CancelledError):
                 if observed_count:
                     # Persist only validated pages. The rejected page cannot
                     # advance the cursor or replace the previous evidence.
-                    partial = sorted(merged.values(), key=lambda r:r['time'])
-                    self._put_history_series(key, {'rows':partial,'venue':'통합',
-                        'adjustment':'source' if interval=='1d' and adjusted else 'raw',
-                        'adjusted_requested':interval=='1d' and adjusted,
-                        'source_trace':evidence,'received_at':now(), **clocks,
-                        'status':'partial','next_before':next_cursor,
-                        'backfill_complete':False})
+                    save('partial',partial=True)
                 raise
             evidence = page_evidence
             observed_count += len(rows)
             merged.update({r['time']:{**r,'source_trace':evidence} for r in rows})
             next_cursor = cursor
+            if rows:
+                earliest = rows[0]['time']
+            if cursor is None:
+                terminal = terminal_receipt(evidence,before=before,rows=rows,received_at=now())
+            else:
+                seen.add(cursor)
+            if repair and rows and archive_clock(rows[0]['time']) <= archive_clock(active_gap['target_time']):
+                gap_closed = True
+                break
+            if mode=='head' and interval=='1d' and had_rows and rows and previous_last:
+                if archive_clock(rows[0]['time']) <= archive_clock(previous_last):
+                    break
             if cover_session and rows:
                 session = session or rows[-1]['date']
                 session_covered = (rows[0]['date'] < session or not cursor or (
@@ -658,24 +732,15 @@ class TossCollector:
         if not observed_count and had_rows:
             # An empty latest response cannot erase a last good daily archive.
             # An exhausted backfill may finish its cursor without replacing rows.
-            self._put_history_series(key,{**previous,'rows':previous.get('rows',[]),
-                'status':'ready' if resume else 'stale','received_at':now(), **clocks,
-                **({'next_before':next_cursor,'backfill_complete':not next_cursor} if resume else {})})
+            save('ready' if mode!='head' else 'stale')
             return self.store.metadata(key) if compact else self.store.get(key)
         if not ordered:
-            result = {'rows': [], 'status': 'no_data', 'backfill_complete': not next_cursor,
-                      'next_before': next_cursor, 'received_at': now(), **clocks, 'venue': '통합', 'source_trace': evidence}
-            self.store.put(key, result)
-            return result
-        self._put_history_series(key, {'rows':ordered,'venue':'통합','adjustment':'source' if interval=='1d' and adjusted else 'raw',
-            'adjusted_requested':interval=='1d' and adjusted,
-            'source_trace':evidence,'received_at':now(), **clocks, 'status':'ready',
-            'next_before':next_cursor if resume or not had_rows or pages>1 else previous.get('next_before'),
-            'backfill_complete':not next_cursor if resume or not had_rows else previous.get('backfill_complete',False),
-            'covered_session':session if session_covered else previous.get('covered_session')})
+            save('no_data')
+            return self.store.metadata(key) if compact else self.store.get(key)
+        save('ready')
         if interval == '1d' and adjusted:
             self.previous_closes = {k:v for k,v in self.previous_closes.items() if k[0] != code}
-            if not resume and observed_count and ordered[-1].get('volume') is not None:
+            if mode=='head' and observed_count and ordered[-1].get('volume') is not None:
                 latest = ordered[-1]
                 self.store.update_quote(code, {'daily_facts': {
                     'volume': {'value': latest['volume'], 'period': latest['date'], 'unit': '주',
@@ -752,7 +817,7 @@ class TossCollector:
         book, book_trace = await self.client.get('/api/v1/orderbook', {'symbol':code})
         trades, trade_trace = await self.client.get('/api/v1/trades', {'symbol':code,'count':50})
         fresh = {'book':normalize_book(book),'trades':[
-            {'time':r['timestamp'][11:19],'timestamp':r['timestamp'],'price':numeric(r['price']),'quantity':numeric(r['volume']),'cumulative_volume':None} for r in trades],
+            {'time':r['timestamp'][11:19],'timestamp':r['timestamp'],'price':numeric(r['price']),'quantity':numeric(r['volume']),'cumulative_volume':None,'source_trace':trade_trace} for r in trades],
             'provider':'toss','venue':'통합','book_status':'ready' if book.get('asks') or book.get('bids') else 'no_data',
             'trades_status':'ready' if trades else 'no_data','received_at':now(),'book_trace':book_trace,'trades_trace':trade_trace,
             'epoch':self.epoch,'gap':True, 'book_as_of':book.get('timestamp')}
@@ -956,8 +1021,8 @@ class TossCollector:
     async def stream(self):
         import websockets
 
-        from .stream_evidence import StreamEvidence
-        observed = StreamEvidence(self.store)
+        from .stream_projection import StreamProjection
+        projection = StreamProjection(self)
         failures = 0
         while True:
             token = None
@@ -965,11 +1030,15 @@ class TossCollector:
                 self.store.put('provider-toss-stream', {'status':'connecting','accepted':[], 'rejected':[], 'received_at':now()})
                 token = await self.client.token()
                 async with websockets.connect('wss://openapi-ws.tossinvest.com/ws/v1', additional_headers={'Authorization':'Bearer '+token}, ping_interval=None) as socket:
-                    previous, last_ping = None, time.monotonic()
+                    previous, last_ping, active_checked, codes = None, time.monotonic(), 0.0, []
                     self.epoch = uuid4().hex
                     self.store.put('provider-toss-stream', {'status':'recovering','accepted':[], 'rejected':[], 'received_at':now(),'epoch':self.epoch})
                     while True:
-                        codes = list(dict.fromkeys(self.store.active()))[:50]  # 100 topics, detail interest first
+                        # Demand changes are sampled once per second; a busy feed
+                        # must not query the same active-job index on every tick.
+                        if time.monotonic() - active_checked >= 1:
+                            codes = list(dict.fromkeys(self.store.active()))[:50]
+                            active_checked = time.monotonic()
                         if codes != previous:
                             await socket.send(json.dumps([{'type':kind,'codes':codes} for kind in ('trade:kr','orderbook:kr')] if codes else []))
                             self.store.put('provider-toss-stream', {'status':'subscribing' if codes else 'idle','accepted':[], 'rejected':[], 'received_at':now(),'epoch':self.epoch})
@@ -980,53 +1049,32 @@ class TossCollector:
                             await socket.send('PING')
                             last_ping = time.monotonic()
                         try:
-                            event = json.loads(await asyncio.wait_for(socket.recv(), timeout=2))
+                            event = json.loads(await asyncio.wait_for(socket.recv(), timeout=projection.wait_seconds()))
+                            received_at = now()
                         except TimeoutError:
-                            observed.flush()
+                            projection.flush()
                             continue
                         if event.get('type')=='subscriptions':
                             failures = 0
                             self.store.put('provider-toss-stream', {'status':'subscribed','accepted':event.get('subscribed',[]),'rejected':event.get('rejected',[]),'received_at':now(),'lossy':True,'epoch':self.epoch})
                         elif event.get('type')=='message':
-                            kind, market, code = event['topic'].split(':')
-                            if market!='kr' or code not in codes or kind not in ('trade','orderbook'):
-                                continue
-                            raw = event['data']
-                            digest = self.store.raw('toss-stream', event['topic'], json.dumps(event).encode())
-                            if not valid_stream_data(kind, raw):
-                                self.store.put('toss-stream-rejected:'+code, {'kind':kind,
-                                    'reason':'unsupported_or_invalid_payload','raw_sha256':digest,'received_at':now()})
-                                continue
-                            evidence = trace('toss_websocket','wss://openapi-ws.tossinvest.com/ws/v1',digest,raw.get('timestamp'),scope='KRX+NXT 통합')
-                            depth = self.store.get('depth:'+code,{})
-                            if kind=='trade':
-                                self.save_quote({'symbol':code,'lastPrice':raw['price'],**raw},evidence)
-                                trade = {'time':raw['timestamp'][11:19],'timestamp':raw['timestamp'],'price':numeric(raw['price']),'quantity':numeric(raw['volume']),'cumulative_volume':None}
-                                # Equal timestamps can be distinct executions. Preserve both.
-                                depth['trades'] = sorted([trade,*depth.get('trades',[])],key=lambda t:t.get('timestamp',''),reverse=True)[:100]
-                                depth['trades_status'] = 'ready'
-                                depth['last_trade_received_at'] = now()
-                            elif kind=='orderbook':
-                                stamp = raw.get('timestamp')
-                                if stamp and depth.get('book_as_of') and datetime.fromisoformat(stamp)<datetime.fromisoformat(depth['book_as_of']):
-                                    continue
-                                depth.update(book=normalize_book(raw),book_status='ready',book_as_of=stamp)
-                            depth.update(received_at=now(),provider='toss',venue='통합',epoch=self.epoch,gap=True)
-                            self.store.put('depth:'+code,depth)
-                            observed.record(kind=kind,code=code,epoch=self.epoch,
-                                source_time=raw.get('timestamp'),evidence=evidence)
-                            self.store.put('provider-toss-stream',{**self.store.get('provider-toss-stream',{}),'status':'receiving','last_event_at':now(),'lossy':True,'epoch':self.epoch})
+                            projection.record(event, codes, self.epoch, received_at)
                         elif event.get('type')=='error':
                             raise ValueError('Provider stream error')
             except asyncio.CancelledError:
-                observed.flush()
+                projection.try_finish()
                 raise
             except Exception as exc:
-                observed.flush()
+                projected = projection.try_finish()
                 if token and getattr(getattr(exc, 'response', None), 'status_code', None) == 401:
                     await self.client.invalidate_token(token)
                 failures += 1
-                self.store.put('provider-toss-stream',{'status':'reconnecting','error':type(exc).__name__,'received_at':now()})
+                try:
+                    self.store.put('provider-toss-stream',{'status':'reconnecting','error':type(exc).__name__,
+                        'projection_pending':not projected,'received_at':now()})
+                except Exception:
+                    # Keep reconnecting if the storage failure also blocks status.
+                    pass
                 await asyncio.sleep(min(60,2**min(failures,6)))
 
     async def recover_snapshots(self):
@@ -1105,13 +1153,10 @@ class TossCollector:
                     await self.history(code, '1d', pages=1, compact=True)
                 await self.history(code, '1m', pages=1, cover_session=True)
                 raw = self.store.metadata(f'bars:{code}:통합:raw', {})
-                # Preserve the prior raw-price cursor/one-page behavior.
-                if (not raw.get('received_at') or raw['received_at'][:10] != now()[:10]
-                        or (raw.get('next_before') and (raw.get('first_time') or '9999')
-                            > str(datetime.now().year-10)+'-01-01')):
-                    resume = bool(raw.get('received_at', '')[:10] == now()[:10]
-                                  and raw.get('next_before'))
-                    await self.history(code, '1d', resume=resume, adjusted=False, compact=True)
+                # Active refresh owns the head only. The whole-market queue owns
+                # all older pages and bridge cursors, including history >10 years.
+                if head_age_seconds(raw, now()) > 3600:
+                    await self.history(code, '1d', adjusted=False, compact=True)
                 self.last_history[code] = time.monotonic()
 
             await attempt('history', history)

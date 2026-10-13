@@ -174,7 +174,7 @@ async def test_five_minute_chart_keeps_observed_week_without_mixing_sessions(tmp
             {'timestamp':day+'T09:00:00+09:00','openPrice':'100','highPrice':'110',
              'lowPrice':'95','closePrice':'105','volume':'10'}
             for day in ('2026-09-21','2026-09-28','2026-10-02')
-        ]}, {'source':'fixture'}
+        ],'nextBefore':None}, {'source':'fixture'}
     monkeypatch.setattr(collector.client,'get',get)
     await collector.history('005930','1m')
     rows=collector.store.get('bars:005930:통합:5min')['rows']

@@ -226,3 +226,33 @@
  .mk-app :is(.mk-activity [aria-label="수급 기간"],.mk-financing [aria-label="대차·신용 기간"],.mk-short-selling [aria-label="공매도 기간"]){display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;gap:8px}
  .mk-app :is(.mk-activity [aria-label="수급 기간"],.mk-financing [aria-label="대차·신용 기간"],.mk-short-selling [aria-label="공매도 기간"])>button{min-width:0;min-height:52px;white-space:nowrap}
 }
+
+/* Shared interactions: no gradients, moving buttons, or numeric animations. */
+.mk-app{--mk-chart-font:12px;--mk-motion-feedback:160ms;--mk-motion-tab:180ms;--mk-motion-panel:240ms}
+.mk-app.mk-large{--mk-chart-font:14px}.mk-app.mk-largest{--mk-chart-font:16px}
+.mk-detail-workspace{grid-template-columns:minmax(200px,var(--mk-list-width,240px)) 12px minmax(0,1fr);gap:8px}
+.mk-pane-separator{padding:0;border:0;border-radius:4px;align-self:stretch;min-height:80px;background:transparent;color:var(--mk-muted);cursor:col-resize;touch-action:none;transition:background-color var(--mk-motion-feedback)}
+.mk-pane-separator:hover,.mk-pane-separator:focus-visible{background:var(--mk-accent-soft);outline:2px solid var(--mk-accent);outline-offset:-2px}
+.mk-pane-separator>span{position:sticky;top:calc(var(--mk-header-height) + 160px);font-size:20px}
+.mk-detail-overview{grid-template-columns:minmax(0,1fr);gap:8px}
+.mk-detail-overview[data-depth=true]{grid-template-columns:minmax(0,1fr) 12px minmax(220px,var(--mk-depth-width,280px))}
+.mk-detail-summary-status.mk-loading{min-height:24px;padding:4px 0;display:flex;gap:8px;align-items:center;justify-content:flex-start;font-size:14px;background:transparent}
+.mk-detail-summary-status .mk-button{min-height:36px}
+.mk-price-coverage,.mk-chart-view-options{font-size:14px;color:var(--mk-muted);margin:8px 0}
+.mk-price-coverage>summary,.mk-chart-view-options>summary{min-height:36px;display:flex;align-items:center;cursor:pointer}
+.mk-price-coverage p{margin:8px 0}.mk-price-expanded,.mk-valuation-expanded{--mk-chart-height:560px}
+.mk-section-failure{min-height:120px;display:grid;justify-items:start;align-content:center;gap:8px;padding:16px;border:1px solid var(--mk-line);border-radius:var(--mk-radius)}
+.mk-section-failure p{margin:0}.mk-filter-recovery{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:12px 0}
+.mk-app [role=tab]{position:relative}
+.mk-app [role=tab]::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--mk-accent);opacity:0;transition:opacity var(--mk-motion-tab)}
+.mk-app [role=tab][aria-selected=true]::after{opacity:1}
+.mk-app :is(button,[role=option]){transition:background-color var(--mk-motion-feedback),border-color var(--mk-motion-feedback),color var(--mk-motion-feedback)}
+.mk-app button{transform:none!important;animation:none!important;background-image:none!important}
+.mk-search-result>[aria-selected=true]{background:var(--mk-accent-soft);outline:2px solid var(--mk-accent);outline-offset:-2px}
+.mk-dialog[open]{animation:mk-panel-reveal var(--mk-motion-panel) ease-out}
+.mk-toast{animation:mk-panel-reveal var(--mk-motion-feedback) ease-out}
+@keyframes mk-panel-reveal{from{opacity:0}to{opacity:1}}
+@media(max-width:1279px){.mk-detail-overview[data-depth=true]{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:1023px){.mk-detail-workspace{grid-template-columns:minmax(0,1fr)}.mk-detail-workspace>.mk-pane-separator{display:none}}
+@media(max-width:767px){.mk-price-expanded,.mk-valuation-expanded{--mk-chart-height:420px}.mk-price-coverage,.mk-chart-view-options,.mk-detail-summary-status.mk-loading{font-size:var(--mk-phone-small)}.mk-filter-recovery{display:grid;width:100%}}
+@media(prefers-reduced-motion:reduce){.mk-app{--mk-motion-feedback:0ms;--mk-motion-tab:0ms;--mk-motion-panel:0ms}.mk-app *,.mk-app *::before,.mk-app *::after{animation-duration:0ms!important;transition-duration:0ms!important;scroll-behavior:auto!important}}

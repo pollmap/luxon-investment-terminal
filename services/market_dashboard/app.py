@@ -281,8 +281,9 @@ def security_valuation(code: str, request: Request, metric: str = "EPS", basis: 
         result = valuation_series(facts, price, code=code, metric=metric, basis=basis, years=years, multiple=multiple,
                                   start=start, end=end, mode=mode, frequency=frequency, interval=interval, venue=selected_venue,session_closes=sessions)
         result["ttm"] = official.get('ttm',{}).get(result['basis'], {'rows':[],'status':'period_evidence_required'})
+        result["history_coverage"] = price.get('history_coverage',{})
         return result
-    return analysis_response(code, request, ("valuation-v3", metric, basis, years, multiple, start, end, mode, frequency, interval, venue), build,
+    return analysis_response(code, request, ("valuation-v4", metric, basis, years, multiple, start, end, mode, frequency, interval, venue), build,
                              ["prices:"+code, f"bars:{code}:{venue}:day", f"bars:{code}:KRX:day", f"bars:{code}:통합:day", f"bars:{code}:통합:raw", "detail:"+code, "official:"+code, 'share-basis:'+code, 'dart-corporations'])
 
 
@@ -320,6 +321,7 @@ def security_bars(code: str, request: Request, interval: str = "day", start: str
         raise HTTPException(422, "Invalid chart selection")
     def build(store):
         from datetime import date
+        from .price_history import history_coverage
         for bound in (start,end):
             if bound:
                 date.fromisoformat(bound)
@@ -364,10 +366,13 @@ def security_bars(code: str, request: Request, interval: str = "day", start: str
                     data = {}
         if interval == "5min":
             rows = [r for r in data.get("rows", []) if (not start or r["date"] >= start) and (not end or r["date"] <= end)]
-            return {**data, "rows": rows, "interval": interval, "venue": venue, "transport":transport, "status": data.get("status", "not_collected")}
-        return {**aggregate_bars(data.get("rows", []), interval=interval, start=start, end=end), "code": code,
-                "venue": data.get("venue"), "adjustment": data.get("adjustment"), "source_trace": data.get("source_trace"), "transport":transport}
-    return analysis_response(code, request, ("bars-v1", interval, start, end, venue, adjustment), build,
+            return {**data, "rows": rows, "interval": interval, "venue": venue, "transport":transport, "status": data.get("status", "not_collected"),
+                    "history_coverage":history_coverage(store,data,requested_start=start,requested_end=end,displayed=rows)}
+        result = aggregate_bars(data.get("rows", []), interval=interval, start=start, end=end)
+        return {**result, "code": code,
+                "venue": data.get("venue"), "adjustment": data.get("adjustment"), "source_trace": data.get("source_trace"), "transport":transport,
+                "history_coverage":history_coverage(store,data,requested_start=start,requested_end=end,displayed=result['rows'])}
+    return analysis_response(code, request, ("bars-v2", interval, start, end, venue, adjustment), build,
                              ["prices:"+code, f"bars:{code}:{venue}:day", f"bars:{code}:{venue}:raw", f"bars:{code}:{venue}:5min", f"krx-bars:{code}:KRX:raw"],
                              history_kind=("raw-history" if adjustment == "raw" else "history") if venue == "통합" and interval != "5min" else None)
 
@@ -913,31 +918,44 @@ async def search(request: Request, q: str = "", limit: int = 12):
     # per client. Once the read ends, the next group rechecks actual DB revisions.
     source_keys = ("universe", "enriched", "quotes")
     heads = await _revision_reads.read(store, source_keys)
-    content = await _search_flights.run(
-        (store, cache_key),
-        lambda: _search_responses.response(
-            store, cache_key, source_keys,
-            lambda: search_payload(normalized_q, bounded_limit, known_revisions=heads),
-            initial_revision=heads,
-        ),
-    )
+    def read():
+        from .search_view import candidate_dependencies, identity_candidates
+        observed = {}
+        first_heads = heads
+        def selected_revisions():
+            nonlocal first_heads
+            current = first_heads if first_heads is not None else timings.read_revisions(store, source_keys)
+            first_heads = None
+            universe = universe_inputs(store, current.get('universe'))[0]
+            codes = identity_candidates(store, universe, normalized_q, current)
+            observed.update(heads=current, codes=codes)
+            return current if codes is None else candidate_dependencies(store, codes, current)
+        return _search_responses.response(store, cache_key, selected_revisions,
+            lambda: search_payload(normalized_q, bounded_limit,
+                known_revisions=observed['heads'], candidate_codes=observed['codes']))
+    content = await _search_flights.run((store, cache_key), read)
     return encoded_response(content, request)
 
 
-def search_payload(query, limit, *, known_revisions=None):
-    from .search_view import candidates, selected_inputs
+def search_payload(query, limit, *, known_revisions=None, candidate_codes=None):
+    from .search_view import candidates, identity_candidates, selected_inputs
     store = get_store()
     heads = known_revisions if known_revisions is not None else timings.read_revisions(
         store, ('universe', 'enriched', 'quotes'))
     universe, identities = universe_inputs(store, heads.get('universe'))
-    result = candidates(store, universe, query, limit, heads)
-    codes = [row['code'] for row in result['rows']]
+    if candidate_codes is None:
+        candidate_codes = identity_candidates(store, universe, query, heads)
+    result = candidates(store, universe, query, limit, heads) if candidate_codes is None else None
+    codes = [row['code'] for row in result['rows']] if result is not None else candidate_codes
     details, quotes = selected_inputs(store, codes, compact=True)
     selected, _ = assemble_rows(store, (
         {'rows': [identities[code] for code in codes]},
         details, quotes,
     ))
-    result['rows'] = selected
+    if result is None:
+        result = apply_query(selected, Query(q=query, limit=min(30, max(1, limit))))
+    else:
+        result['rows'] = selected
     compact_rows = []
     for row in result["rows"]:
         compact = {
@@ -1146,37 +1164,39 @@ def summary_security(row):
 
 
 @app.get(BASE + "/securities/{code}/price-window")
-def security_price_window(code: str, request: Request, range: int = 252, interval: str = 'day', view: str = 'chart'):
+def security_price_window(code: str, request: Request, range: int = 252, interval: str = 'day', view: str = 'chart',
+                          venue: str = 'auto', adjustment: str = 'source'):
     from .price_window import price_window
-    return analysis_response(code,request,('price-window-v1',range,interval,view),
-        lambda store:price_window(store,code,range_id=range,interval=interval,view=view),
-        [f'bars:{code}:통합:day','prices:'+code],history_kind='history')
+    return analysis_response(code,request,('price-window-v2',range,interval,view,venue,adjustment),
+        lambda store:price_window(store,code,range_id=range,interval=interval,view=view,venue=venue,adjustment=adjustment),
+        [f'bars:{code}:{scope}:{period}' for scope in ('통합','KRX','NXT') for period in ('day','raw')]+['prices:'+code],
+        history_kind='raw-history' if adjustment=='raw' else 'history')
 
 
 @app.get(BASE + "/securities/{code}/prices")
-def prices(code: str, period: str = "all"):
+def prices(code: str, period: str = "all", venue: str = 'auto', adjustment: str = 'auto'):
     valid_code(code)
     if period not in ("week", "month", "quarter", "year", "five_years", "all"):
         raise HTTPException(422, "Invalid price period")
+    if venue not in ('auto','통합','KRX','NXT') or adjustment not in ('auto','source','raw','split'):
+        raise HTTPException(422, "Invalid price source selection")
     store = get_store()
     if code not in store.listed_codes():
         raise HTTPException(404, "Unknown security")
     store.request(code)
     from .toss_backfill import request_history
-    request_history(store, code, 'history')
-    snapshot = store.metadata(f"bars:{code}:통합:day", {}) or store.metadata("prices:" + code, {"rows": [], "status": "collecting"})
-    reference = snapshot.get('_series_ref')
+    request_history(store, code, 'raw-history' if adjustment=='raw' else 'history')
+    from .price_history import history_coverage, price_bounds, read_prices, select_price_history
+    snapshot, selection = select_price_history(store,code,venue=venue,adjustment=adjustment)
     reverse = snapshot.get('_series_reverse', False)
+    _, last = price_bounds(store,snapshot)
     if period == 'all':
-        return {**snapshot, 'rows': store.time_series.rows(reference, reverse)} if reference else snapshot
-    if reference:
-        # The manifest is committed with observations. Older manifests can
-        # recover their final date with an indexed bounds query.
-        last = snapshot.get('last_time') or store.time_series.bounds(reference)[1]
-    else:
-        last = snapshot.get('rows', [{}])[-1].get('date') if snapshot.get('rows') else None
+        rows=read_prices(store,snapshot,reverse=reverse)
+        return {**snapshot,'rows':rows,'history_coverage':history_coverage(
+            store,snapshot,requested_end=last,displayed=rows,selection=selection)}
     if not last:
-        return {**snapshot, 'rows': []} if reference else snapshot
+        return {**snapshot,'rows':[],'status':snapshot.get('status','not_collected'),
+                'history_coverage':history_coverage(store,snapshot,selection=selection)}
     from datetime import date, timedelta
     import calendar
     end = date.fromisoformat(last[:10])
@@ -1187,9 +1207,9 @@ def prices(code: str, period: str = "all"):
         year, month = divmod(month_index, 12)
         month += 1
         cutoff = end.replace(year=year, month=month, day=min(end.day, calendar.monthrange(year, month)[1])).isoformat()
-    rows = (store.time_series.rows(reference, reverse, start=cutoff) if reference
-            else [row for row in snapshot['rows'] if row['date'] >= cutoff])
-    return {**snapshot, 'rows': rows, 'period': period}
+    rows=read_prices(store,snapshot,reverse=reverse,start=cutoff)
+    return {**snapshot,'rows':rows,'period':period,'history_coverage':history_coverage(
+        store,snapshot,requested_start=cutoff,requested_end=last,displayed=rows,selection=selection)}
 
 
 @app.get(BASE + "/securities/{code}/depth")
@@ -1328,11 +1348,15 @@ def security_financial_questions(code: str, request: Request, basis: str = 'CFS'
 @app.get(BASE + "/securities/{code}/financials/timeline")
 def security_financial_timeline(code: str, request: Request, basis: str='CFS'):
     from .official_views import read_view
-    from .financial_timeline import annual_timeline
+    from .financial_timeline import VERSION, annual_timeline
     from .issuer_documents import report_dependencies
     if basis not in ('CFS','OFS'): raise HTTPException(422,'Invalid accounting basis')
-    return analysis_response(code,request,('financial-timeline-v1',basis),
-        lambda store:annual_timeline(store,(read_view(store,code,'reports') or {}).get('financial_reports',{}),basis),report_dependencies(get_store(),code))
+    def build(store):
+        reports = read_view(store, code, 'reports') or {}
+        return annual_timeline(store, reports.get('financial_reports', {}), basis,
+                               contexts=reports.get('annual_period_contexts', []))
+    return analysis_response(code, request, (VERSION, basis), build,
+                             report_dependencies(get_store(), code))
 
 
 @app.get(BASE + "/securities/{code}/financials")

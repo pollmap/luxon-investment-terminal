@@ -15,7 +15,7 @@ function load(file,dependencies={},globals={}){
 }
 const periods=load('analysis-periods.ts');
 const native=value=>JSON.parse(JSON.stringify(value));
-const f=(period,name='매출액',value=100,extra={})=>({period,name,value,frequency:'annual',basis:'CFS',estimate:false,unit:'억원',source_trace:{source:'fixture_non_production',period,unit:'억원'},...extra});
+const f=(period,name='매출액',value=100,extra={})=>({period,name,value,frequency:'annual',basis:'CFS',estimate:false,unit:'억원',...(/^\d{4}$/.test(period)?{period_start:`${period}-01-01`,period_end:`${period}-12-31`,period_verified:true}:{}),source_trace:{source:'fixture_non_production',period,unit:'억원'},...extra});
 function elements(tree,predicate){
   if(Array.isArray(tree))return tree.flatMap(n=>elements(n,predicate));
   if(!tree||typeof tree!=='object')return [];
@@ -32,7 +32,7 @@ function hooks(overrides={}){
 }
 const types={format:value=>value==null?'—':String(value),tone:()=>'',request:()=>{throw new Error('No network in this fixture');}};
 function earnings(financials){
-  const h=hooks();const Component=load('earnings-overview.tsx',{react:h.react,'./types':types,'./analysis-periods':periods,'./earnings-change':load('earnings-change.ts')}).default;
+  const h=hooks();const Component=load('earnings-overview.tsx',{react:h.react,'./types':types,'./analysis-periods':periods,'./financial-change':load('financial-change.ts',{'./valuation-series':load('valuation-series.ts')})}).default;
   return {tree:null,render(){h.reset();this.tree=Component({code:'000001',financials});return renderToStaticMarkup(this.tree);}};
 }
 const headingYears=h=>elements(h.tree,n=>n.type==='thead')[0].props.children.props.children.slice(1)[0].map(text);
@@ -77,9 +77,9 @@ test('zero and loss are displayed; missing prior year never becomes a false grow
   const h=earnings([f('2021','매출액',50),f('2023','매출액',0),f('2024','매출액',-5)]);h.render();
   const bars=elements(h.tree,n=>n.props?.className==='mk-earnings-bars')[0].props.children;
   assert.equal(text(bars[0].props.children[0]),'자료 없음');
-  assert.equal(text(bars[1].props.children[0]),'0');assert.equal(text(bars[1].props.children[1]),'—');
+  assert.equal(text(bars[1].props.children[0]),'0');assert.equal(text(bars[1].props.children[1]),'전년 자료 없음');
   assert.equal(elements(bars[1],n=>n.type==='i')[0].props.style.height,'0%');
-  assert.equal(text(bars[2].props.children[0]),'-5');assert.equal(text(bars[2].props.children[1]),'적자 전환');
+  assert.equal(text(bars[2].props.children[0]),'-5');assert.equal(text(bars[2].props.children[1]),'음수 전환');
 });
 test('estimates, separate statements and unrelated accounts cannot extend actual annual window',()=>{
   const h=earnings([f('2023'),f('2024'),f('2026','매출액',10,{estimate:true}),f('2025','매출액',10,{basis:'OFS'}),f('2027','자본',10)]);
@@ -88,6 +88,34 @@ test('estimates, separate statements and unrelated accounts cannot extend actual
 test('unknown annual labels use honest observation counts instead of claiming recent fiscal years',()=>{
   const h=earnings([f('FY2021'),f('FY2023'),f('FY2024')]),html=h.render();
   assert.ok(button(h,'3개 기간'));assert.doesNotMatch(html,/회계연도까지|최근 3년/);
+});
+test('different real periods in the same fiscal year retain both reported amounts and suppress ambiguous YoY',()=>{
+  const input=[f('2023','매출액',80),f('2024','매출액',100),f('2024','매출액',40,{period_start:'2024-04-01'})],before=JSON.stringify(input);
+  const h=earnings(input),html=h.render(),headings=Array.from(headingYears(h));
+  assert.ok(headings.includes('2024 · 2024-01-01 ~ 2024-12-31'));assert.ok(headings.includes('2024 · 2024-04-01 ~ 2024-12-31'));
+  assert.match(html,/>100</);assert.match(html,/>40</);assert.match(html,/기간 다름/);assert.doesNotMatch(html,/\+25\.0%/);assert.equal(JSON.stringify(input),before);
+});
+test('an unverified account does not add an empty annual column or block another verified account growth',()=>{
+  const unknown={period_start:null,period_end:null,period_verified:false};
+  const h=earnings([f('2024','매출액',100),f('2025','매출액',150),
+    f('2024','당기순이익',20,unknown),f('2025','당기순이익',30,unknown)]);h.render();
+  assert.deepEqual(Array.from(headingYears(h)),['2023','2024','2025']);
+  assert.doesNotMatch(text(h.tree),/2024 · 기간 미확인|2025 · 기간 미확인/);
+  assert.match(text(h.tree),/50\.0%/);
+  const net=elements(h.tree,n=>n.type==='tr').find(n=>text(n.props.children[0])==='당기순이익 증감률');
+  assert.match(text(net),/기간 미확인/);
+});
+test('an actual date without verified context cannot supply the display period of an unknown account',()=>{
+  for(const context of [{period_verified:false},{period_verified:true,period_reason:'conflicting_period_contexts'}]){
+    const h=earnings([f('2024','매출액',100,context),f('2024','당기순이익',20,{period_start:null,period_end:null,period_verified:false})]);
+    const html=h.render(),headings=Array.from(headingYears(h));
+    assert.ok(headings.includes('2024 · 기간 미확인'));assert.ok(headings.includes('2024 · 2024-01-01 ~ 2024-12-31'));
+    assert.match(html,/>100</);assert.match(html,/>20</);assert.doesNotMatch(html,/\+\d+\.\d%/);
+  }
+});
+test('same actual period picks the latest publication in UTC without discarding another real period',()=>{
+  const h=earnings([f('2024','매출액',100,{available_at:'2025-03-03T10:00:00+09:00'}),f('2024','매출액',120,{available_at:'2025-03-03T02:00:00Z'}),f('2024','매출액',90,{available_at:'2025-03-03T01:30:00+09:00'})]);
+  const html=h.render();assert.deepEqual(Array.from(headingYears(h)),['2022','2023','2024']);assert.match(html,/>120</);assert.doesNotMatch(html,/>100<|>90</);
 });
 const point=(date,reference_price,comparison_eligible=true)=>({date,reference_price,comparison_eligible});
 test('comparison range excludes invalid dates and discloses interior gaps without changing points',()=>{
@@ -109,7 +137,7 @@ function valuation(response,overrides={}){
   let dynamicIndex=0,blob=null;
   class FixtureURL extends URL{static createObjectURL(value){blob=value;return 'blob:fixture';}static revokeObjectURL(){}}
   const Component=load('valuation-chart.tsx',{
-    react:h.react,'./types':types,'./analysis-periods':periods,'./valuation-series':load('valuation-series.ts'),'./market-history':{writeMarketHistory(){}},'next/dynamic':{default:()=>dynamicIndex++===0?'fixture-chart':'fixture-eps'},
+    react:h.react,'./types':types,'./analysis-periods':periods,'./valuation-series':load('valuation-series.ts'),'./chart-selection':load('chart-selection.ts'),'./price-history':load('price-history.ts'),'./market-section-boundary':{default:'fixture-boundary'},'./market-history':{writeMarketHistory(){}},'next/dynamic':{default:()=>dynamicIndex++===0?'fixture-chart':'fixture-eps'},
   },{URL:FixtureURL,URLSearchParams,Blob,setTimeout:()=>0,localStorage:{setItem(){}},location:{href:'https://example.invalid/stocks?code=000001'},window:{dispatchEvent(){}},Event:class{},document:{createElement:()=>({click(){}})}}).default;
   return {tree:null,render(){h.reset();this.tree=Component({code:response.code});},get blob(){return blob;}};
 }
@@ -141,6 +169,12 @@ test('server-ineligible positive facts and negative metrics do not produce a ran
   const response=analysis();response.series=response.series.map((p,i)=>({...p,comparison_eligible:i===1,metric_value:i===1?-10:p.metric_value}));
   const h=valuation(response);h.render();assert.equal(elements(h.tree,n=>n.props?.['aria-label']==='비교 가능한 실적 구간').length,0);
   assert.deepEqual(Array.from(chart(h).props.comparisons[0].values,p=>p.value),[null,null,null,null,null]);
+});
+test('valuation distinguishes requested, displayed, stored and comparable ranges without claiming full collection',()=>{
+  const response=analysis();response.history_coverage={requested:{start:'2021-05-01',end:'2024-05-01'},displayed:{start:'2024-01-01',end:'2024-05-01',rows:5},stored:{start:'2023-01-01',end:'2024-05-01',rows:50},collection:{status:'partial',backfill_complete:false,older_pages_pending:true,gap_pending:false}};
+  const h=valuation(response);h.render();const details=elements(h.tree,n=>n.type==='details'&&text(n.props.children[0])==='가격 자료 범위')[0],value=text(details);
+  assert.match(value,/요청 2021-05-01 ~ 2024-05-01/);assert.match(value,/표시 2024-01-01 ~ 2024-05-01/);assert.match(value,/저장된 기간 2023-01-01 ~ 2024-05-01/);
+  assert.match(value,/실적 비교 2024-02-01 ~ 2024-04-01 · 중간 공백 있음/);assert.match(value,/이전 가격 자료가 더 남아 있어요/);assert.doesNotMatch(value,/전체 확보|수집 완료/);
 });
 test('switching to actual multiples retains dates, range key and user scenario; CSV separates the two multiples',async()=>{
   const response=analysis();response.series=response.series.map(p=>({...p,multiple:20}));

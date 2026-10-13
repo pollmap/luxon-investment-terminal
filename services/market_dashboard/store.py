@@ -158,6 +158,20 @@ class Store:
             save_compressed(directory, digest, content, url, now())
             return digest
         path = directory / f"{digest}.json"
+        if source == 'toss-stream' and not (directory / f'{digest}.bin').exists():
+            # Existing raw-v1 readers already support a UTF-8 envelope alone.
+            # One create-only durable file preserves the exact frame bytes;
+            # do not duplicate each high-frequency frame in a second file.
+            if path.exists():
+                from .raw_archive import read_original_verified
+                if read_original_verified(directory, digest) != content:
+                    raise ValueError('Stream original differs from received bytes')
+                return digest
+            envelope = json.dumps({'url':url, 'received_at':now(), 'sha256':digest,
+                                   'payload':content.decode('utf-8'), 'bytes':len(content)},
+                                  ensure_ascii=False).encode('utf-8')
+            atomic_create(path, envelope)
+            return digest
         if source == 'dart':
             # Exact DART only: XBRL/events have their own archive contracts.
             compressed = (directory / f'{digest}.bin.gz').exists()

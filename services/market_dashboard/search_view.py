@@ -17,6 +17,8 @@ PATHS = (('code',), ('name',), ('aliases',), ('market',), ('sector',), ('value',
          ('as_of',), ('facts', 'value', 'value'), ('facts', 'value', 'period'),
          ('daily_facts', 'value', 'value'), ('daily_facts', 'value', 'period'),
          ('quote_trace', 'source'))
+IDENTITY_PATHS = (('code',), ('name',), ('aliases',), ('market',), ('sector',),
+                  ('as_of',), ('quote_trace', 'source'))
 # Fields consumed by assemble_rows before compact search serialization. Nested
 # trace objects stay intact: do not reconstruct or duplicate provenance fields.
 COMPACT_PATHS = tuple((key,) for key in (
@@ -28,11 +30,13 @@ COMPACT_PATHS = tuple((key,) for key in (
 )
 _lock = threading.Lock()
 _cache = OrderedDict()
+_identity_lock = threading.Lock()
+_identity_cache = OrderedDict()
 
 
-def _columns(sqlite):
+def _columns(sqlite, paths=PATHS):
     columns = ['code']
-    for path in PATHS:
+    for path in paths:
         if sqlite:
             location = '$.' + '.'.join(path)
             columns.extend((f"json_extract(value, '{location}')",
@@ -84,7 +88,7 @@ def _quote_heads(store):
         "WHERE key IN ('quotes', 'quote-book') OR key LIKE 'quote:%'")))
 
 
-def _quote_delta(store, cached):
+def _quote_delta(store, cached, paths=PATHS):
     """Reuse unchanged rows; abandon the delta if any concurrent writer intervenes."""
     previous = cached[2]
     heads = _quote_heads(store)
@@ -103,7 +107,7 @@ def _quote_delta(store, cached):
         statement = text(
             f"WITH entries AS {materialized}(SELECT substr(key, 7) AS code, {value} AS value "
             "FROM market_snapshots WHERE key IN :keys) SELECT "
-            + ', '.join(_columns(sqlite)) + ' FROM entries'
+            + ', '.join(_columns(sqlite, paths)) + ' FROM entries'
         ).bindparams(bindparam('keys', expanding=True))
         rows = _records(store, statement, {'keys': changed})
     # The heads before and after the selected read must match, including absent
@@ -113,26 +117,29 @@ def _quote_delta(store, cached):
     from .quote_store import book_revision
     revision = book_revision(heads.get('quotes'), heads.get('quote-book'))
     projected = dict(cached[1])
-    projected.update(_decode(rows, sqlite))
-    timings.count('search_delta')
-    timings.count('search_delta_rows', len(rows))
+    projected.update(_decode(rows, sqlite, paths))
+    if paths == PATHS:
+        timings.count('search_delta')
+        timings.count('search_delta_rows', len(rows))
     return revision, projected, heads
 
 
-def _light_map(store, key, revision):
+def _light_map(store, key, revision, paths=PATHS):
     identity = (store, key)
-    with timings.timed_lock(_lock, 'search_lock'):
-        cached = _cache.get(identity)
+    cache, lock = (_cache, _lock) if paths == PATHS else (_identity_cache, _identity_lock)
+    with timings.timed_lock(lock, 'search_lock'):
+        cached = cache.get(identity)
         if revision is not None and cached and cached[0] == revision:
-            _cache.move_to_end(identity)
+            cache.move_to_end(identity)
             return cached[1]
         if key == 'quotes' and cached:
-            incremental = _quote_delta(store, cached)
+            incremental = _quote_delta(store, cached, paths)
             if incremental is not None:
-                _cache[identity] = incremental
-                _cache.move_to_end(identity)
+                cache[identity] = incremental
+                cache.move_to_end(identity)
                 return incremental[1]
-            timings.count('search_fallback')
+            if paths == PATHS:
+                timings.count('search_fallback')
         sqlite = store.engine.dialect.name == 'sqlite'
         entries = ("SELECT e.key AS code, e.value AS value, 0 AS priority, NULL AS item_revision "
                    "FROM market_snapshots s JOIN json_each(s.payload) e ON true "
@@ -148,7 +155,7 @@ def _light_map(store, key, revision):
         # observation in this very SELECT, without a second revision query.
         empty = "'{}'" if sqlite else "'{}'::jsonb"
         entries += f' UNION ALL SELECT NULL, {empty}, -1, NULL'
-        columns = _columns(sqlite)
+        columns = _columns(sqlite, paths)
         columns.extend(("(SELECT updated_at FROM heads WHERE key = :key)",
                         "(SELECT updated_at FROM heads WHERE key = 'quote-book')",
                         'item_revision'))
@@ -157,8 +164,9 @@ def _light_map(store, key, revision):
                          + ') SELECT ' + ', '.join(columns)
                          + ' FROM entries ORDER BY priority')
         records = _records(store, statement, {'key': key})
-        timings.count('search_full')
-        projected = _decode(records, sqlite)
+        if paths == PATHS:
+            timings.count('search_full')
+        projected = _decode(records, sqlite, paths)
         observed_revision = records[0][-3]
         heads = {}
         if key == 'quotes':
@@ -170,11 +178,53 @@ def _light_map(store, key, revision):
             observed_revision = book_revision(observed_revision, records[0][-2])
         # Attach only the source heads observed with the actual projected values.
         if observed_revision is not None:
-            _cache[identity] = (observed_revision, projected, heads)
-            _cache.move_to_end(identity)
-            while len(_cache) > 4:
-                _cache.popitem(last=False)
+            cache[identity] = (observed_revision, projected, heads)
+            cache.move_to_end(identity)
+            while len(cache) > 4:
+                cache.popitem(last=False)
         return projected
+
+
+def identity_candidates(store, universe, query, revisions):
+    """Identify at most 30 matches without loading financial or ranking fields.
+
+    Broad/empty queries retain the market-wide ranking contract. Quote aliases
+    remain searchable, including legacy writes and stale public quote rejection.
+    """
+    if not query.strip():
+        return None
+    from .service_scope import universe_view
+
+    details = _light_map(store, 'enriched', revisions.get('enriched'), IDENTITY_PATHS)
+    quotes = _light_map(store, 'quotes', revisions.get('quotes'), IDENTITY_PATHS)
+    codes = []
+    for base in universe_view(universe)['rows']:
+        code = base['code']
+        quote = quotes.get(code, {})
+        if (quote.get('quote_trace', {}).get('source') not in ('toss', 'toss_websocket')
+                and quote.get('as_of') and base.get('as_of')
+                and quote['as_of'] < base['as_of']):
+            quote = {}
+        if matches_security({**base, **details.get(code, {}), **quote}, query):
+            codes.append(code)
+            if len(codes) > 30:
+                return None
+    return tuple(codes)
+
+
+def candidate_dependencies(store, codes, revisions):
+    """Reuse the exact quote heads observed with the identity projection."""
+    with _identity_lock:
+        cached = _identity_cache.get((store, 'quotes'))
+        quote_heads = dict(cached[2]) if cached else {}
+    result = {key: revisions[key] for key in ('universe', 'enriched') if key in revisions}
+    result['candidate-codes'] = json.dumps(codes, separators=(',', ':'))
+    for code in codes:
+        key = 'quote:' + code
+        # A per-security record overrides the legacy book in selected_inputs.
+        # Changes to other per-security records do not invalidate these bytes.
+        result[key] = quote_heads.get(key, quote_heads.get('quotes'))
+    return result
 
 
 def candidates(store, universe, query, limit, revisions):

@@ -9,6 +9,7 @@ import httpx
 from fastapi import APIRouter, HTTPException, Request
 
 from .bars import aggregate_bars
+from .price_history import price_bounds
 
 router = APIRouter()
 
@@ -90,9 +91,18 @@ def history_via_openalgo(code, interval, start, end):
     url = os.getenv('MARKET_OPENALGO_URL')
     if not url:
         return None
+    if start is None or end is None:
+        from .app import get_store
+
+        store = get_store()
+        key = f"bars:{code}:통합:" + ('5min' if interval=='5min' else 'day')
+        first, last = price_bounds(store, store.metadata(key,{}) or {})
+        start, end = start or first, end or last
+        if start is None or end is None:
+            return None  # No invented start date or lifetime bound.
     response = httpx.post(url.rstrip('/')+'/api/v1/history', headers={'X-Market-Key':internal_key()},
         json={'symbol':code,'exchange':'TOSS_KR','interval':{'day':'D','week':'W','month':'M','5min':'5m'}[interval],
-              'start_date':start or '1990-01-01','end_date':end or '2100-01-01'}, timeout=6)
+              'start_date':start,'end_date':end}, timeout=6)
     response.raise_for_status()
     result = response.json()
     if result.get('status') != 'success':

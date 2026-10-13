@@ -34,7 +34,7 @@ type Props = {
 };
 export default function StockTable(p: Props) {
   const [selecting,setSelecting]=useState(false);
-  const showSelection=(p.selectionMode ?? selecting)||p.selected.length>0;
+  const showSelection=p.selectionMode ?? (selecting||p.selected.length>0);
   return (
     <div className="mk-stock-table-wrap">
       {p.selectionMode === undefined && <div className="mk-table-actions"><button className="mk-button" aria-pressed={showSelection} onClick={()=>{if(p.selected.length){p.selected.forEach(p.onSelect);}setSelecting(!showSelection);}}>{showSelection?"비교 선택 닫기":"비교할 종목 선택"}</button></div>}

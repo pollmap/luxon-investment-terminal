@@ -1,6 +1,7 @@
 "use client";
 import {useEffect, useRef} from "react";
 import {createChart, LineSeries, CandlestickSeries, BarSeries, HistogramSeries, AreaSeries, LineStyle, LineType, ColorType, type Time, type UTCTimestamp, type ISeriesApi, type IChartApi, type SeriesType} from "lightweight-charts";
+import {preservedLogicalRange} from './chart-selection';
 
 export type ChartRow = {time:string;close:number;open?:number;high?:number;low?:number;volume?:number|null;ma20?:number|null;valid?:boolean};
 export type ComparisonLine={values:{time:string;value:number|null}[];color:string;area?:boolean;dashed?:boolean;step?:boolean};
@@ -36,7 +37,8 @@ export default function FinancialChart({rows,kind="line",rangeKey="",movingAvera
       else state.price.applyOptions({color:css('--mk-accent')});
       average.applyOptions({color:css('--mk-amber')||'#b68923'});
       for(const {series,definition} of state.overlays){const c=css(definition.color)||definition.color;series.applyOptions(definition.area?{lineColor:c,topColor:c+'18',bottomColor:c+'18'}:{color:c});}
-      chart.applyOptions({layout:{textColor:css('--mk-muted')},grid:{horzLines:{color:css('--mk-line')}}});
+      const fontSize=Number.parseFloat(css('--mk-chart-font'))||12;
+      chart.applyOptions({layout:{textColor:css('--mk-muted'),fontSize},grid:{horzLines:{color:css('--mk-line')}}});
     };
     repaint();
     const observer=new MutationObserver(repaint);if(app)observer.observe(app,{attributes:true,attributeFilter:['data-theme','class']});
@@ -57,6 +59,7 @@ export default function FinancialChart({rows,kind="line",rangeKey="",movingAvera
     const timed=rows.map((r,index)=>({...r,index,time:chartTime(r.time)}));
     state.indices=new Map(timed.map(r=>[timeKey(r.time),r.index]));
     chart.applyOptions({timeScale:{timeVisible:rows.some(r=>r.time.length>10)}});
+    price.priceScale().applyOptions({scaleMargins:{top:.08,bottom:rows.some(r=>r.volume!=null&&Number.isFinite(r.volume))?.24:.08}});
     const segmented=breakGaps&&kind==='line';
     price.setData(kind==='candle'||kind==='bar'
       ? timed.map(r=>r.valid!==false&&[r.open,r.high,r.low,r.close].every(v=>Number.isFinite(v))?{time:r.time,open:r.open!,high:r.high!,low:r.low!,close:r.close}:{time:r.time})
@@ -88,10 +91,9 @@ export default function FinancialChart({rows,kind="line",rangeKey="",movingAvera
     for(const overlay of state.overlays.splice(overlayIndex))chart.removeSeries(overlay.series);
     // Append/prepend updates and shape changes must not reset a user's zoom.
     // Explicit period/identity changes are supplied separately by the caller.
-    const anchor=previousRange?Math.max(0,Math.min(state.times.length-1,Math.floor(previousRange.from))):0;
-    const nextAnchor=state.times.length?rows.findIndex(row=>row.time===state.times[anchor]):-1;
-    if(rows.length&&(!state.times.length||rangeKey!==state.rangeKey||nextAnchor<0))chart.timeScale().fitContent();
-    else if(previousRange){const offset=nextAnchor-anchor;chart.timeScale().setVisibleLogicalRange({from:previousRange.from+offset,to:previousRange.to+offset});}
+    const nextTimes=rows.map(row=>row.time),preserved=preservedLogicalRange(state.times,nextTimes,previousRange);
+    if(rows.length&&(!state.times.length||rangeKey!==state.rangeKey||!preserved))chart.timeScale().fitContent();
+    else if(preserved)chart.timeScale().setVisibleLogicalRange(preserved);
     state.times=rows.map(row=>row.time);
     state.rangeKey=rangeKey;
   },[rows,kind,rangeKey,movingAverage,comparisons,breakGaps]);

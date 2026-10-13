@@ -106,6 +106,8 @@ def price_collection_status(snapshot):
     source = snapshot.get('status', 'ready')
     if source not in ('ready', 'no_data'):
         return source
+    if snapshot.get('gap_status') == 'source_gap':
+        return 'source_gap'
     if not snapshot.get('backfill_complete') or snapshot.get('next_before'):
         return 'collecting'
     return 'ready' if snapshot.get('row_count') or snapshot.get('rows') else 'no_data'
@@ -353,15 +355,23 @@ class TossBackfill:
                 target = 'provider_available_history'
                 covered = snapshot.get('backfill_complete') and not snapshot.get('next_before')
                 fresh = recent_head(snapshot, clock)
-                if not covered or not fresh:
+                blocked_gap = (snapshot.get('gap_status') == 'source_gap'
+                               and snapshot.get('history_complete') and not snapshot.get('next_before'))
+                if (not covered or not fresh) and not (blocked_gap and fresh):
                     # A recent head refresh never discards the older-page cursor.
                     resume = resume_history(snapshot, 'next_before', clock, int(state.get('visits', 0)))
+                    # Bridge a newly discovered middle gap on alternating visits;
+                    # the independent older cursor keeps its own opportunities.
+                    visits = int(state.get('visits', 0))
+                    repair = bool(snapshot.get('gap_next_before') and visits % 2 == 1
+                                  and (fresh or visits % 5 != 0))
                     # Refreshing the head must not replace an older durable cursor.
                     # Old pages/new archives can use a bounded burst rather than
                     # waiting for another entire seven-kind universe sweep.
-                    pages = burst_pages('MARKET_TOSS_HISTORY_BURST') if resume or not (snapshot.get('row_count') or rows) else 1
-                    with request_workload('history' if resume or pages > 1 else 'latest'):
-                        result = await self.collector.history(code, pages=pages, resume=resume, compact=True, **({} if adjusted else {'adjusted':False}))
+                    pages = burst_pages('MARKET_TOSS_HISTORY_BURST') if repair or resume or not (snapshot.get('row_count') or rows) else 1
+                    with request_workload('history' if repair or resume or pages > 1 else 'latest'):
+                        result = await self.collector.history(code, pages=pages, resume=resume and not repair,
+                            compact=True, **({'repair':True} if repair else {}), **({} if adjusted else {'adjusted':False}))
                     rows = result.get('rows', [])
                     covered = result.get('backfill_complete') and not result.get('next_before')
                     count=result.get('row_count',len(rows))
@@ -372,6 +382,8 @@ class TossBackfill:
                         'last_date':result.get('last_time',rows[-1]['date'] if rows else '')[:10] or None,
                         'next_before': result.get('next_before'), 'updated_at': clock,
                         'backfill_complete':bool(covered),
+                        'history_complete':result.get('history_complete',result.get('backfill_complete',False)),
+                        'gap_status':result.get('gap_status'),'gap_next_before':result.get('gap_next_before'),
                         'failures': 0, 'visits': int(state.get('visits', 0)) + 1, 'target_start': target})
                 else:
                     count = snapshot.get('row_count', len(rows))
@@ -384,7 +396,8 @@ class TossBackfill:
                             'source_status':snapshot.get('status', 'ready'),
                             'first_date':str(snapshot.get('first_time') or '')[:10] or None,
                             'last_date':str(snapshot.get('last_time') or '')[:10] or None,
-                            'backfill_complete':True, 'next_before':None, 'updated_at':clock,
+                            'backfill_complete':bool(covered), 'next_before':snapshot.get('next_before'), 'updated_at':clock,
+                            'history_complete':snapshot.get('history_complete',True),'gap_status':snapshot.get('gap_status'),
                             'target_start':target, 'visits':int(state.get('visits',0)), 'failures':0})
             else:
                 snapshot = self.store.metadata(f'toss:{kind}:{code}', {})

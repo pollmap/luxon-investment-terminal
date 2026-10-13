@@ -1,7 +1,7 @@
 "use client";
 import PriceChart from "./price-chart";
 import dynamic from "next/dynamic";
-const FinancialChart=dynamic(()=>import("./financial-chart"),{loading:()=> <div className="mk-financial-canvas" style={{height:360}} aria-busy="true"/>});
+const FinancialChart=dynamic(()=>import("./financial-chart"),{loading:()=> <div className="mk-financial-canvas" style={{height:'var(--mk-chart-height, 420px)'}} aria-busy="true"/>});
 import type {Price} from "./types";
 import {intradayWindow} from './chart-period';
 import {intradayLinePoints,type LineInterval} from './intraday-line';

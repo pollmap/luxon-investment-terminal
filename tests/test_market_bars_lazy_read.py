@@ -65,6 +65,12 @@ def save(store, key, rows, normalized, *, venue="통합", adjustment="source"):
     return store.get(key)
 
 
+def old_response(response):
+    payload=response.json()
+    assert "history_coverage" in payload
+    return {k:v for k,v in payload.items() if k!="history_coverage"}
+
+
 def expected(data, rows, interval, adjustment, transport):
     if adjustment != "source" and data.get("adjustment") != adjustment:
         data = {}
@@ -130,7 +136,7 @@ def test_success_uses_manifest_and_preserves_response(
     ))
     response = request(interval, adjustment)
     assert response.status_code == 200
-    assert response.json() == expected(data, remote, interval, adjustment, "openalgo")
+    assert old_response(response) == expected(data, remote, interval, adjustment, "openalgo")
     assert calls == [(CODE, interval, None, None)]  # No range pushdown in this change.
     assert reads == []
 
@@ -165,7 +171,7 @@ def test_fallback_reads_same_stored_snapshot_once(
     response = request(interval, adjustment)
     assert response.status_code == 200
     transport = "stored" if outcome == "disabled" else "stored_fallback"
-    assert response.json() == expected(data, data["rows"], interval, adjustment, transport)
+    assert old_response(response) == expected(data, data["rows"], interval, adjustment, transport)
     assert reads == [key]
     assert calls == [(CODE, interval, None, None)]
 
@@ -183,7 +189,7 @@ def test_genuine_empty_success_never_loads_history(
     reads = watch_history_gets(store, monkeypatch, forbidden=True)
     response = request(interval, adjustment)
     assert response.status_code == 200
-    assert response.json() == expected(data, [], interval, adjustment, "openalgo")
+    assert old_response(response) == expected(data, [], interval, adjustment, "openalgo")
     assert reads == []
 
 
@@ -212,7 +218,7 @@ def test_legacy_series_manifest_without_count_checks_only_one_row(
     assert response.status_code == 200
     assert checks[0] == {"limit": 1}
     assert reads == ([key] if has_rows else [])
-    assert response.json() == expected(
+    assert old_response(response) == expected(
         data, data["rows"], "day", "source", "stored_fallback" if has_rows else "openalgo",
     )
 
@@ -246,7 +252,7 @@ def test_krx_selection_order_is_unchanged(fixture_store, monkeypatch, normalized
     reads = watch_history_gets(store, monkeypatch)
     response = request("day", adjustments, venue="KRX")
     assert response.status_code == 200
-    assert response.json() == expected(
+    assert old_response(response) == expected(
         selected, selected.get("rows", []), "day", adjustments, "stored",
     )
     assert reads == expected_reads
@@ -270,7 +276,7 @@ def test_mismatched_five_minute_adjustment_stays_rejected(fixture_store, monkeyp
     assert response.status_code == 200
     transport = ("stored" if outcome == "disabled" else "stored_fallback"
                  if outcome == "error" else "openalgo")
-    assert response.json() == expected({}, remote, "5min", "raw", transport)
+    assert old_response(response) == expected({}, remote, "5min", "raw", transport)
     assert reads == ([key] if outcome in ("disabled", "error") else [])
 
 
@@ -286,7 +292,7 @@ def test_missing_store_still_accepts_remote_and_revalidates_revision(fixture_sto
     reads = watch_history_gets(store, monkeypatch, forbidden=True)
     first = request("day")
     assert first.status_code == 200
-    assert first.json() == expected({}, fixture_rows(), "day", "source", "openalgo")
+    assert old_response(first) == expected({}, fixture_rows(), "day", "source", "openalgo")
     same = TestClient(api.app).get(BASE, params={
         "venue": "통합", "interval": "day", "start": "2026-04-01", "end": "2026-04-30",
     }, headers={"If-None-Match": first.headers["etag"]})

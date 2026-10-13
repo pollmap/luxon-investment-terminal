@@ -33,6 +33,9 @@ import Dialog, {consumeDialogCloseNavigation} from "./dialog";
 import {detailRouteKeys, writeMarketHistory} from "./market-history";
 import StockTable from "./stock-table";
 import WorkspaceList from "./workspace-list";
+import WorkspaceSplit from './workspace-split';
+import FilterRecovery from './filter-recovery';
+import MarketSectionBoundary from './market-section-boundary';
 import HeaderSearch from "./header-search";
 import ReleaseNotice from "./release-notice";
 import {useStockSearch} from "./use-stock-search";
@@ -142,6 +145,7 @@ export default function Dashboard() {
     [mobileTable, setMobileTable] = useState(false),
     [rankPending, setRankPending] = useState(false),
     [retry, setRetry] = useState(0);
+  const [searchIndex,setSearchIndex]=useState(-1),[searchComposing,setSearchComposing]=useState(false);
   const queryRef = useRef(query),
     comparisonReturn=useRef<{page:Page;offset:number;scroll:number}>({page:'screener',offset:0,scroll:0}),
     routeSearch = useRef(""),
@@ -152,7 +156,7 @@ export default function Dashboard() {
     loadedListKey = useRef(""),
     dataRef = useRef<Result | null>(null),
     focusCode = useRef<string | null>(null);
-  const {rows:results,busy:searchBusy,failed:searchFailed,retry:retrySearch}=useStockSearch(search,modal==="search",30);
+  const {rows:results,busy:searchBusy,failed:searchFailed,retry:retrySearch}=useStockSearch(search,modal==="search"&&!searchComposing,30);
   const [canUndoFavorite,setCanUndoFavorite] = useState(false);
   const undoFavorite = useRef<(() => void) | null>(null);
   const lastFavoriteTouch = useRef({code:"",time:0});
@@ -175,6 +179,7 @@ export default function Dashboard() {
     setCode(r.code);
     setQuery(r.query);
     setSelected(r.selected);
+    setComparisonMode(r.selected.length>0);
     const resume = history.state?.marketReleaseRestore;
     if (resume && resume.url === location.href && Date.now() - resume.savedAt >= 0 && Date.now() - resume.savedAt < 600_000) {
       if (["market", "screener", "watchlist", "compare"].includes(resume.page)) setPage(resume.page);
@@ -249,6 +254,9 @@ export default function Dashboard() {
     }}, "", location.href);
     location.reload();
   };
+  const reloadRef=useRef(reloadRelease);
+  useEffect(()=>{reloadRef.current=reloadRelease;});
+  useEffect(()=>{const recover=()=>reloadRef.current();window.addEventListener('market-chunk-reload',recover);return()=>window.removeEventListener('market-chunk-reload',recover);},[]);
   useEffect(() => {
     if (!ready) return;
     try {
@@ -527,6 +535,9 @@ export default function Dashboard() {
     ? recentSuggestions
     : (data?.rows || []).slice(0, 8);
   const visibleSearchRows: SearchStock[] = search.trim() ? results : suggestedRows;
+  const searchResultKey=visibleSearchRows.map(row=>row.code).join(',');
+  useEffect(()=>setSearchIndex(-1),[search,searchResultKey]);
+  useEffect(()=>{if(modal==='search'&&searchIndex>=0)document.getElementById(`dialog-stock-option-${searchIndex}`)?.scrollIntoView({block:'nearest'});},[modal,searchIndex]);
   const sort = (key: MetricId) => {
     setOffset(0);
     setQuery((q) => ({
@@ -678,7 +689,7 @@ export default function Dashboard() {
       )}
       <main id="market-main" className="mk-main">
         {!ready ? <div className="mk-panel" style={{minHeight:420}} role="status" aria-busy="true">화면을 여는 중…</div> : code ? (
-          <div className="mk-detail-workspace"><WorkspaceList rows={data?.rows ?? []} code={code} favorites={prefs.favorites} onOpen={open} onFavorite={favorite}/><StockDetail
+          <WorkspaceSplit list={<WorkspaceList rows={data?.rows ?? []} code={code} favorites={prefs.favorites} onOpen={open} onFavorite={favorite}/>}><MarketSectionBoundary key={code} label="종목"><StockDetail
             key={code}
             code={code}
             initialSecurity={data?.rows.find(row=>row.code===code) ?? savedRows.find(row=>row.code===code)}
@@ -686,7 +697,7 @@ export default function Dashboard() {
             onFavorite={() => favorite(code)}
             onBack={back}
             onMetric={onMetric}
-          /></div>
+          /></MarketSectionBoundary></WorkspaceSplit>
         ) : (
           <>
             <div className="mk-page-heading">
@@ -782,7 +793,7 @@ export default function Dashboard() {
             )}
             {page === "compare" ? (
               <div className="mk-panel">
-                {selected.length >= 2 && <ComparisonChart codes={selected} />}
+                {selected.length >= 2 && <MarketSectionBoundary label="비교 차트"><ComparisonChart codes={selected}/></MarketSectionBoundary>}
                 {selected.length < 2 ? (
                   <div className="mk-empty">
                     <GitCompareArrows size={30} />
@@ -871,6 +882,7 @@ export default function Dashboard() {
                           </span>
                         </h2>
                         {loading && <span className="mk-caption mk-update-label">불러오는 중</span>}
+                        {page!=='market'&&<button className="mk-button mk-rank-compare" aria-pressed={comparisonMode} onClick={()=>{if(comparisonMode)setSelected([]);setComparisonMode(value=>!value);}}>{comparisonMode?'비교 취소':'비교 선택'}</button>}
                       </div>
                       {page === "market" ? (
                         <div className="mk-toolbar mk-rank-controls">
@@ -1119,7 +1131,7 @@ export default function Dashboard() {
                         <>
                           <MobileList
                             rows={data.rows}
-                            selectionMode={page === "market" ? comparisonMode : undefined}
+                            selectionMode={comparisonMode}
                             favorites={prefs.favorites}
                             selected={selected}
                             metric={
@@ -1136,7 +1148,7 @@ export default function Dashboard() {
                           />
                           <StockTable
                             rows={data.rows}
-                            selectionMode={page === "market" ? comparisonMode : undefined}
+                            selectionMode={comparisonMode}
                             columns={displayColumns}
                             widths={prefs.widths}
                             favorites={prefs.favorites}
@@ -1164,6 +1176,7 @@ export default function Dashboard() {
                               ? "종목 옆 별표를 누르면 이 기기에 저장됩니다."
                               : "검색어와 조건을 바꿔 보세요."}
                           </p>
+                          {page!=='watchlist'&&!loading&&!error&&<FilterRecovery query={query} onApply={next=>{setQuery(next);setOffset(0);}}/>}
                           <button
                             className="mk-button"
                             onClick={() =>
@@ -1281,7 +1294,7 @@ export default function Dashboard() {
           </>
         )}
       </main>
-      {selected.length > 0 && page !== "compare" && !code && (
+      {comparisonMode&&selected.length > 0 && page !== "compare" && !code && (
         <div
           className="mk-compare-bar"
           role="region"
@@ -1291,7 +1304,7 @@ export default function Dashboard() {
             <Check size={16} />
             <b>{selected.length}</b>개 종목 선택
           </span>
-          <button onClick={() => setSelected([])}>해제</button>
+          <button onClick={() => {setSelected([]);setComparisonMode(false);}}>선택 해제</button>
           <button
             className="mk-primary mk-button"
             disabled={selected.length < 2}
@@ -1380,6 +1393,11 @@ export default function Dashboard() {
               placeholder="삼성전자, 005930…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onCompositionStart={()=>setSearchComposing(true)}
+              onCompositionEnd={()=>setSearchComposing(false)}
+              aria-controls="dialog-stock-results"
+              aria-activedescendant={searchIndex>=0?`dialog-stock-option-${searchIndex}`:undefined}
+              onKeyDown={event=>{if(searchComposing||event.nativeEvent.isComposing||event.nativeEvent.keyCode===229)return;if(['ArrowDown','ArrowUp'].includes(event.key)){event.preventDefault();setSearchIndex(index=>Math.max(0,Math.min(visibleSearchRows.length-1,index+(event.key==='ArrowDown'?1:-1))));}else if(event.key==='Enter'&&visibleSearchRows[searchIndex>=0?searchIndex:0]){event.preventDefault();open(visibleSearchRows[searchIndex>=0?searchIndex:0].code);}}}
             />
           </label>
           <p className="mk-caption">
@@ -1389,15 +1407,15 @@ export default function Dashboard() {
                 ? "최근 본 종목"
                 : `${labels[query.sort]} 상위 종목`}
           </p>
-          <div className="mk-search-results" aria-live="polite">
+          <div className="mk-search-results" id="dialog-stock-results" role="listbox" aria-label="검색 결과" aria-live="polite">
             {searchFailed && !visibleSearchRows.length ? (
               <p className="mk-empty">검색 결과를 불러오지 못했어요. <button className="mk-button" onClick={retrySearch}>다시 시도</button></p>
             ) : searchBusy && !visibleSearchRows.length ? (
               <p className="mk-empty">검색 중…</p>
             ) : visibleSearchRows.length ? (
-              visibleSearchRows.map((s) => (
+              visibleSearchRows.map((s,index) => (
                 <div className="mk-search-result" key={s.code}>
-                  <button onClick={() => open(s.code)}>
+                  <button id={`dialog-stock-option-${index}`} role="option" aria-selected={searchIndex===index} onClick={() => open(s.code)}>
                     <CompanyLogo url={s.logo_url} name={s.name} />
                     <span className="mk-search-company">
                       <strong>{s.name}</strong>

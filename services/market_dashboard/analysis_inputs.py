@@ -6,6 +6,7 @@ from datetime import date, timedelta
 from .fundamental_metrics import security_fundamentals
 from .official_views import read_view
 from .per_share import security_eps
+from .price_history import history_coverage, price_bounds, read_prices, select_price_history
 
 
 def security_facts(store, code):
@@ -28,28 +29,15 @@ def security_facts(store, code):
 
 
 def analysis_prices(store, code, venue, years, start=None, end=None):
-    keys = (
-        [f"bars:{code}:통합:day", f"bars:{code}:KRX:day", "prices:" + code]
-        if venue == "auto"
-        else [f"bars:{code}:{venue}:day"] + (["prices:" + code] if venue == "KRX" else [])
-    )
     evidence = store.get("share-basis:" + code, {})
     from .share_basis import aligned_prices, valid_evidence
 
-    if valid_evidence(evidence) and venue in ("auto", "통합"):
-        keys.insert(0, f"bars:{code}:통합:raw")
-    snapshot = {}
-    for key in keys:
-        candidate = store.metadata(key, {})
-        if candidate.get("row_count") or candidate.get("rows"):
-            snapshot = candidate
-            break
+    snapshot, selection = select_price_history(
+        store, code, venue=venue, prefer_raw=valid_evidence(evidence)
+    )
     selected_venue = snapshot.get("venue") or ("KRX" if venue == "auto" else venue)
-    reference = snapshot.get("_series_ref")
-    if not reference:
-        return aligned_prices(snapshot, evidence, code), selected_venue
-    _, last = store.time_series.bounds(reference)
-    finish = end or (last[:10] if last else None)
+    _, last = price_bounds(store,snapshot)
+    finish = end or last
     begin = start
     if not begin and years and finish:
         d = date.fromisoformat(finish)
@@ -59,8 +47,10 @@ def analysis_prices(store, code, venue, years, start=None, end=None):
     # Include pre-window observations so a previous publication becomes effective
     # before the display window, and the last completed month remains identifiable.
     warmup = (date.fromisoformat(begin) - timedelta(days=600)).isoformat() if begin else None
-    rows = store.time_series.rows(reference, start=warmup, end=finish + "T99" if finish else None)
-    return aligned_prices({**snapshot, "rows": rows}, evidence, code), selected_venue
+    rows = read_prices(store,snapshot,start=warmup,end=finish)
+    coverage = history_coverage(store,snapshot,requested_start=begin,requested_end=finish,
+                                displayed=[r for r in rows if not begin or r.get('date','')>=begin],selection=selection)
+    return aligned_prices({**snapshot, "rows": rows, "history_coverage":coverage}, evidence, code), selected_venue
 
 
 def metric_availability(facts, price, security_code=None, *, input_readiness=()):

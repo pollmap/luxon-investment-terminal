@@ -1,5 +1,6 @@
 """fixture_non_production: queue fairness, recovery and collection failure semantics."""
 from types import SimpleNamespace
+from datetime import datetime, timedelta
 
 import httpx
 import pytest
@@ -68,7 +69,7 @@ class Client:
             day = '2020-01-02' if params.get('before') else '2026-10-02'
             return {'candles': [{'timestamp': day + 'T15:30:00+09:00', 'openPrice': '10',
                 'closePrice': '11', 'highPrice': '12', 'lowPrice': '9', 'volume': '20'}],
-                'nextBefore': None if params.get('before') else 'older-page'}, {'source': 'fixture_non_production'}
+                'nextBefore': None if params.get('before') else '2020-01-02T15:30:00+09:00'}, {'source': 'fixture_non_production'}
         return {'records': []}, {'source': 'fixture_non_production'}
 
 
@@ -102,7 +103,7 @@ async def test_restart_and_fair_phase_scan(tmp_path):
 async def test_resume_does_not_lose_old_pages_on_head_refresh(tmp_path):
     store, collector, _ = setup(tmp_path)
     await collector.history('000660')
-    assert store.get('bars:000660:통합:day')['next_before'] == 'older-page'
+    assert store.get('bars:000660:통합:day')['next_before'] == '2020-01-02T15:30:00+09:00'
     await collector.history('000660')
     result = await collector.history('000660', resume=True)
     assert len(result['rows']) == 2 and result['backfill_complete']
@@ -155,7 +156,7 @@ async def test_stalled_provider_cursor_keeps_last_good_snapshot(tmp_path):
     await collector.history('000660')
     previous = store.get('bars:000660:통합:day')
     async def stalled(*args):
-        return {'candles': [], 'nextBefore': 'older-page'}, {}
+        return {'candles': [], 'nextBefore': '2020-01-02T15:30:00+09:00'}, {}
     collector.client.get = stalled
     with pytest.raises(ValueError, match='did not advance'):
         await collector.history('000660', resume=True)
@@ -168,7 +169,7 @@ async def test_trade_pages_preserve_history_and_each_row_source(tmp_path):
     async def page(path, params):
         older=bool(params.get('until'))
         return {'records':[{'date':'2025-10-01' if older else '2026-10-02','marginLoan':{'balanceQuantity':'5'}}],
-                'nextUntil':None if older else 'older-page'}, {'source':'fixture_non_production','sha256':'old' if older else 'head'}
+                'nextUntil':None if older else '2020-01-02T15:30:00+09:00'}, {'source':'fixture_non_production','sha256':'old' if older else 'head'}
     collector.client.get=page
     await collector.fundamentals_of_trading('000660',('credit-trades',))
     await collector.fundamentals_of_trading('000660',('credit-trades',),resume=True)
@@ -226,10 +227,10 @@ async def test_completed_view_collection_repairs_waiting_job_without_provider_re
 async def test_completion_flag_with_remaining_price_cursor_does_not_skip_collection(tmp_path):
     store,collector,queue=setup(tmp_path)
     store.put('bars:000660:통합:day',{'status':'ready','row_count':42,'received_at':now(),
-        'backfill_complete':True,'next_before':'older-page'})
+        'backfill_complete':True,'next_before':'2020-01-02T15:30:00+09:00'})
     store.put('toss-backfill-progress',{'attempts':1})
     await queue.step()
-    assert collector.client.calls and collector.client.calls[0][1]['before']=='older-page'
+    assert collector.client.calls and collector.client.calls[0][1]['before']=='2020-01-02T15:30:00+09:00'
 
 
 @pytest.mark.asyncio
@@ -253,7 +254,7 @@ async def test_program_backfill_writes_only_new_page_and_reads_latest_summary(tm
     monkeypatch.setattr(store.time_series,'rows',read)
     async def page(*args):
         return {'records':[{'date':'1999-12-31','arbitrage':{'buyVolume':'5'},'nonArbitrage':{'buyVolume':'1'}}],
-                'nextUntil':'older-page'}, {'source':'fixture_non_production','sha256':'older'}
+                'nextUntil':'2020-01-02T15:30:00+09:00'}, {'source':'fixture_non_production','sha256':'older'}
     collector.client.get=page
     await collector.fundamentals_of_trading('000660',('program-trades',),resume=True)
     assert calls==[1] and reads==[1]
@@ -298,7 +299,7 @@ async def test_raw_and_adjusted_history_have_independent_cursors_and_sources(tmp
     raw=store.get('bars:000660:통합:raw')
     adjusted=store.get('bars:000660:통합:day')
     assert len(raw['rows'])==2 and raw['adjustment']=='raw'
-    assert len(adjusted['rows'])==1 and adjusted['next_before']=='older-page'
+    assert len(adjusted['rows'])==1 and adjusted['next_before']=='2020-01-02T15:30:00+09:00'
     assert all(r['source_trace']['source']=='fixture_non_production' for r in raw['rows'])
 
 
@@ -327,11 +328,11 @@ class LongHistoryClient(Client):
         self.calls.append((path, dict(params)))
         if not path.endswith('candles'):
             return {'records':[]}, {'source':'fixture_non_production'}
-        page = int(params.get('before', '0'))
+        page = (datetime.fromisoformat('2026-09-28T15:30:00+09:00') - datetime.fromisoformat(params['before'])).days if params.get('before') else 0
         return {'symbol': params['symbol'], 'candles': [
-            {'timestamp': f'2026-09-{28-page:02d}T15:30:00+09:00',
+            {'timestamp': (datetime.fromisoformat('2026-09-28T15:30:00+09:00') - timedelta(days=page)).isoformat(),
              'openPrice': '10', 'closePrice': '11', 'highPrice': '12',
-             'lowPrice': '9', 'volume': '20'}], 'nextBefore': str(page+1)}, {'source': 'fixture_non_production', 'page': page}
+             'lowPrice': '9', 'volume': '20'}], 'nextBefore': (datetime.fromisoformat('2026-09-28T15:30:00+09:00') - timedelta(days=page+1)).isoformat()}, {'source': 'fixture_non_production', 'page': page}
 
 
 @pytest.mark.asyncio
@@ -340,7 +341,7 @@ async def test_burst_is_bounded_and_next_security_is_not_starved(tmp_path, monke
     store, collector, queue = setup(tmp_path, LongHistoryClient())
     await queue.step()
     assert len(collector.client.calls) == 8
-    assert store.metadata('bars:000660:통합:day')['next_before'] == '8'
+    assert store.metadata('bars:000660:통합:day')['next_before'] == '2026-09-20T15:30:00+09:00'
     assert store.metadata('bars:000660:통합:day')['row_count'] == 8
     for _ in range(7):
         await queue.step()
@@ -361,7 +362,7 @@ async def test_existing_archive_head_refresh_keeps_deep_cursor(tmp_path, monkeyp
     collector.client.calls.clear()
     await queue.step()
     assert len(collector.client.calls) == 1
-    assert store.metadata('bars:000660:통합:day')['next_before'] == '8'
+    assert store.metadata('bars:000660:통합:day')['next_before'] == '2026-09-20T15:30:00+09:00'
     assert store.metadata('bars:000660:통합:day')['row_count'] == 8
 
 
@@ -373,7 +374,7 @@ async def test_failed_later_page_preserves_valid_pages_and_resume_cursor(tmp_pat
     store, collector, _ = setup(tmp_path, client)
     original = client.get
     async def failing(path, params):
-        if params.get('before') == '2':
+        if params.get('before') == '2026-09-26T15:30:00+09:00':
             if failure == 'transport':
                 raise httpx.ReadError('fixture interruption')
             if failure == 'cancel':
@@ -382,7 +383,7 @@ async def test_failed_later_page_preserves_valid_pages_and_resume_cursor(tmp_pat
             if failure == 'security':
                 data['symbol'] = '999999'
             else:
-                data['nextBefore'] = '2'
+                data['nextBefore'] = '2026-09-26T15:30:00+09:00'
             return data, evidence
         return await original(path, params)
     client.get = failing
@@ -391,15 +392,15 @@ async def test_failed_later_page_preserves_valid_pages_and_resume_cursor(tmp_pat
         await collector.history('000660', pages=8)
     saved = store.metadata('bars:000660:통합:day')
     assert saved['status'] == 'partial'
-    assert saved['row_count'] == 2 and saved['next_before'] == '2'
+    assert saved['row_count'] == 2 and saved['next_before'] == '2026-09-26T15:30:00+09:00'
     assert saved['source_trace']['page'] == 1
     assert not saved['backfill_complete']
     client.get = original
     client.calls.clear()
     await collector.history('000660', pages=2, resume=True)
-    assert client.calls[0][1]['before'] == '2'
+    assert client.calls[0][1]['before'] == '2026-09-26T15:30:00+09:00'
     assert store.metadata('bars:000660:통합:day')['row_count'] == 4
-    assert store.metadata('bars:000660:통합:day')['next_before'] == '4'
+    assert store.metadata('bars:000660:통합:day')['next_before'] == '2026-09-24T15:30:00+09:00'
 
 
 class LongTradingClient(Client):
@@ -663,18 +664,18 @@ async def test_removed_next_listing_advances_to_successor_and_reconcile_preserve
 async def test_jobs_for_codes_outside_current_universe_are_archived_without_losing_data(tmp_path):
     store, collector, queue = setup(tmp_path)
     stale = {'status':'error', 'error':'HTTPStatusError', 'http_status':404,
-             'diagnosis':{'status':'catalogue_mismatch'}, 'next_before':'older-page',
+             'diagnosis':{'status':'catalogue_mismatch'}, 'next_before':'2020-01-02T15:30:00+09:00',
              'rows':321, 'failures':3}
     store.put('toss-backfill:008000:history', stale)
     store.put('toss:history:008000', {'rows':[{'date':'2020-01-01','close':'123'}],
-                                     'next_until':'older-page'})
+                                     'next_until':'2020-01-02T15:30:00+09:00'})
 
     await queue.reconcile(store.listed_codes())
 
     current = store.get('toss-backfill:008000:history')
     assert current['status'] == 'out_of_universe'
     assert current['source_status'] == 'error'
-    assert current['next_before'] == 'older-page' and current['rows'] == 321
+    assert current['next_before'] == '2020-01-02T15:30:00+09:00' and current['rows'] == 321
     archives = store.list_prefix('toss-backfill-scope-history:008000:history:')
     assert len(archives) == 1
     archived = next(iter(archives.values()))
@@ -686,7 +687,7 @@ async def test_jobs_for_codes_outside_current_universe_are_archived_without_losi
 @pytest.mark.asyncio
 async def test_relisted_code_resumes_preserved_job_cursor(tmp_path):
     store, collector, queue = setup(tmp_path)
-    old = {'status':'out_of_universe', 'source_status':'error', 'next_until':'older-page',
+    old = {'status':'out_of_universe', 'source_status':'error', 'next_until':'2020-01-02T15:30:00+09:00',
            'rows':99, 'backfill_complete':False, 'scope_version':1}
     store.put('toss-backfill:003000:investor-trading', old)
     codes = ['000660', '003000', '005930']
@@ -695,7 +696,7 @@ async def test_relisted_code_resumes_preserved_job_cursor(tmp_path):
 
     restored = store.get('toss-backfill:003000:investor-trading')
     assert restored['status'] == 'queued'
-    assert restored['next_until'] == 'older-page' and restored['rows'] == 99
+    assert restored['next_until'] == '2020-01-02T15:30:00+09:00' and restored['rows'] == 99
     assert restored['reactivated_at']
 
 
@@ -771,7 +772,7 @@ async def test_empty_final_old_price_page_finishes_the_job_without_erasing_rows(
     collector.client.get = empty_last_page
     store.put('toss-backfill-progress', {'cursor': 0, 'phase': phase, 'attempts': 1})
     assert await queue.step() == 'ready'
-    assert observed[0]['before'] == 'older-page'
+    assert observed[0]['before'] == '2020-01-02T15:30:00+09:00'
     state = store.get(f'toss-backfill:000660:{kind}')
     assert state['status'] == state['source_status'] == 'ready'
     assert state['backfill_complete'] and state['next_before'] is None
@@ -784,7 +785,7 @@ def test_explicit_price_source_failure_is_not_promoted_by_rows_or_old_cursor(
     source_status, complete,
 ):
     snapshot = {'status': source_status, 'row_count': 500,
-                'backfill_complete': complete, 'next_before': None if complete else 'older-page'}
+                'backfill_complete': complete, 'next_before': None if complete else '2020-01-02T15:30:00+09:00'}
     assert price_collection_status(snapshot) == source_status
 
 
