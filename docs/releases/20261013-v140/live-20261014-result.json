@@ -1,0 +1,417 @@
+{
+  "automation_id": "automation-3",
+  "scheduled_kst": "2026-10-14 09:10",
+  "trigger_utc": "2026-10-14T04:56:26.664Z",
+  "closed_at": "2026-10-14T05:11:40.237442+00:00",
+  "actual_execution_was_late": true,
+  "release": "20261014-search-lock-v141",
+  "runtime": {
+    "current_release": "20261014-search-lock-v141",
+    "current": "/srv/services/korea-stocks/releases/20261014-search-lock-v141",
+    "services": [
+      {
+        "name": "korea-stocks-market-api-1",
+        "running": true,
+        "started_at": "2026-10-13T15:40:21.061508467Z",
+        "image_id": "sha256:a799da5644a309c7a21240b0a4bcec9ce41f29a8105fb42691ec98b2a7577836",
+        "runtime_release": "20261014-search-lock-v141",
+        "compose_service": "market-api",
+        "compose_files": "/srv/services/korea-stocks/releases/20261014-search-lock-v141/ops/market/compose.desktop.yml",
+        "compose_directory": "/srv/services/korea-stocks/releases/20261014-search-lock-v141/ops/market"
+      },
+      {
+        "name": "korea-stocks-market-worker-1",
+        "running": true,
+        "started_at": "2026-10-13T15:40:21.058106195Z",
+        "image_id": "sha256:a799da5644a309c7a21240b0a4bcec9ce41f29a8105fb42691ec98b2a7577836",
+        "runtime_release": "20261014-search-lock-v141",
+        "compose_service": "market-worker",
+        "compose_files": "/srv/services/korea-stocks/releases/20261014-search-lock-v141/ops/market/compose.desktop.yml",
+        "compose_directory": "/srv/services/korea-stocks/releases/20261014-search-lock-v141/ops/market"
+      }
+    ]
+  },
+  "public_versions": {
+    "health": {
+      "http": 200,
+      "release": "20261014-search-lock-v141"
+    },
+    "manifest": {
+      "http": 200,
+      "release": "20261014-search-lock-v141"
+    }
+  },
+  "capture_observations": 3,
+  "first_pair": {
+    "mode": "readonly_shared_worker",
+    "day": "2026-10-14",
+    "keys": [
+      "provider-toss-stream",
+      "toss-calendar:KR",
+      "toss-calendar:KR:2026-10-14",
+      "toss-recovery:005930",
+      "toss-recovery:000660",
+      "toss-stream-evidence:2026-10-14:005930:trade",
+      "toss-stream-evidence:2026-10-14:005930:orderbook",
+      "toss-stream-evidence:2026-10-14:000660:trade",
+      "toss-stream-evidence:2026-10-14:000660:orderbook"
+    ],
+    "samples": 2,
+    "interval_seconds": 20,
+    "provider_requests": 0,
+    "provider_connections": 0,
+    "database_writes": 0,
+    "limitations": [
+      "two_latest_raw_samples_not_every_tick",
+      "no_provider_sequence",
+      "separate_browser_and_forced_disconnect_verification_required"
+    ],
+    "release": "20261014-search-lock-v141",
+    "observations": [
+      {
+        "captured_at": "2026-10-14T04:58:50.993062+00:00",
+        "calendar": {
+          "status": "open_day",
+          "day": "2026-10-14",
+          "source_sha256": "46ee9cc663f774d5def76ae8b676256902e1c1fbe933a563fc623cd670e99caf",
+          "scope": "KRX+NXT integrated",
+          "sessions": [
+            {
+              "name": "preMarket",
+              "start": "2026-10-14T08:00:00+09:00",
+              "end": "2026-10-14T09:00:00+09:00"
+            },
+            {
+              "name": "regularMarket",
+              "start": "2026-10-14T09:00:00+09:00",
+              "end": "2026-10-14T15:30:00+09:00"
+            },
+            {
+              "name": "afterMarket",
+              "start": "2026-10-14T15:30:00+09:00",
+              "end": "2026-10-14T20:00:00+09:00"
+            }
+          ],
+          "open_at_capture": true,
+          "provider_next_business_day": "2026-10-15"
+        },
+        "worker": {
+          "epoch": "10fde09a6b554f43a5f574c5fee2bd6e",
+          "status": "subscribed"
+        },
+        "evidence": [
+          {
+            "code": "005930",
+            "kind": "trade",
+            "verified_raw": false,
+            "fresh_at_capture": false,
+            "reason": "evidence_identity"
+          },
+          {
+            "code": "005930",
+            "kind": "orderbook",
+            "verified_raw": false,
+            "fresh_at_capture": false,
+            "reason": "evidence_identity"
+          },
+          {
+            "code": "000660",
+            "kind": "trade",
+            "verified_raw": false,
+            "fresh_at_capture": false,
+            "reason": "evidence_identity"
+          },
+          {
+            "code": "000660",
+            "kind": "orderbook",
+            "verified_raw": false,
+            "fresh_at_capture": false,
+            "reason": "evidence_identity"
+          }
+        ],
+        "recovery": {
+          "005930": {
+            "epoch": "10fde09a6b554f43a5f574c5fee2bd6e",
+            "completed_at": "2026-10-13T15:43:31.680741+00:00"
+          },
+          "000660": {
+            "epoch": "10fde09a6b554f43a5f574c5fee2bd6e",
+            "completed_at": "2026-10-13T16:49:18.034635+00:00"
+          }
+        }
+      },
+      {
+        "captured_at": "2026-10-14T04:59:11.102909+00:00",
+        "calendar": {
+          "status": "open_day",
+          "day": "2026-10-14",
+          "source_sha256": "46ee9cc663f774d5def76ae8b676256902e1c1fbe933a563fc623cd670e99caf",
+          "scope": "KRX+NXT integrated",
+          "sessions": [
+            {
+              "name": "preMarket",
+              "start": "2026-10-14T08:00:00+09:00",
+              "end": "2026-10-14T09:00:00+09:00"
+            },
+            {
+              "name": "regularMarket",
+              "start": "2026-10-14T09:00:00+09:00",
+              "end": "2026-10-14T15:30:00+09:00"
+            },
+            {
+              "name": "afterMarket",
+              "start": "2026-10-14T15:30:00+09:00",
+              "end": "2026-10-14T20:00:00+09:00"
+            }
+          ],
+          "open_at_capture": true,
+          "provider_next_business_day": "2026-10-15"
+        },
+        "worker": {
+          "epoch": "10fde09a6b554f43a5f574c5fee2bd6e",
+          "status": "subscribed"
+        },
+        "evidence": [
+          {
+            "code": "005930",
+            "kind": "trade",
+            "verified_raw": false,
+            "fresh_at_capture": false,
+            "reason": "evidence_identity"
+          },
+          {
+            "code": "005930",
+            "kind": "orderbook",
+            "verified_raw": false,
+            "fresh_at_capture": false,
+            "reason": "evidence_identity"
+          },
+          {
+            "code": "000660",
+            "kind": "trade",
+            "verified_raw": false,
+            "fresh_at_capture": false,
+            "reason": "evidence_identity"
+          },
+          {
+            "code": "000660",
+            "kind": "orderbook",
+            "verified_raw": false,
+            "fresh_at_capture": false,
+            "reason": "evidence_identity"
+          }
+        ],
+        "recovery": {
+          "005930": {
+            "epoch": "10fde09a6b554f43a5f574c5fee2bd6e",
+            "completed_at": "2026-10-13T15:43:31.680741+00:00"
+          },
+          "000660": {
+            "epoch": "10fde09a6b554f43a5f574c5fee2bd6e",
+            "completed_at": "2026-10-13T16:49:18.034635+00:00"
+          }
+        }
+      }
+    ],
+    "gates": {
+      "rows": [
+        {
+          "code": "005930",
+          "kind": "trade",
+          "message_count_delta": 0,
+          "fresh_message_observed": false,
+          "epoch_recovery_observed": false
+        },
+        {
+          "code": "005930",
+          "kind": "orderbook",
+          "message_count_delta": 0,
+          "fresh_message_observed": false,
+          "epoch_recovery_observed": false
+        },
+        {
+          "code": "000660",
+          "kind": "trade",
+          "message_count_delta": 0,
+          "fresh_message_observed": false,
+          "epoch_recovery_observed": false
+        },
+        {
+          "code": "000660",
+          "kind": "orderbook",
+          "message_count_delta": 0,
+          "fresh_message_observed": false,
+          "epoch_recovery_observed": false
+        }
+      ],
+      "both_kinds_observed": false,
+      "epoch_recovery_observed": false,
+      "forced_disconnect_verified": false,
+      "browser_render_verified": false,
+      "gapless_delivery_verified": false
+    }
+  },
+  "third_observation": {
+    "release": "20261014-search-lock-v141",
+    "observation_number": 3,
+    "observation": {
+      "captured_at": "2026-10-14T05:07:26.333335+00:00",
+      "calendar": {
+        "status": "open_day",
+        "day": "2026-10-14",
+        "source_sha256": "46ee9cc663f774d5def76ae8b676256902e1c1fbe933a563fc623cd670e99caf",
+        "scope": "KRX+NXT integrated",
+        "sessions": [
+          {
+            "name": "preMarket",
+            "start": "2026-10-14T08:00:00+09:00",
+            "end": "2026-10-14T09:00:00+09:00"
+          },
+          {
+            "name": "regularMarket",
+            "start": "2026-10-14T09:00:00+09:00",
+            "end": "2026-10-14T15:30:00+09:00"
+          },
+          {
+            "name": "afterMarket",
+            "start": "2026-10-14T15:30:00+09:00",
+            "end": "2026-10-14T20:00:00+09:00"
+          }
+        ],
+        "open_at_capture": true,
+        "provider_next_business_day": "2026-10-15"
+      },
+      "worker": {
+        "epoch": "10fde09a6b554f43a5f574c5fee2bd6e",
+        "status": "receiving"
+      },
+      "evidence": [
+        {
+          "code": "005930",
+          "kind": "trade",
+          "verified_raw": false,
+          "fresh_at_capture": false,
+          "reason": "evidence_unreadable"
+        },
+        {
+          "code": "005930",
+          "kind": "orderbook",
+          "verified_raw": false,
+          "fresh_at_capture": false,
+          "reason": "evidence_unreadable"
+        },
+        {
+          "code": "000660",
+          "kind": "trade",
+          "verified_raw": false,
+          "fresh_at_capture": false,
+          "reason": "evidence_unreadable"
+        },
+        {
+          "code": "000660",
+          "kind": "orderbook",
+          "verified_raw": false,
+          "fresh_at_capture": false,
+          "reason": "evidence_unreadable"
+        }
+      ],
+      "recovery": {
+        "005930": {
+          "epoch": "10fde09a6b554f43a5f574c5fee2bd6e",
+          "completed_at": "2026-10-14T05:03:26.989730+00:00"
+        },
+        "000660": null
+      }
+    },
+    "agent_provider_connections": 0,
+    "database_writes": 0,
+    "worker_restarted": false,
+    "capture_source_sha256": "f144a74b187577cafb94ecfe026d702e8e8384401797f663d2971dab735134ff",
+    "accepted_targets": {
+      "trade:kr:005930": true,
+      "orderbook:kr:005930": true,
+      "trade:kr:000660": true,
+      "orderbook:kr:000660": true
+    },
+    "raw_frame_endpoint_supplement": [
+      {
+        "code": "005930",
+        "kind": "trade",
+        "topic": "trade:kr:005930",
+        "verified_actual_receive_endpoint": false,
+        "reason": "missing_or_invalid_receive_frame"
+      },
+      {
+        "code": "005930",
+        "kind": "orderbook",
+        "topic": "orderbook:kr:005930",
+        "verified_actual_receive_endpoint": false,
+        "reason": "missing_or_invalid_receive_frame"
+      },
+      {
+        "code": "000660",
+        "kind": "trade",
+        "topic": "trade:kr:000660",
+        "verified_actual_receive_endpoint": false,
+        "reason": "missing_or_invalid_receive_frame"
+      },
+      {
+        "code": "000660",
+        "kind": "orderbook",
+        "topic": "orderbook:kr:000660",
+        "verified_actual_receive_endpoint": false,
+        "reason": "missing_or_invalid_receive_frame"
+      }
+    ]
+  },
+  "original_frames_verified": false,
+  "live_receipt_gate_passed": false,
+  "recovery_verified": false,
+  "worker_restarted": false,
+  "database_api_redis_restarted": false,
+  "new_vendor_connections": 0,
+  "source_code_modified": false,
+  "automatic_retry": false,
+  "browser": {
+    "samsung_price_observations": [
+      "235750",
+      "236500"
+    ],
+    "samsung_trade_time_visible": "14:04:23",
+    "hynix_price_observations": [
+      "1448000",
+      "1436000",
+      "1437000"
+    ],
+    "hynix_trade_time_visible": "14:10:09",
+    "depth_and_execution_tables_visible": true,
+    "single_same_version_receipt_binding_verified": false,
+    "no_gapless_claim": true,
+    "viewport_css": {
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "validator_defects": [
+    {
+      "file": "ops/market/capture_shared_stream.py",
+      "function": "original",
+      "defect": "No envelope-only UTF-8 payload fallback; live Store.raw(toss-stream) deliberately preserves exact bytes in JSON only, without .bin/.bin.gz"
+    },
+    {
+      "file": "ops/market/capture_shared_stream.py",
+      "function": "evidence",
+      "defect": "Requires metadata URL==topic, while shared receiver archives exact frame under wss://openapi-ws.tossinvest.com/ws/v1; topic must be checked in raw message body"
+    },
+    {
+      "file": "ops/market/capture_shared_stream.py",
+      "function": "observation",
+      "limitation": "recovery ready marker is not a raw REST snapshot integrity proof; no_data can return without exception"
+    }
+  ],
+  "evidence_files": {
+    "runtime-before.json": "4e1042f1cc53e90c0681fc6c52e642581026d52c07fde3a2d6f1ebcb611cdfa7",
+    "capture-1.json": "7841cf6c281c9c79e7ec343f19418392073f5a4eaf1c2e6f02261198d381a2bb",
+    "capture-3.json": "073b61b0369b6df86a38e763b81259710604c56c94e3490e91ffd31a8b8fe4e8"
+  }
+}
